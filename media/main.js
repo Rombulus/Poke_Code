@@ -56,7 +56,7 @@
             if (!state.missions.typeProgress) {
                 state.missions.typeProgress = {};
             }
-            
+
             // Migration : Ajouter des IDs et Niveaux aux Pokémon qui n'en ont pas
             state.pokedex.forEach(p => {
                 if (!p.instanceId) p.instanceId = Date.now() + Math.random();
@@ -66,7 +66,7 @@
 
             // Traduction automatique des noms existants (si en anglais/minuscules)
             translateExistingPokedex();
-            
+
             updateUI();
             renderShop();
             startGameLoop();
@@ -86,7 +86,7 @@
                         renderPokedex();
                         saveState();
                     }
-                } catch (e) {}
+                } catch (e) { }
             }
         }
     }
@@ -97,13 +97,13 @@
             const tabId = btn.dataset.tab;
             UI.tabs.forEach(b => b.classList.remove('active'));
             UI.tabContents.forEach(c => c.classList.add('hidden'));
-            
-            btn.classList.add('active');
-            document.getElementById(`${tabId}-tab`).classList.remove('hidden');
 
-            if (tabId === 'pokedex') renderPokedex();
-            if (tabId === 'shop') renderShop();
-            if (tabId === 'missions') renderMissions();
+            btn.classList.add('active');
+            document.getElementById(tabId).classList.remove('hidden');
+
+            if (tabId === 'pokedex-tab') renderPokedex();
+            if (tabId === 'shop-tab') renderShop();
+            if (tabId === 'missions-tab') renderMissions();
         });
     });
 
@@ -120,28 +120,41 @@
         UI.coinCount.innerText = state.coins;
         UI.pokedexCount.innerText = state.pokedex.length;
         UI.playerLevel.innerText = state.level;
-        
+
         const xpToNext = Math.floor(Math.pow(state.level, 1.8) * 150);
         const progress = Math.min(100, (state.xp / xpToNext) * 100);
         UI.xpProgress.style.width = `${progress}%`;
 
         renderBallInventory();
         renderMissions();
+
+        // Easter Egg Debug : 5 clics sur le header donne 2000 pièces
+        let debugClicks = 0;
+        document.querySelector('header').onclick = () => {
+            debugClicks++;
+            if (debugClicks >= 5) {
+                state.coins += 2000;
+                debugClicks = 0;
+                vscode.postMessage({ type: 'showInfo', value: "DEBUG: +2000 pièces ajoutées !" });
+                updateUI();
+                saveState();
+            }
+        };
     }
 
     const BALL_TYPES = [
-        { id: 'pokeball', name: 'Poké Ball', rate: 0.3, price: 20, img: 'poke-ball' },
-        { id: 'superball', name: 'Super Ball', rate: 0.5, price: 100, img: 'great-ball' },
-        { id: 'hyperball', name: 'Hyper Ball', rate: 0.8, price: 400, img: 'ultra-ball' },
+        { id: 'pokeball', name: 'Poké Ball', rate: 0.4, price: 20, img: 'poke-ball' },
+        { id: 'superball', name: 'Super Ball', rate: 0.6, price: 100, img: 'great-ball' },
+        { id: 'hyperball', name: 'Hyper Ball', rate: 0.85, price: 400, img: 'ultra-ball' },
         { id: 'masterball', name: 'Master Ball', rate: 1.0, price: 5000, img: 'master-ball' },
-        { id: 'sombreball', name: 'Sombre Ball', rate: 0.6, price: 150, img: 'dusk-ball' },
-        { id: 'quickball', name: 'Rapide Ball', rate: 0.6, price: 150, img: 'quick-ball' },
-        { id: 'luxeball', name: 'Luxe Ball', rate: 0.4, price: 200, img: 'luxury-ball' },
-        { id: 'soinball', name: 'Soin Ball', rate: 0.3, price: 50, img: 'heal-ball' },
-        { id: 'filetball', name: 'Filet Ball', rate: 0.5, price: 120, img: 'net-ball' },
-        { id: 'faibleball', name: 'Faible Ball', rate: 0.4, price: 80, img: 'nest-ball' },
-        { id: 'scaphandreball', name: 'Scaphandre Ball', rate: 0.5, price: 120, img: 'dive-ball' },
-        { id: 'amourball', name: 'Love Ball', rate: 0.4, price: 250, img: 'love-ball' }
+        { id: 'sombreball', name: 'Sombre Ball', rate: 0.7, price: 150, img: 'dusk-ball' },
+        { id: 'quickball', name: 'Rapide Ball', rate: 0.7, price: 150, img: 'quick-ball' },
+        { id: 'luxeball', name: 'Luxe Ball', rate: 0.5, price: 200, img: 'luxury-ball' },
+        { id: 'soinball', name: 'Soin Ball', rate: 0.4, price: 50, img: 'heal-ball' },
+        { id: 'filetball', name: 'Filet Ball', rate: 0.6, price: 120, img: 'net-ball' },
+        { id: 'faibleball', name: 'Faible Ball', rate: 0.5, price: 80, img: 'nest-ball' },
+        { id: 'scaphandreball', name: 'Scaphandre Ball', rate: 0.6, price: 120, img: 'dive-ball' },
+        { id: 'amourball', name: 'Love Ball', rate: 0.5, price: 250, img: 'love-ball' }
     ];
 
     function renderBallInventory() {
@@ -191,10 +204,10 @@
             }
 
             // 2. XP Passive et Argent Passif
-            if (new Date().getSeconds() % 10 === 0) {
+            if (new Date().getSeconds() % 3 === 0) {
                 gainPassiveXP();
             }
-            // Argent passif toutes les 2 minutes (120 secondes)
+            // Argent passif toutes les 2 minutes
             if (new Date().getTime() % 120000 < 1000) {
                 state.coins += 10;
                 updateUI();
@@ -215,22 +228,27 @@
     }
 
     function gainPassiveXP() {
-        let changed = false;
+        let leveledUp = false;
         state.pokedex.forEach(p => {
-            // Gain de 1 XP toutes les 10 secondes
+            // Gain de 1 XP toutes les 3 secondes
             p.xp = (p.xp || 0) + 1;
             const xpToNext = calculatePokeXPToNext(p.level || 1);
             if (p.xp >= xpToNext) {
                 p.level = (p.level || 1) + 1;
                 p.xp = 0;
-                changed = true;
+                leveledUp = true;
                 checkAutoEvolution(p);
             }
         });
-        if (changed) {
+
+        // Mise à jour visuelle si on est sur l'onglet pokedex
+        const isPokedexOpen = !document.getElementById('pokedex-tab').classList.contains('hidden');
+        if (isPokedexOpen || leveledUp) {
             renderPokedex();
-            saveState();
         }
+
+        // Toujours sauvegarder le gain d'XP
+        saveState();
     }
 
     function calculatePokeXPToNext(level) {
@@ -238,7 +256,12 @@
     }
 
     async function spawnPokemon() {
-        UI.spawnArea.innerHTML = '<div class="loader">Un Pokémon approche discrètement...</div>';
+        UI.spawnArea.innerHTML = `
+            <div class="hunting-container">
+                <div class="shaking-grass">🌾</div>
+                <div class="loader">Un Pokémon approche discrètement...</div>
+            </div>
+        `;
         vscode.postMessage({ type: 'updateStatus', active: true });
 
         try {
@@ -264,12 +287,12 @@
 
                 // Condition de niveau : certains Pokémon ne spawnent qu'à partir d'un certain niveau joueur
                 const minLevelRequired = rarity === "Légendaire" ? 50 : (rarity === "Épique" ? 20 : 1);
-                
+
                 if (state.level >= minLevelRequired && Math.random() < chance) {
                     const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
                     data = await response.json();
                     found = true;
-                    
+
                     const frenchName = speciesData.names.find(n => n.language.name === 'fr')?.name || data.name;
 
                     currentPokemon = {
@@ -317,8 +340,8 @@
         }
 
         const ball = BALL_TYPES.find(b => b.id === selectedBall);
-        const difficulty = Math.min(0.4, (currentPokemon.baseExperience / 600));
-        const catchSuccess = Math.random() < Math.max(0.05, ball.rate - difficulty);
+        const difficulty = Math.min(0.35, (currentPokemon.baseExperience / 800));
+        const catchSuccess = Math.random() < Math.max(0.1, ball.rate - difficulty);
 
         state.inventory.balls[selectedBall]--;
         const pokemonEl = document.getElementById('active-pokemon');
@@ -331,7 +354,7 @@
         } else {
             pokemonEl.classList.add('shake-anim');
             setTimeout(() => { pokemonEl.classList.remove('shake-anim'); }, 500);
-            
+
             // Vérifier si le joueur est à court de TOUTES les balls
             const totalBalls = Object.values(state.inventory.balls).reduce((a, b) => a + b, 0);
             if (totalBalls <= 0) {
@@ -357,7 +380,7 @@
         state.coins += 5;
         state.xp += Math.floor(currentPokemon.baseExperience / 5);
         state.missions.captures++;
-        
+
         currentPokemon.types.forEach(t => {
             state.missions.typeProgress[t] = (state.missions.typeProgress[t] || 0) + 1;
         });
@@ -383,13 +406,15 @@
     function renderShop() {
         UI.shopList.innerHTML = '';
         BALL_TYPES.forEach(item => {
+            const owned = state.inventory.balls[item.id] || 0;
             const card = document.createElement('div');
             card.className = 'shop-item';
             card.innerHTML = `
                 <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.img}.png">
                 <div class="item-info">
                     <span>${item.name}</span>
-                    <span class="price">${item.price} 🪙</span>
+                    <span class="owned">Possédé : ${owned}</span>
+                    <span class="price">${item.price} <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/nugget.png" class="mini-icon"></span>
                 </div>
                 <button onclick="buyItem('${item.id}', ${item.price})">Acheter</button>
             `;
@@ -411,11 +436,11 @@
     window.claimMission = (id, stone) => {
         if (!state.missions.claimed) state.missions.claimed = [];
         state.missions.claimed.push(id);
-        
+
         // Gains
         state.coins += 50;
         state.inventory.stones[stone] = (state.inventory.stones[stone] || 0) + 1;
-        
+
         vscode.postMessage({ type: 'showInfo', value: `Mission accomplie ! +50 🪙 et 1x ${stone.replace('-', ' ')}` });
         saveState();
         updateUI();
@@ -425,7 +450,7 @@
         if (!UI.pokedexList) return;
         UI.pokedexList.innerHTML = '';
         const search = (UI.pokeSearch?.value || '').toLowerCase();
-        
+
         // Sécurité : s'assurer que pokedex est un tableau
         if (!Array.isArray(state.pokedex)) state.pokedex = [];
 
@@ -437,12 +462,18 @@
             const item = document.createElement('div');
             item.className = `pokedex-item ${p.isShiny ? 'shiny-border' : ''}`;
             const evoInfo = calculateEvoTime(p);
-            
+
+            const xpToNext = calculatePokeXPToNext(p.level || 1);
+            const xpProgress = Math.min(100, (p.xp / xpToNext) * 100);
+            const minsLeft = Math.ceil(((xpToNext - p.xp) * 3) / 60);
+
             item.innerHTML = `
                 <div class="poke-info">
                     <img src="${p.sprite || ''}">
                     <span class="p-name">${p.name || 'Inconnu'} ${p.isShiny ? '✨' : ''}</span>
                     <span class="p-lvl">Nv.${p.level || '?'}</span>
+                    <div class="p-xp-bar"><div style="width: ${xpProgress}%"></div></div>
+                    <div class="p-xp-info">Prog: ${minsLeft} min</div>
                     <div class="evo-timer">${evoInfo}</div>
                 </div>
                 <div class="poke-actions">
@@ -472,7 +503,8 @@
             const evoRes = await fetch(speciesData.evolution_chain.url);
             const evoData = await evoRes.json();
 
-            const evoDetails = findEvoDetails(evoData.chain, p.name);
+            const englishName = speciesData.name;
+            const evoDetails = findEvoDetails(evoData.chain, englishName);
             if (evoDetails && evoDetails.length > 0) {
                 const detail = evoDetails[0];
                 if (detail.trigger.name === "level-up") {
@@ -506,14 +538,15 @@
             const evoRes = await fetch(speciesData.evolution_chain.url);
             const evoData = await evoRes.json();
 
-            const evoDetails = findEvoDetails(evoData.chain, pokemon.name);
+            const englishName = speciesData.name;
+            const evoDetails = findEvoDetails(evoData.chain, englishName);
             if (evoDetails && evoDetails.length > 0) {
                 const detail = evoDetails[0];
                 if (detail.trigger.name === "level-up" && detail.min_level <= pokemon.level) {
                     evolvePokemon(pokemon, detail.species_name);
                 }
             }
-        } catch (e) {}
+        } catch (e) { }
     }
 
     function findEvoDetails(chain, currentName) {
@@ -568,7 +601,7 @@
 
         const index = state.pokedex.findIndex(p => p.instanceId === oldPoke.instanceId);
         state.pokedex[index] = { ...oldPoke, id: data.id, name: frenchName, sprite: data.sprites.other['official-artwork'].front_default };
-        
+
         vscode.postMessage({ type: 'showInfo', value: `Évolution en ${frenchName} !` });
         state.missions.evolutions++;
         saveState();
@@ -582,50 +615,65 @@
     }
 
     const MISSIONS = [
-        { id: 'm1', type: 'fire', stone: 'fire-stone', target: 5, label: 'Brasier I' },
-        { id: 'm2', type: 'fire', stone: 'fire-stone', target: 15, label: 'Brasier II' },
-        { id: 'm3', type: 'water', stone: 'water-stone', target: 5, label: 'Aquatique I' },
-        { id: 'm4', type: 'water', stone: 'water-stone', target: 15, label: 'Aquatique II' },
-        { id: 'm5', type: 'grass', stone: 'leaf-stone', target: 5, label: 'Nature I' },
-        { id: 'm6', type: 'grass', stone: 'leaf-stone', target: 15, label: 'Nature II' },
-        { id: 'm7', type: 'electric', stone: 'thunder-stone', target: 5, label: 'Voltage I' },
-        { id: 'm8', type: 'ice', stone: 'ice-stone', target: 5, label: 'Givre I' },
-        { id: 'm9', type: 'normal', stone: 'moon-stone', target: 10, label: 'Lunaire' },
-        { id: 'm10', type: 'psychic', stone: 'sun-stone', target: 10, label: 'Solaire' },
-        { id: 'm11', type: 'poison', stone: 'dusk-stone', target: 10, label: 'Crépuscule' },
-        { id: 'm12', type: 'fairy', stone: 'shiny-stone', target: 10, label: 'Éclat' },
-        { id: 'm13', type: 'fighting', stone: 'lien_amitie', target: 10, label: 'Fraternité' },
-        { id: 'm14', type: 'steel', stone: 'metal-coat', target: 5, label: 'Métallurgie' },
-        { id: 'm15', type: 'rock', stone: 'module_mag', target: 8, label: 'Magnétisme' },
-        { id: 'm16', type: 'dark', stone: 'lentille_inv', target: 8, label: 'Inversion' },
-        { id: 'm17', type: 'dragon', stone: 'dragon-scale', target: 5, label: 'Draconique' },
-        { id: 'm18', type: 'ghost', stone: 'reaper-cloth', target: 5, label: 'Faucheur' }
+        { id: 'm1', type: 'fire', stone: 'fire-stone', target: 5, label: 'Brasier Ardent I' },
+        { id: 'm2', type: 'fire', stone: 'fire-stone', target: 15, label: 'Brasier Ardent II' },
+        { id: 'm3', type: 'water', stone: 'water-stone', target: 5, label: 'Source Océane I' },
+        { id: 'm4', type: 'water', stone: 'water-stone', target: 15, label: 'Source Océane II' },
+        { id: 'm5', type: 'grass', stone: 'leaf-stone', target: 5, label: 'Floraison Sylvestre I' },
+        { id: 'm6', type: 'grass', stone: 'leaf-stone', target: 15, label: 'Floraison Sylvestre II' },
+        { id: 'm7', type: 'electric', stone: 'thunder-stone', target: 5, label: 'Éclair Volt' },
+        { id: 'm8', type: 'ice', stone: 'ice-stone', target: 5, label: 'Givre Éternel' },
+        { id: 'm9', type: 'normal', stone: 'moon-stone', target: 10, label: 'Force Tranquille' },
+        { id: 'm10', type: 'psychic', stone: 'sun-stone', target: 10, label: 'Esprit Supérieur' },
+        { id: 'm11', type: 'poison', stone: 'dusk-stone', target: 10, label: 'Venin Mortel' },
+        { id: 'm12', type: 'fairy', stone: 'shiny-stone', target: 10, label: 'Éclat Féerique' },
+        { id: 'm13', type: 'fighting', stone: 'lien_amitie', target: 10, label: 'Aura de Combat' },
+        { id: 'm14', type: 'steel', stone: 'metal-coat', target: 5, label: 'Blindage Métal' },
+        { id: 'm15', type: 'rock', stone: 'module_mag', target: 8, label: 'Cœur de Roche' },
+        { id: 'm16', type: 'dark', stone: 'lentille_inv', target: 8, label: 'Ombre Obscure' },
+        { id: 'm17', type: 'dragon', stone: 'dragon-scale', target: 5, label: 'Souffle du Dragon' },
+        { id: 'm18', type: 'ghost', stone: 'reaper-cloth', target: 5, label: 'Hantise Spectrale' }
     ];
 
     function renderMissions() {
         const container = document.getElementById('missions-list');
         container.innerHTML = '<h2>Missions d\'Entraîneur</h2>';
-        
+
         if (!state.missions.typeProgress) state.missions.typeProgress = {};
         if (!state.missions.claimed) state.missions.claimed = [];
 
+        const typeMissions = {};
         MISSIONS.forEach(m => {
-            const current = state.missions.typeProgress[m.type] || 0;
-            const progress = Math.min(100, (current / m.target) * 100);
-            const isClaimed = state.missions.claimed.includes(m.id);
-            
-            const card = document.createElement('div');
-            card.className = `mission-card ${isClaimed ? 'claimed' : ''}`;
-            card.innerHTML = `
-                <h3>${m.label}</h3>
-                <p>Captures ${m.type.toUpperCase()}: ${current}/${m.target}</p>
-                <div class="progress-bar"><div style="width: ${progress}%"></div></div>
-                <div class="reward">Cadeau: ${m.stone.replace('-', ' ')}</div>
-                <button class="claim-btn" ${current >= m.target && !isClaimed ? '' : 'disabled'} onclick="claimMission('${m.id}', '${m.stone}', ${m.target})">
-                    ${isClaimed ? 'Récupéré' : 'Réclamer'}
-                </button>
-            `;
-            container.appendChild(card);
+            if (!typeMissions[m.type]) typeMissions[m.type] = [];
+            typeMissions[m.type].push(m);
+        });
+
+        const typeTranslations = { fire: 'FEU', water: 'EAU', grass: 'PLANTE', electric: 'ÉLECTRIK', ice: 'GLACE', normal: 'NORMAL', psychic: 'PSY', poison: 'POISON', fairy: 'FÉE', fighting: 'COMBAT', steel: 'ACIER', rock: 'ROCHE', dark: 'TÉNÈBRES', dragon: 'DRAGON', ghost: 'SPECTRE' };
+        const stoneTranslations = { 'fire-stone': 'Pierre Feu', 'water-stone': 'Pierre Eau', 'leaf-stone': 'Pierre Plante', 'thunder-stone': 'Pierre Foudre', 'ice-stone': 'Pierre Glace', 'moon-stone': 'Pierre Lune', 'sun-stone': 'Pierre Soleil', 'dusk-stone': 'Pierre Nuit', 'shiny-stone': 'Pierre Éclat', 'lien_amitie': 'Lien d\'Amitié', 'metal-coat': 'Peau Métal', 'module_mag': 'Module Mag.', 'lentille_inv': 'Lentille Inv.', 'dragon-scale': 'Écaille Draco', 'reaper-cloth': 'Tissu Faucheur' };
+
+        Object.keys(typeMissions).forEach(type => {
+            const series = typeMissions[type];
+            const nextMission = series.find(m => !state.missions.claimed.includes(m.id));
+
+            if (nextMission) {
+                const current = state.missions.typeProgress[nextMission.type] || 0;
+                const progress = Math.min(100, (current / nextMission.target) * 100);
+                const typeFr = typeTranslations[nextMission.type] || nextMission.type.toUpperCase();
+                const stoneFr = stoneTranslations[nextMission.stone] || nextMission.stone.replace('-', ' ');
+
+                const card = document.createElement('div');
+                card.className = `mission-card`;
+                card.innerHTML = `
+                    <h3>${nextMission.label}</h3>
+                    <p>Captures ${typeFr}: ${current}/${nextMission.target}</p>
+                    <div class="progress-bar"><div style="width: ${progress}%"></div></div>
+                    <div class="reward">Cadeau: ${stoneFr}</div>
+                    <button class="claim-btn" ${current >= nextMission.target ? '' : 'disabled'} onclick="claimMission('${nextMission.id}', '${nextMission.stone}', ${nextMission.target})">
+                        Réclamer
+                    </button>
+                `;
+                container.appendChild(card);
+            }
         });
     }
 

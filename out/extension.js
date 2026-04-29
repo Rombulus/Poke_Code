@@ -25,6 +25,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = void 0;
 const vscode = __importStar(require("vscode"));
+const path = __importStar(require("path"));
+const fs = __importStar(require("fs"));
+const os = __importStar(require("os"));
 function activate(context) {
     const provider = new PokeIdleProvider(context.extensionUri, context);
     context.subscriptions.push(vscode.window.registerWebviewViewProvider(PokeIdleProvider.viewType, provider));
@@ -48,16 +51,39 @@ class PokeIdleProvider {
         webviewView.webview.onDidReceiveMessage(data => {
             switch (data.type) {
                 case 'saveState':
+                    try {
+                        const savePath = this._getSavePath();
+                        fs.writeFileSync(savePath, JSON.stringify(data.value, null, 2));
+                    }
+                    catch (e) {
+                        console.error("Save error:", e);
+                    }
                     this._context.globalState.update('pokeState', data.value);
                     break;
                 case 'getState':
-                    const savedState = this._context.globalState.get('pokeState');
-                    if (savedState) {
-                        this._view?.webview.postMessage({ type: 'loadState', value: savedState });
+                    let stateToLoad = null;
+                    const savePath = this._getSavePath();
+                    // 1. Essayer de charger depuis le fichier externe
+                    if (fs.existsSync(savePath)) {
+                        try {
+                            const fileContent = fs.readFileSync(savePath, 'utf8');
+                            stateToLoad = JSON.parse(fileContent);
+                        }
+                        catch (e) {
+                            console.error("Load file error:", e);
+                        }
+                    }
+                    // 2. Fallback sur le globalState si le fichier n'existe pas ou est corrompu
+                    if (!stateToLoad) {
+                        stateToLoad = this._context.globalState.get('pokeState');
+                    }
+                    if (stateToLoad) {
+                        this._view?.webview.postMessage({ type: 'loadState', value: stateToLoad });
                     }
                     else {
                         // État initial si aucune sauvegarde
-                        this._view?.webview.postMessage({ type: 'loadState', value: {
+                        this._view?.webview.postMessage({
+                            type: 'loadState', value: {
                                 pokedex: [],
                                 inventory: { balls: { pokeball: 20 }, stones: {} },
                                 coins: 200,
@@ -65,7 +91,8 @@ class PokeIdleProvider {
                                 level: 1,
                                 missions: { captures: 0, evolutions: 0, typeProgress: {}, claimed: [] },
                                 spawnTimer: 180
-                            } });
+                            }
+                        });
                     }
                     break;
                 case 'showInfo':
@@ -114,7 +141,7 @@ class PokeIdleProvider {
                             </div>
                         </div>
                         <div class="stats">
-                            <span><span id="coin-count">0</span> <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-dollar.png" class="mini-icon"></span>
+                            <span><span id="coin-count">0</span> <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/nugget.png" class="mini-icon"></span>
                             <span><span id="pokedex-count">0</span> 🐾</span>
                         </div>
                     </header>
@@ -166,6 +193,9 @@ class PokeIdleProvider {
 				<script src="${scriptUri}"></script>
 			</body>
 			</html>`;
+    }
+    _getSavePath() {
+        return path.join(os.homedir(), '.poke-idle-save.json');
     }
 }
 PokeIdleProvider.viewType = 'poke-idle-view';

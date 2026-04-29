@@ -63,7 +63,7 @@ header {
 .xp-bar-container {
     width: 80%;
     height: 4px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 2px;
     overflow: hidden;
 }
@@ -86,9 +86,17 @@ header {
     font-weight: bold;
 }
 
+.stats span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .mini-icon {
     width: 18px;
     height: 18px;
+    vertical-align: middle;
+    margin-top: -2px;
 }
 
 /* Tabs */
@@ -133,7 +141,8 @@ header {
     height: 60px;
     position: relative;
     overflow: hidden;
-    background: #4a7c44; /* Vert herbe fonce */
+    background: #4a7c44;
+    /* Vert herbe fonce */
     border-radius: 12px;
     margin-bottom: 15px;
     border: 2px solid var(--glass-border);
@@ -142,7 +151,8 @@ header {
 .tall-grass {
     width: 200%;
     height: 100%;
-    background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/gracidea.png'); /* On detourne un item pour faire des fleurs/herbes */
+    background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/gracidea.png');
+    /* On detourne un item pour faire des fleurs/herbes */
     background-size: 30px;
     opacity: 0.3;
     animation: moveGrass 10s linear infinite;
@@ -162,13 +172,25 @@ header {
 }
 
 @keyframes moveGrass {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
 }
 
 @keyframes walkBob {
-    0%, 100% { transform: translate(-50%, 0) rotate(-2deg); }
-    50% { transform: translate(-50%, -4px) rotate(2deg); }
+
+    0%,
+    100% {
+        transform: translate(-50%, 0) rotate(-2deg);
+    }
+
+    50% {
+        transform: translate(-50%, -4px) rotate(2deg);
+    }
 }
 
 .game-container {
@@ -176,7 +198,7 @@ header {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: radial-gradient(circle at center, rgba(255,83,80,0.1) 0%, transparent 70%);
+    background: radial-gradient(circle at center, rgba(255, 83, 80, 0.1) 0%, transparent 70%);
 }
 
 .pokemon-card {
@@ -189,7 +211,7 @@ header {
 .pokemon-sprite {
     width: 150px;
     height: 150px;
-    filter: drop-shadow(0 0 15px rgba(255,255,255,0.2));
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.2));
     animation: float 3s ease-in-out infinite;
 }
 
@@ -224,11 +246,26 @@ header {
     margin-bottom: 5px;
 }
 
-.rarity-tag.commun { background: #808080; }
-.rarity-tag.peu.commun { background: #4caf50; }
-.rarity-tag.rare { background: #2196f3; }
-.rarity-tag.épique { background: #9c27b0; }
-.rarity-tag.légendaire { background: #ff9800; color: #000; }
+.rarity-tag.commun {
+    background: #808080;
+}
+
+.rarity-tag.peu.commun {
+    background: #4caf50;
+}
+
+.rarity-tag.rare {
+    background: #2196f3;
+}
+
+.rarity-tag.épique {
+    background: #9c27b0;
+}
+
+.rarity-tag.légendaire {
+    background: #ff9800;
+    color: #000;
+}
 
 .capture-hint {
     font-size: 0.75rem;
@@ -243,11 +280,13 @@ header {
     background: var(--glass-bg);
     border-radius: 12px;
     overflow-x: auto;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
+    /* Firefox */
 }
 
 .inventory-bar::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+    display: none;
+    /* Chrome/Safari */
 }
 
 .item-slot {
@@ -286,13 +325,15 @@ header {
 }
 
 /* Shop & Pokedex */
-.shop-grid, .grid {
+.shop-grid,
+.grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 12px;
 }
 
-.shop-item, .pokedex-item {
+.shop-item,
+.pokedex-item {
     background: var(--bg-secondary);
     border: 1px solid var(--glass-border);
     border-radius: 12px;
@@ -303,7 +344,21 @@ header {
     text-align: center;
 }
 
-.shop-item img, .poke-info img {
+.item-info .owned {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin: 2px 0;
+}
+
+.price {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
+}
+
+.shop-item img,
+.poke-info img {
     width: 50px;
     height: 50px;
     object-fit: contain;
@@ -344,7 +399,7 @@ header {
 .p-xp-bar {
     width: 100%;
     height: 3px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 2px;
     margin: 5px 0;
     overflow: hidden;
@@ -362,7 +417,7 @@ header {
 
 .sell-btn {
     width: 100%;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--glass-border);
     color: var(--text-dim);
     font-size: 0.65rem;
@@ -372,13 +427,13 @@ header {
 }
 
 .sell-btn:hover {
-    background: rgba(255,0,0,0.1);
+    background: rgba(255, 0, 0, 0.1);
     color: white;
 }
 
 .shiny-border {
     border-color: var(--shiny-gold);
-    box-shadow: inset 0 0 10px rgba(255,215,0,0.2);
+    box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.2);
 }
 
 /* Missions */
@@ -392,7 +447,7 @@ header {
 
 .progress-bar {
     height: 8px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
     margin: 10px 0;
     overflow: hidden;
@@ -443,10 +498,83 @@ input[type="text"] {
     outline: none;
 }
 
+.hunting-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.shaking-grass {
+    font-size: 3rem;
+    animation: grassShake 1.5s infinite;
+}
+
+@keyframes grassShake {
+
+    0%,
+    100% {
+        transform: rotate(0deg) scale(1);
+    }
+
+    25% {
+        transform: rotate(-10deg) scale(1.1);
+    }
+
+    50% {
+        transform: rotate(10deg) scale(1);
+    }
+
+    75% {
+        transform: rotate(-5deg) scale(1.05);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.p-xp-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 4px 0;
+}
+
+.p-xp-bar div {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #8bc34a);
+    transition: width 0.3s ease;
+}
+
+.p-xp-info {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+}
+
 /* Animations */
 @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-15px); }
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-15px);
+    }
 }
 
 .catch-anim {
@@ -454,9 +582,18 @@ input[type="text"] {
 }
 
 @keyframes catchEff {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2) rotate(20deg); }
-    100% { transform: scale(0) rotate(360deg); opacity: 0; }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2) rotate(20deg);
+    }
+
+    100% {
+        transform: scale(0) rotate(360deg);
+        opacity: 0;
+    }
 }
 
 .shake-anim {
@@ -464,9 +601,19 @@ input[type="text"] {
 }
 
 @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-10px); }
-    75% { transform: translateX(10px); }
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-10px);
+    }
+
+    75% {
+        transform: translateX(10px);
+    }
 }
 
 .loader {
@@ -476,6 +623,13 @@ input[type="text"] {
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
 }

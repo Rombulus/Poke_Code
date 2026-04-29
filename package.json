@@ -3,7 +3,7 @@
   "displayName": "PokeIdle VS Code",
   "publisher": "hugo",
   "description": "Un idle game Pokémon dans votre barre latérale VS Code.",
-  "version": "0.2.0",
+  "version": "0.7.0",
   "engines": {
     "vscode": "^1.75.0"
   },

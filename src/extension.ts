@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as os from 'os';
 
 export function activate(context: vscode.ExtensionContext) {
 	const provider = new PokeIdleProvider(context.extensionUri, context);
@@ -40,23 +42,48 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 		webviewView.webview.onDidReceiveMessage(data => {
 			switch (data.type) {
 				case 'saveState':
+					try {
+						const savePath = this._getSavePath();
+						fs.writeFileSync(savePath, JSON.stringify(data.value, null, 2));
+					} catch (e) {
+						console.error("Save error:", e);
+					}
 					this._context.globalState.update('pokeState', data.value);
 					break;
 				case 'getState':
-					const savedState = this._context.globalState.get('pokeState');
-					if (savedState) {
-						this._view?.webview.postMessage({ type: 'loadState', value: savedState });
+					let stateToLoad = null;
+					const savePath = this._getSavePath();
+
+					// 1. Essayer de charger depuis le fichier externe
+					if (fs.existsSync(savePath)) {
+						try {
+							const fileContent = fs.readFileSync(savePath, 'utf8');
+							stateToLoad = JSON.parse(fileContent);
+						} catch (e) {
+							console.error("Load file error:", e);
+						}
+					}
+
+					// 2. Fallback sur le globalState si le fichier n'existe pas ou est corrompu
+					if (!stateToLoad) {
+						stateToLoad = this._context.globalState.get('pokeState');
+					}
+
+					if (stateToLoad) {
+						this._view?.webview.postMessage({ type: 'loadState', value: stateToLoad });
 					} else {
 						// État initial si aucune sauvegarde
-						this._view?.webview.postMessage({ type: 'loadState', value: { 
-							pokedex: [], 
-							inventory: { balls: { pokeball: 20 }, stones: {} }, 
-							coins: 200, 
-							xp: 0, 
-							level: 1, 
-							missions: { captures: 0, evolutions: 0, typeProgress: {}, claimed: [] },
-							spawnTimer: 180 
-						}});
+						this._view?.webview.postMessage({
+							type: 'loadState', value: {
+								pokedex: [],
+								inventory: { balls: { pokeball: 20 }, stones: {} },
+								coins: 200,
+								xp: 0,
+								level: 1,
+								missions: { captures: 0, evolutions: 0, typeProgress: {}, claimed: [] },
+								spawnTimer: 180
+							}
+						});
 					}
 					break;
 				case 'showInfo':
@@ -106,7 +133,7 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
                             </div>
                         </div>
                         <div class="stats">
-                            <span><span id="coin-count">0</span> <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-dollar.png" class="mini-icon"></span>
+                            <span><span id="coin-count">0</span> <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/nugget.png" class="mini-icon"></span>
                             <span><span id="pokedex-count">0</span> 🐾</span>
                         </div>
                     </header>
@@ -158,5 +185,9 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 				<script src="${scriptUri}"></script>
 			</body>
 			</html>`;
+	}
+
+	private _getSavePath(): string {
+		return path.join(os.homedir(), '.poke-idle-save.json');
 	}
 }
