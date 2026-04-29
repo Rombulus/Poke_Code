@@ -4,18 +4,19 @@
     let state = {
         pokedex: [],
         inventory: {
-            pokeballs: 10,
-            superballs: 0,
-            hyperballs: 0,
+            balls: { pokeball: 20 },
             stones: {}
         },
-        coins: 50,
+        coins: 200,
         xp: 0,
         level: 1,
         missions: {
             captures: 0,
-            evolutions: 0
-        }
+            evolutions: 0,
+            typeProgress: {},
+            claimed: []
+        },
+        spawnTimer: 180 // 3 minutes en secondes
     };
 
     const UI = {
@@ -36,7 +37,7 @@
     };
 
     let currentPokemon = null;
-    let selectedBall = 'pokeballs';
+    let selectedBall = 'pokeball';
 
     // Initialisation
     vscode.postMessage({ type: 'getState' });
@@ -45,18 +46,50 @@
         const message = event.data;
         if (message.type === 'loadState') {
             state = message.value;
-            // Migrer l'ancien état si nécessaire
-            if (!state.inventory) {
-                state.inventory = { pokeballs: 10, superballs: 0, hyperballs: 0, stones: {} };
-                state.xp = 0;
-                state.level = 1;
-                state.missions = { captures: 0, evolutions: 0 };
+            // Migrer l'ancien état vers le nouveau système
+            if (!state.inventory.balls) {
+                state.inventory = { balls: { pokeball: 20 }, stones: {} };
             }
+            if (state.spawnTimer === undefined || isNaN(state.spawnTimer)) {
+                state.spawnTimer = 180;
+            }
+            if (!state.missions.typeProgress) {
+                state.missions.typeProgress = {};
+            }
+            
+            // Migration : Ajouter des IDs et Niveaux aux Pokémon qui n'en ont pas
+            state.pokedex.forEach(p => {
+                if (!p.instanceId) p.instanceId = Date.now() + Math.random();
+                if (!p.level) p.level = 5;
+                if (p.xp === undefined) p.xp = 0;
+            });
+
+            // Traduction automatique des noms existants (si en anglais/minuscules)
+            translateExistingPokedex();
+            
             updateUI();
             renderShop();
             startGameLoop();
         }
     });
+
+    async function translateExistingPokedex() {
+        for (let p of state.pokedex) {
+            // Si le nom est en minuscule et sans espace, c'est probablement un nom anglais de l'API
+            if (p.name === p.name.toLowerCase() && !p.name.includes(' ')) {
+                try {
+                    const res = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${p.id}/`);
+                    const data = await res.json();
+                    const fr = data.names.find(n => n.language.name === 'fr')?.name;
+                    if (fr) {
+                        p.name = fr;
+                        renderPokedex();
+                        saveState();
+                    }
+                } catch (e) {}
+            }
+        }
+    }
 
     // Gestion des Onglets
     UI.tabs.forEach(btn => {
@@ -85,23 +118,49 @@
 
     function updateUI() {
         UI.coinCount.innerText = state.coins;
-        // Affichage des Points Prestige
-        const ppDisplay = document.getElementById('pp-count') || createPPDisplay();
-        ppDisplay.innerText = state.specialPoints || 0;
-
         UI.pokedexCount.innerText = state.pokedex.length;
         UI.playerLevel.innerText = state.level;
         
-        // Courbe d'XP exponentielle pour le long terme
         const xpToNext = Math.floor(Math.pow(state.level, 1.8) * 150);
         const progress = Math.min(100, (state.xp / xpToNext) * 100);
         UI.xpProgress.style.width = `${progress}%`;
 
-        document.getElementById('count-pokeballs').innerText = state.inventory.pokeballs;
-        document.getElementById('count-superballs').innerText = state.inventory.superballs;
-        document.getElementById('count-hyperballs').innerText = state.inventory.hyperballs;
-        
+        renderBallInventory();
         renderMissions();
+    }
+
+    const BALL_TYPES = [
+        { id: 'pokeball', name: 'Poké Ball', rate: 0.3, price: 20, img: 'poke-ball' },
+        { id: 'superball', name: 'Super Ball', rate: 0.5, price: 100, img: 'great-ball' },
+        { id: 'hyperball', name: 'Hyper Ball', rate: 0.8, price: 400, img: 'ultra-ball' },
+        { id: 'masterball', name: 'Master Ball', rate: 1.0, price: 5000, img: 'master-ball' },
+        { id: 'sombreball', name: 'Sombre Ball', rate: 0.6, price: 150, img: 'dusk-ball' },
+        { id: 'quickball', name: 'Rapide Ball', rate: 0.6, price: 150, img: 'quick-ball' },
+        { id: 'luxeball', name: 'Luxe Ball', rate: 0.4, price: 200, img: 'luxury-ball' },
+        { id: 'soinball', name: 'Soin Ball', rate: 0.3, price: 50, img: 'heal-ball' },
+        { id: 'filetball', name: 'Filet Ball', rate: 0.5, price: 120, img: 'net-ball' },
+        { id: 'faibleball', name: 'Faible Ball', rate: 0.4, price: 80, img: 'nest-ball' },
+        { id: 'scaphandreball', name: 'Scaphandre Ball', rate: 0.5, price: 120, img: 'dive-ball' },
+        { id: 'amourball', name: 'Love Ball', rate: 0.4, price: 250, img: 'love-ball' }
+    ];
+
+    function renderBallInventory() {
+        const container = document.getElementById('ball-inventory');
+        container.innerHTML = '';
+        BALL_TYPES.forEach(ball => {
+            const count = state.inventory.balls[ball.id] || 0;
+            const slot = document.createElement('div');
+            slot.className = `item-slot ${selectedBall === ball.id ? 'active' : ''}`;
+            slot.innerHTML = `
+                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${ball.img}.png">
+                <span>${count}</span>
+            `;
+            slot.onclick = () => {
+                selectedBall = ball.id;
+                updateUI();
+            };
+            container.appendChild(slot);
+        });
     }
 
     function createPPDisplay() {
@@ -119,17 +178,63 @@
     }
 
     function startGameLoop() {
-        // Un check toutes les 30 secondes pour ralentir le rythme
+        // Boucle principale (toutes les secondes)
         setInterval(() => {
+            // 1. Gestion du Spawn (Aléatoire entre 30s et 3min)
             if (!currentPokemon) {
-                // Taux de spawn de base plus bas
-                const baseRate = 0.2; 
-                const levelBonus = Math.min(0.2, state.level * 0.005);
-                if (Math.random() < (baseRate + levelBonus)) {
+                state.spawnTimer--;
+                if (state.spawnTimer <= 0) {
                     spawnPokemon();
+                    // Nouveau délai aléatoire : 30s (30) à 3min (180)
+                    state.spawnTimer = Math.floor(Math.random() * (180 - 30 + 1)) + 30;
                 }
             }
-        }, 30000);
+
+            // 2. XP Passive et Argent Passif
+            if (new Date().getSeconds() % 10 === 0) {
+                gainPassiveXP();
+            }
+            // Argent passif toutes les 2 minutes (120 secondes)
+            if (new Date().getTime() % 120000 < 1000) {
+                state.coins += 10;
+                updateUI();
+                saveState();
+            }
+        }, 1000);
+    }
+
+    function updateSpawnTimerUI() {
+        const timerEl = document.getElementById('spawn-timer-display');
+        if (timerEl && !currentPokemon) {
+            const mins = Math.floor(state.spawnTimer / 60);
+            const secs = state.spawnTimer % 60;
+            timerEl.innerText = `Prochain Pokémon dans : ${mins}:${secs.toString().padStart(2, '0')}`;
+        } else if (timerEl) {
+            timerEl.innerText = "Un Pokémon est apparu !";
+        }
+    }
+
+    function gainPassiveXP() {
+        let changed = false;
+        state.pokedex.forEach(p => {
+            // Gain de 1 XP toutes les 10 secondes
+            p.xp = (p.xp || 0) + 1;
+            const xpToNext = calculatePokeXPToNext(p.level || 1);
+            if (p.xp >= xpToNext) {
+                p.level = (p.level || 1) + 1;
+                p.xp = 0;
+                changed = true;
+                checkAutoEvolution(p);
+            }
+        });
+        if (changed) {
+            renderPokedex();
+            saveState();
+        }
+    }
+
+    function calculatePokeXPToNext(level) {
+        return Math.floor(Math.pow(level, 1.5) * 20);
     }
 
     async function spawnPokemon() {
@@ -137,49 +242,54 @@
         vscode.postMessage({ type: 'updateStatus', active: true });
 
         try {
-            let attempts = 0;
             let data = null;
             let speciesData = null;
+            let found = false;
 
-            // Tentative de trouver un Pokémon "capturable" (Base ou Sauvage standard)
-            while (attempts < 5) {
+            while (!found) {
+                // On peut maintenant piocher dans toute la liste (1025)
                 const id = Math.floor(Math.random() * 1025) + 1;
                 const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`);
                 speciesData = await speciesRes.json();
 
-                // On exclut les Pokémon qui sont des évolutions complexes ou mythiques
-                // (On laisse les bébés et les formes de base)
-                const isSpecialEvo = speciesData.evolves_from_species !== null; 
-                const isLegendary = speciesData.is_legendary || speciesData.is_mythical;
+                // Logique de rareté basée sur le capture_rate (255 = très commun, 3 = légendaire)
+                const capRate = speciesData.capture_rate;
+                let rarity = "Commun";
+                let chance = 1;
 
-                if (!isSpecialEvo || (attempts > 3)) { // Après 3 essais on est moins strict
+                if (capRate <= 3) { rarity = "Légendaire"; chance = 0.01; }
+                else if (capRate <= 45) { rarity = "Épique"; chance = 0.1; }
+                else if (capRate <= 100) { rarity = "Rare"; chance = 0.3; }
+                else if (capRate <= 150) { rarity = "Peu Commun"; chance = 0.6; }
+
+                // Condition de niveau : certains Pokémon ne spawnent qu'à partir d'un certain niveau joueur
+                const minLevelRequired = rarity === "Légendaire" ? 50 : (rarity === "Épique" ? 20 : 1);
+                
+                if (state.level >= minLevelRequired && Math.random() < chance) {
                     const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
                     data = await response.json();
-                    break;
+                    found = true;
+                    
+                    const frenchName = speciesData.names.find(n => n.language.name === 'fr')?.name || data.name;
+
+                    currentPokemon = {
+                        id: data.id,
+                        name: frenchName,
+                        rarity: rarity,
+                        captureRate: capRate,
+                        sprite: data.sprites.other['official-artwork'].front_default || data.sprites.front_default,
+                        types: data.types.map(t => t.type.name),
+                        isShiny: Math.random() < (1 / 512),
+                        baseExperience: data.base_experience || 50,
+                        level: Math.max(1, Math.floor(state.level * 0.8) + Math.floor(Math.random() * 5))
+                    };
                 }
-                attempts++;
             }
-
-            // Sprites de haute qualité pour toutes les générations (Gen 1-9)
-            const sprite = data.sprites.other['official-artwork'].front_default || 
-                           data.sprites.other['home'].front_default ||
-                           data.sprites.front_default;
-
-            const isShiny = Math.random() < (1 / 512);
-            
-            currentPokemon = {
-                id: data.id,
-                name: data.name,
-                sprite: isShiny ? (data.sprites.other['official-artwork'].front_shiny || data.sprites.front_shiny || sprite) : sprite,
-                types: data.types.map(t => t.type.name),
-                isShiny: isShiny,
-                baseExperience: data.base_experience || 50
-            };
 
             renderPokemon();
         } catch (error) {
-            UI.spawnArea.innerHTML = '<div class="loader">Zone calme...</div>';
-            currentPokemon = null;
+            console.error("Spawn error:", error);
+            state.spawnTimer = 10; // Réessaie vite en cas d'erreur API
             vscode.postMessage({ type: 'updateStatus', active: false });
         }
     }
@@ -187,11 +297,12 @@
     function renderPokemon() {
         UI.spawnArea.innerHTML = `
             <div class="pokemon-card ${currentPokemon.isShiny ? 'shiny-glow' : ''}" id="active-pokemon">
+                <div class="rarity-tag ${currentPokemon.rarity.toLowerCase()}">${currentPokemon.rarity}</div>
                 <img src="${currentPokemon.sprite}" class="pokemon-sprite">
                 <div class="pokemon-name">
-                    ${currentPokemon.isShiny ? '✨ ' : ''}${currentPokemon.name}
+                    ${currentPokemon.isShiny ? '✨ ' : ''}${currentPokemon.name} <span class="lvl">Nv.${currentPokemon.level}</span>
                 </div>
-                <div class="capture-hint">Utilisez vos Balls avec parcimonie...</div>
+                <div class="capture-hint">Cliquez pour capturer !</div>
             </div>
         `;
 
@@ -200,70 +311,61 @@
 
     function catchPokemon() {
         if (!currentPokemon) return;
-        if (state.inventory[selectedBall] <= 0) {
+        if ((state.inventory.balls[selectedBall] || 0) <= 0) {
             vscode.postMessage({ type: 'showInfo', value: "Plus de Balls ! Attendez que vos pièces s'accumulent." });
             return;
         }
 
-        // Taux de capture plus difficiles
-        // Les Pokémon avec beaucoup d'XP de base sont plus durs à attraper
+        const ball = BALL_TYPES.find(b => b.id === selectedBall);
         const difficulty = Math.min(0.4, (currentPokemon.baseExperience / 600));
-        const ballChances = { 
-            pokeballs: 0.3 - difficulty, 
-            superballs: 0.5 - difficulty, 
-            hyperballs: 0.8 - (difficulty / 2) 
-        };
-        
-        const catchSuccess = Math.random() < Math.max(0.05, ballChances[selectedBall]);
+        const catchSuccess = Math.random() < Math.max(0.05, ball.rate - difficulty);
 
-        state.inventory[selectedBall]--;
+        state.inventory.balls[selectedBall]--;
         const pokemonEl = document.getElementById('active-pokemon');
 
         if (catchSuccess) {
-            pokemonEl.classList.add('catch-anim');
+            pokemonEl.classList.add('captured-anim');
             setTimeout(() => {
                 finalizeCapture();
             }, 500);
         } else {
             pokemonEl.classList.add('shake-anim');
-            // 20% de chance qu'il s'enfuie après un échec
-            if (Math.random() < 0.2) {
-                vscode.postMessage({ type: 'showInfo', value: `${currentPokemon.name} s'est enfui dans les hautes herbes !` });
-                setTimeout(() => {
-                    currentPokemon = null;
-                    UI.spawnArea.innerHTML = '<div class="loader">Recherche de Pokémon...</div>';
-                    vscode.postMessage({ type: 'updateStatus', active: false });
-                    saveState();
-                    updateUI();
-                }, 500);
+            setTimeout(() => { pokemonEl.classList.remove('shake-anim'); }, 500);
+            
+            // Vérifier si le joueur est à court de TOUTES les balls
+            const totalBalls = Object.values(state.inventory.balls).reduce((a, b) => a + b, 0);
+            if (totalBalls <= 0) {
+                vscode.postMessage({ type: 'showInfo', value: `Plus de Balls ! ${currentPokemon.name} s'enfuit pendant que vous fouillez vos poches...` });
+                currentPokemon = null;
+                UI.spawnArea.innerHTML = '<div class="loader">Recherche...</div>';
+                vscode.postMessage({ type: 'updateStatus', active: false });
+                saveState();
+                updateUI();
             }
         }
     }
 
     function finalizeCapture() {
-        const exists = state.pokedex.find(p => p.id === currentPokemon.id && p.isShiny === currentPokemon.isShiny);
-        
-        if (!exists) {
-            state.pokedex.push({
-                ...currentPokemon,
-                date: new Date().toLocaleDateString(),
-                catchCount: 1
-            });
-            vscode.postMessage({ type: 'showInfo', value: `Merveilleux ! ${currentPokemon.name} a été ajouté au Pokédex.` });
-        } else {
-            exists.catchCount = (exists.catchCount || 1) + 1;
-            state.coins += 10; // Réduit pour le long terme
-            vscode.postMessage({ type: 'showInfo', value: `Vous avez déjà ce Pokémon. Recyclé pour 10 pièces.` });
-        }
+        const newPoke = {
+            ...currentPokemon,
+            instanceId: Date.now() + Math.random(),
+            xp: 0,
+            date: new Date().toLocaleDateString()
+        };
 
-        // Gains réduits pour forcer la patience
-        state.coins += 2;
+        state.pokedex.push(newPoke);
+        state.coins += 5;
         state.xp += Math.floor(currentPokemon.baseExperience / 5);
         state.missions.captures++;
         
+        currentPokemon.types.forEach(t => {
+            state.missions.typeProgress[t] = (state.missions.typeProgress[t] || 0) + 1;
+        });
+
         checkLevelUp();
         currentPokemon = null;
-        UI.spawnArea.innerHTML = '<div class="loader">Recherche de Pokémon...</div>';
+        state.spawnTimer = 180;
+        UI.spawnArea.innerHTML = '<div class="loader" id="spawn-timer-display">Recherche...</div>';
         vscode.postMessage({ type: 'updateStatus', active: false });
         saveState();
         updateUI();
@@ -275,27 +377,19 @@
             state.xp -= xpToNext;
             state.level++;
             vscode.postMessage({ type: 'showInfo', value: `NIVEAU SUPÉRIEUR ! Passage au niveau ${state.level}.` });
-            state.coins += 50; 
         }
     }
 
-    // Boutique (Prix augmentés)
-    const SHOP_ITEMS = [
-        { id: 'pokeballs', name: 'Poké Ball', price: 20, icon: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png' },
-        { id: 'superballs', name: 'Super Ball', price: 100, icon: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/great-ball.png' },
-        { id: 'hyperballs', name: 'Hyper Ball', price: 400, icon: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png' }
-    ];
-
     function renderShop() {
         UI.shopList.innerHTML = '';
-        SHOP_ITEMS.forEach(item => {
+        BALL_TYPES.forEach(item => {
             const card = document.createElement('div');
             card.className = 'shop-item';
             card.innerHTML = `
-                <img src="${item.icon}">
+                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.img}.png">
                 <div class="item-info">
                     <span>${item.name}</span>
-                    <span class="price">${item.price} <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" class="mini-icon"></span>
+                    <span class="price">${item.price} 🪙</span>
                 </div>
                 <button onclick="buyItem('${item.id}', ${item.price})">Acheter</button>
             `;
@@ -306,7 +400,7 @@
     window.buyItem = (id, price) => {
         if (state.coins >= price) {
             state.coins -= price;
-            state.inventory[id]++;
+            state.inventory.balls[id] = (state.inventory.balls[id] || 0) + 1;
             updateUI();
             saveState();
         } else {
@@ -314,63 +408,150 @@
         }
     };
 
-    // Pokédex & Évolutions
-    function renderPokedex() {
-        UI.pokedexList.innerHTML = '';
-        const search = UI.pokeSearch.value.toLowerCase();
+    window.claimMission = (id, stone) => {
+        if (!state.missions.claimed) state.missions.claimed = [];
+        state.missions.claimed.push(id);
         
-        const filtered = state.pokedex.filter(p => p.name.toLowerCase().includes(search));
-        const sorted = filtered.sort((a, b) => a.id - b.id);
+        // Gains
+        state.coins += 50;
+        state.inventory.stones[stone] = (state.inventory.stones[stone] || 0) + 1;
+        
+        vscode.postMessage({ type: 'showInfo', value: `Mission accomplie ! +50 🪙 et 1x ${stone.replace('-', ' ')}` });
+        saveState();
+        updateUI();
+    };
+
+    function renderPokedex() {
+        if (!UI.pokedexList) return;
+        UI.pokedexList.innerHTML = '';
+        const search = (UI.pokeSearch?.value || '').toLowerCase();
+        
+        // Sécurité : s'assurer que pokedex est un tableau
+        if (!Array.isArray(state.pokedex)) state.pokedex = [];
+
+        const filtered = state.pokedex.filter(p => p && p.name && p.name.toLowerCase().includes(search));
+        const sorted = filtered.sort((a, b) => (a.id || 0) - (b.id || 0));
 
         sorted.forEach(p => {
+            if (!p) return;
             const item = document.createElement('div');
             item.className = `pokedex-item ${p.isShiny ? 'shiny-border' : ''}`;
+            const evoInfo = calculateEvoTime(p);
+            
             item.innerHTML = `
-                <img src="${p.sprite}">
-                <span class="p-name">${p.name}</span>
-                <span class="p-id">#${p.id}</span>
-                <button class="evolve-btn" onclick="tryEvolve(${p.id})">Évoluer</button>
+                <div class="poke-info">
+                    <img src="${p.sprite || ''}">
+                    <span class="p-name">${p.name || 'Inconnu'} ${p.isShiny ? '✨' : ''}</span>
+                    <span class="p-lvl">Nv.${p.level || '?'}</span>
+                    <div class="evo-timer">${evoInfo}</div>
+                </div>
+                <div class="poke-actions">
+                    <button class="sell-btn" onclick="sellPokemon(${p.instanceId})">Vendre (20$)</button>
+                </div>
             `;
             UI.pokedexList.appendChild(item);
         });
     }
 
-    UI.pokeSearch.addEventListener('input', renderPokedex);
+    function calculateEvoTime(p) {
+        if (!p.nextEvoLevel) {
+            fetchNextEvoLevel(p);
+            return "Analyse...";
+        }
+        if (p.nextEvoLevel === "MAX") return "Stade Final";
+        if (typeof p.nextEvoLevel === "string") return p.nextEvoLevel;
+        return p.level >= p.nextEvoLevel ? "Évolution prête !" : `Nv. requis : ${p.nextEvoLevel}`;
+    }
+
+    async function fetchNextEvoLevel(p) {
+        if (p.fetchingEvo) return;
+        p.fetchingEvo = true;
+        try {
+            const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${p.id}/`);
+            const speciesData = await speciesRes.json();
+            const evoRes = await fetch(speciesData.evolution_chain.url);
+            const evoData = await evoRes.json();
+
+            const evoDetails = findEvoDetails(evoData.chain, p.name);
+            if (evoDetails && evoDetails.length > 0) {
+                const detail = evoDetails[0];
+                if (detail.trigger.name === "level-up") {
+                    p.nextEvoLevel = detail.min_level || (p.level + 1);
+                } else {
+                    p.nextEvoLevel = `Item requis`;
+                }
+            } else {
+                p.nextEvoLevel = "MAX";
+            }
+            renderPokedex();
+        } catch (e) { p.nextEvoLevel = "Erreur"; }
+        p.fetchingEvo = false;
+    }
+
+    window.sellPokemon = (instanceId) => {
+        const index = state.pokedex.findIndex(p => p.instanceId === instanceId);
+        if (index > -1) {
+            state.coins += 20;
+            state.pokedex.splice(index, 1);
+            saveState();
+            updateUI();
+            renderPokedex();
+        }
+    };
+
+    async function checkAutoEvolution(pokemon) {
+        try {
+            const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemon.id}/`);
+            const speciesData = await speciesRes.json();
+            const evoRes = await fetch(speciesData.evolution_chain.url);
+            const evoData = await evoRes.json();
+
+            const evoDetails = findEvoDetails(evoData.chain, pokemon.name);
+            if (evoDetails && evoDetails.length > 0) {
+                const detail = evoDetails[0];
+                if (detail.trigger.name === "level-up" && detail.min_level <= pokemon.level) {
+                    evolvePokemon(pokemon, detail.species_name);
+                }
+            }
+        } catch (e) {}
+    }
+
+    function findEvoDetails(chain, currentName) {
+        if (chain.species.name === currentName) {
+            return chain.evolves_to.map(e => ({ species_name: e.species.name, ...e.evolution_details[0] }));
+        }
+        for (let next of chain.evolves_to) {
+            const res = findEvoDetails(next, currentName);
+            if (res) return res;
+        }
+        return null;
+    }
 
     window.tryEvolve = async (id) => {
         const p = state.pokedex.find(poke => poke.id === id);
         if (!p) return;
-
-        try {
-            const response = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`);
-            const data = await response.json();
-            const evoResponse = await fetch(data.evolution_chain.url);
-            const evoData = await evoResponse.json();
-
-            // Logique simplifiée : trouver le prochain dans la chaine
-            const nextEvo = findNextEvolution(evoData.chain, p.name);
-            
-            if (nextEvo) {
-                // Vérifier si on a la pierre nécessaire (déterminée par le type ou milestone)
-                const stoneNeeded = getStoneForType(p.types[0]);
-                if (state.inventory.stones[stoneNeeded] > 0) {
-                    state.inventory.stones[stoneNeeded]--;
-                    evolvePokemon(p, nextEvo);
-                } else {
-                    vscode.postMessage({ type: 'showInfo', value: `Il vous faut une Pierre ${stoneNeeded.toUpperCase()} ! (Missions)` });
-                }
-            } else {
-                vscode.postMessage({ type: 'showInfo', value: `${p.name} est déjà au stade final !` });
-            }
-        } catch (e) {
-            console.error(e);
+        const stoneNeeded = getStoneForType(p.types[0]);
+        if (state.inventory.stones[stoneNeeded] > 0) {
+            state.inventory.stones[stoneNeeded]--;
+            // Logique simplifié pour cet exemple
+            const next = await fetchNextEvolution(p.id, p.name);
+            if (next) evolvePokemon(p, next);
+        } else {
+            vscode.postMessage({ type: 'showInfo', value: `Besoin d'une Pierre ${stoneNeeded.toUpperCase()}` });
         }
     };
 
+    async function fetchNextEvolution(id, name) {
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`);
+        const data = await res.json();
+        const chainRes = await fetch(data.evolution_chain.url);
+        const chainData = await chainRes.json();
+        const evo = findNextEvolution(chainData.chain, name);
+        return evo;
+    }
+
     function findNextEvolution(chain, currentName) {
-        if (chain.species.name === currentName) {
-            return chain.evolves_to[0] ? chain.evolves_to[0].species.name : null;
-        }
+        if (chain.species.name === currentName) return chain.evolves_to[0] ? chain.evolves_to[0].species.name : null;
         for (let next of chain.evolves_to) {
             const res = findNextEvolution(next, currentName);
             if (res) return res;
@@ -381,18 +562,14 @@
     async function evolvePokemon(oldPoke, newName) {
         const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${newName}`);
         const data = await response.json();
+        const speciesRes = await fetch(data.species.url);
+        const speciesData = await speciesRes.json();
+        const frenchName = speciesData.names.find(n => n.language.name === 'fr')?.name || data.name;
+
+        const index = state.pokedex.findIndex(p => p.instanceId === oldPoke.instanceId);
+        state.pokedex[index] = { ...oldPoke, id: data.id, name: frenchName, sprite: data.sprites.other['official-artwork'].front_default };
         
-        const index = state.pokedex.findIndex(p => p.id === oldPoke.id);
-        state.pokedex[index] = {
-            id: data.id,
-            name: data.name,
-            sprite: oldPoke.isShiny ? data.sprites.front_shiny : data.sprites.front_default,
-            types: data.types.map(t => t.type.name),
-            isShiny: oldPoke.isShiny,
-            date: new Date().toLocaleDateString()
-        };
-        
-        vscode.postMessage({ type: 'showInfo', value: `Quoi ? Votre Pokémon évolue en ${newName} !` });
+        vscode.postMessage({ type: 'showInfo', value: `Évolution en ${frenchName} !` });
         state.missions.evolutions++;
         saveState();
         renderPokedex();
@@ -400,92 +577,58 @@
     }
 
     function getStoneForType(type) {
-        const map = { fire: 'feu', water: 'eau', grass: 'plante', electric: 'foudre', ice: 'glace' };
-        return map[type] || 'lune';
+        const map = { fire: 'fire-stone', water: 'water-stone', grass: 'leaf-stone', electric: 'thunder-stone', ice: 'ice-stone', normal: 'moon-stone', psychic: 'sun-stone', poison: 'dusk-stone', fairy: 'shiny-stone', steel: 'metal-coat', rock: 'module_mag', dark: 'lentille_inv', dragon: 'dragon-scale', ghost: 'reaper-cloth' };
+        return map[type] || 'moon-stone';
     }
 
-    // Missions spécifiques par type
-    const MISSION_TYPES = [
-        { type: 'fire', stone: 'feu', target: 15, label: 'Brasier' },
-        { type: 'water', stone: 'eau', target: 15, label: 'Aquatique' },
-        { type: 'grass', stone: 'plante', target: 15, label: 'Nature' },
-        { type: 'electric', stone: 'foudre', target: 15, label: 'Voltage' },
-        { type: 'ice', stone: 'glace', target: 10, label: 'Glacial' },
-        { type: 'psychic', stone: 'lune', target: 10, label: 'Psychique' }
+    const MISSIONS = [
+        { id: 'm1', type: 'fire', stone: 'fire-stone', target: 5, label: 'Brasier I' },
+        { id: 'm2', type: 'fire', stone: 'fire-stone', target: 15, label: 'Brasier II' },
+        { id: 'm3', type: 'water', stone: 'water-stone', target: 5, label: 'Aquatique I' },
+        { id: 'm4', type: 'water', stone: 'water-stone', target: 15, label: 'Aquatique II' },
+        { id: 'm5', type: 'grass', stone: 'leaf-stone', target: 5, label: 'Nature I' },
+        { id: 'm6', type: 'grass', stone: 'leaf-stone', target: 15, label: 'Nature II' },
+        { id: 'm7', type: 'electric', stone: 'thunder-stone', target: 5, label: 'Voltage I' },
+        { id: 'm8', type: 'ice', stone: 'ice-stone', target: 5, label: 'Givre I' },
+        { id: 'm9', type: 'normal', stone: 'moon-stone', target: 10, label: 'Lunaire' },
+        { id: 'm10', type: 'psychic', stone: 'sun-stone', target: 10, label: 'Solaire' },
+        { id: 'm11', type: 'poison', stone: 'dusk-stone', target: 10, label: 'Crépuscule' },
+        { id: 'm12', type: 'fairy', stone: 'shiny-stone', target: 10, label: 'Éclat' },
+        { id: 'm13', type: 'fighting', stone: 'lien_amitie', target: 10, label: 'Fraternité' },
+        { id: 'm14', type: 'steel', stone: 'metal-coat', target: 5, label: 'Métallurgie' },
+        { id: 'm15', type: 'rock', stone: 'module_mag', target: 8, label: 'Magnétisme' },
+        { id: 'm16', type: 'dark', stone: 'lentille_inv', target: 8, label: 'Inversion' },
+        { id: 'm17', type: 'dragon', stone: 'dragon-scale', target: 5, label: 'Draconique' },
+        { id: 'm18', type: 'ghost', stone: 'reaper-cloth', target: 5, label: 'Faucheur' }
     ];
 
     function renderMissions() {
         const container = document.getElementById('missions-list');
-        container.innerHTML = '<h2>Missions de Type</h2>';
+        container.innerHTML = '<h2>Missions d\'Entraîneur</h2>';
         
         if (!state.missions.typeProgress) state.missions.typeProgress = {};
+        if (!state.missions.claimed) state.missions.claimed = [];
 
-        MISSION_TYPES.forEach(m => {
+        MISSIONS.forEach(m => {
             const current = state.missions.typeProgress[m.type] || 0;
             const progress = Math.min(100, (current / m.target) * 100);
+            const isClaimed = state.missions.claimed.includes(m.id);
             
             const card = document.createElement('div');
-            card.className = 'mission-card';
+            card.className = `mission-card ${isClaimed ? 'claimed' : ''}`;
             card.innerHTML = `
-                <h3>Expert ${m.label}</h3>
-                <p>Capturez ${m.target} Pokémon de type ${m.type.toUpperCase()}.</p>
+                <h3>${m.label}</h3>
+                <p>Captures ${m.type.toUpperCase()}: ${current}/${m.target}</p>
                 <div class="progress-bar"><div style="width: ${progress}%"></div></div>
-                <div class="reward">Récompense: 1x Pierre ${m.stone.toUpperCase()}</div>
-                <button class="claim-btn" ${current >= m.target ? '' : 'disabled'} onclick="claimTypeMission('${m.type}', '${m.stone}', ${m.target})">
-                    Réclamer
+                <div class="reward">Cadeau: ${m.stone.replace('-', ' ')}</div>
+                <button class="claim-btn" ${current >= m.target && !isClaimed ? '' : 'disabled'} onclick="claimMission('${m.id}', '${m.stone}', ${m.target})">
+                    ${isClaimed ? 'Récupéré' : 'Réclamer'}
                 </button>
             `;
             container.appendChild(card);
         });
     }
 
-    window.claimTypeMission = (type, stone, target) => {
-        if (state.missions.typeProgress[type] >= target) {
-            state.missions.typeProgress[type] -= target;
-            if (!state.inventory.stones[stone]) state.inventory.stones[stone] = 0;
-            state.inventory.stones[stone]++;
-            vscode.postMessage({ type: 'showInfo', value: `Obtenu : 1x Pierre ${stone.toUpperCase()} !` });
-            saveState();
-            updateUI();
-        }
-    };
-
-    // Mise à jour du progrès dans finalizeCapture
-    function finalizeCapture() {
-        const exists = state.pokedex.find(p => p.id === currentPokemon.id && p.isShiny === currentPokemon.isShiny);
-        
-        if (!exists) {
-            state.pokedex.push({
-                ...currentPokemon,
-                date: new Date().toLocaleDateString(),
-                catchCount: 1
-            });
-            vscode.postMessage({ type: 'showInfo', value: `Merveilleux ! ${currentPokemon.name} a été ajouté au Pokédex.` });
-        } else {
-            exists.catchCount = (exists.catchCount || 1) + 1;
-            // Conversion automatique des doublons en Points Prestige (PP)
-            if (!state.specialPoints) state.specialPoints = 0;
-            state.specialPoints += 1;
-            vscode.postMessage({ type: 'showInfo', value: `${currentPokemon.name} est un doublon. +1 Point Prestige !` });
-        }
-
-        // Progrès des missions par type
-        if (!state.missions.typeProgress) state.missions.typeProgress = {};
-        currentPokemon.types.forEach(t => {
-            state.missions.typeProgress[t] = (state.missions.typeProgress[t] || 0) + 1;
-        });
-
-        state.coins += 2;
-        state.xp += Math.floor(currentPokemon.baseExperience / 5);
-        state.missions.captures++;
-        
-        checkLevelUp();
-        currentPokemon = null;
-        UI.spawnArea.innerHTML = '<div class="loader">Recherche de Pokémon...</div>';
-        vscode.postMessage({ type: 'updateStatus', active: false });
-        saveState();
-        updateUI();
-    }
     function saveState() {
         vscode.postMessage({ type: 'saveState', value: state });
     }

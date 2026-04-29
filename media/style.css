@@ -46,6 +46,18 @@ header {
     font-size: 0.8rem;
     font-weight: 800;
     color: var(--accent-light);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.v-tag {
+    font-size: 0.6rem;
+    background: var(--glass-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--text-dim);
+    font-weight: normal;
 }
 
 .xp-bar-container {
@@ -116,6 +128,49 @@ header {
 }
 
 /* Safari Tab */
+.walker-container {
+    width: 100%;
+    height: 60px;
+    position: relative;
+    overflow: hidden;
+    background: #4a7c44; /* Vert herbe fonce */
+    border-radius: 12px;
+    margin-bottom: 15px;
+    border: 2px solid var(--glass-border);
+}
+
+.tall-grass {
+    width: 200%;
+    height: 100%;
+    background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/gracidea.png'); /* On detourne un item pour faire des fleurs/herbes */
+    background-size: 30px;
+    opacity: 0.3;
+    animation: moveGrass 10s linear infinite;
+}
+
+.trainer-walker {
+    width: 32px;
+    height: 32px;
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/25.gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    animation: walkBob 2s ease-in-out infinite;
+}
+
+@keyframes moveGrass {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+@keyframes walkBob {
+    0%, 100% { transform: translate(-50%, 0) rotate(-2deg); }
+    50% { transform: translate(-50%, -4px) rotate(2deg); }
+}
+
 .game-container {
     height: 250px;
     display: flex;
@@ -150,7 +205,30 @@ header {
     padding: 4px 15px;
     background: var(--glass-bg);
     border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
+
+.pokemon-name .lvl {
+    font-size: 0.8rem;
+    color: var(--accent-light);
+}
+
+.rarity-tag {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+.rarity-tag.commun { background: #808080; }
+.rarity-tag.peu.commun { background: #4caf50; }
+.rarity-tag.rare { background: #2196f3; }
+.rarity-tag.épique { background: #9c27b0; }
+.rarity-tag.légendaire { background: #ff9800; color: #000; }
 
 .capture-hint {
     font-size: 0.75rem;
@@ -160,39 +238,51 @@ header {
 
 .inventory-bar {
     display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 20px;
+    gap: 10px;
+    padding: 10px;
+    background: var(--glass-bg);
+    border-radius: 12px;
+    overflow-x: auto;
+    scrollbar-width: none; /* Firefox */
+}
+
+.inventory-bar::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
 }
 
 .item-slot {
-    width: 60px;
-    height: 60px;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
+    flex: 0 0 50px;
+    height: 50px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
+    border: 1px solid transparent;
+    position: relative;
 }
 
 .item-slot img {
-    width: 30px;
-    height: 30px;
+    width: 24px;
+    height: 24px;
 }
 
 .item-slot span {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     font-weight: bold;
+    color: var(--text-dim);
 }
 
 .item-slot.active {
-    border-color: var(--accent);
-    background: rgba(255,83,80,0.1);
-    transform: scale(1.1);
+    background: var(--accent-gradient);
+    border-color: var(--accent-light);
+}
+
+.item-slot.active span {
+    color: white;
 }
 
 /* Shop & Pokedex */
@@ -213,43 +303,77 @@ header {
     text-align: center;
 }
 
-.shop-item img, .pokedex-item img {
-    width: 60px;
-    height: 60px;
+.shop-item img, .poke-info img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
 }
 
-.item-info {
+.pokedex-item {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    margin: 8px 0;
-    font-size: 0.85rem;
+    width: 100%;
 }
 
-.price {
-    color: var(--shiny-gold);
-    font-weight: bold;
+.poke-info {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
+    gap: 2px;
 }
 
 .p-name {
     text-transform: capitalize;
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
 }
 
-.p-id {
+.p-lvl {
+    font-size: 0.75rem;
+    color: var(--accent-light);
+    font-weight: bold;
+}
+
+.evo-timer {
     font-size: 0.7rem;
     color: var(--text-dim);
+    margin-top: 2px;
+    font-style: italic;
 }
 
-.evolve-btn {
+.p-xp-bar {
+    width: 100%;
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    margin: 5px 0;
+    overflow: hidden;
+}
+
+.p-xp-bar div {
+    height: 100%;
+    background: var(--xp-color);
+}
+
+.poke-actions {
+    width: 100%;
     margin-top: 8px;
-    font-size: 0.7rem;
-    padding: 4px 8px;
+}
+
+.sell-btn {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-dim);
+    font-size: 0.65rem;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.sell-btn:hover {
+    background: rgba(255,0,0,0.1);
+    color: white;
 }
 
 .shiny-border {

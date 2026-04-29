@@ -1,8 +1,9 @@
 {
-  "name": "poke-idle-vscode",
+  "name": "poke-idle-game",
   "displayName": "PokeIdle VS Code",
+  "publisher": "hugo",
   "description": "Un idle game Pokémon dans votre barre latérale VS Code.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -17,7 +18,7 @@
         {
           "id": "poke-idle-explorer",
           "title": "PokeIdle",
-          "icon": "media/pokeball-icon.png"
+          "icon": "media/icon.svg"
         }
       ]
     },
