@@ -32,7 +32,7 @@ function activate(context) {
     // Permet la synchronisation des données entre différents ordinateurs via VS Code Settings Sync
     context.globalState.setKeysForSync(['pokeState']);
     const provider = new PokeIdleProvider(context.extensionUri, context);
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider(PokeIdleProvider.viewType, provider));
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(PokeIdleProvider.viewType, provider), vscode.commands.registerCommand('pokeidle.giveCoins', () => provider.cheat('coins')), vscode.commands.registerCommand('pokeidle.giveStones', () => provider.cheat('stones')), vscode.commands.registerCommand('pokeidle.giveBalls', () => provider.cheat('balls')), vscode.commands.registerCommand('pokeidle.giveItem', () => provider.giveItem()));
 }
 exports.activate = activate;
 class PokeIdleProvider {
@@ -122,6 +122,88 @@ class PokeIdleProvider {
             }
         });
     }
+    cheat(type) {
+        let state = this._context.globalState.get('pokeState');
+        if (!state)
+            return;
+        if (type === 'coins') {
+            state.coins += 100000;
+            vscode.window.showInformationMessage('Cheat : 100 000 Pièces ajoutées !');
+        }
+        else if (type === 'stones') {
+            if (!state.inventory)
+                state.inventory = { stones: {}, balls: {} };
+            if (!state.inventory.stones)
+                state.inventory.stones = {};
+            const allStones = [
+                'fire-stone', 'water-stone', 'leaf-stone', 'thunder-stone', 'ice-stone', 'moon-stone', 'sun-stone', 'dusk-stone', 'shiny-stone', 'dawn-stone',
+                'kings-rock', 'metal-coat', 'protector', 'electirizer', 'magmarizer', 'reaper-cloth', 'dragon-scale', 'prism-scale', 'upgrade', 'dubious-disc',
+                'linking-cord', 'soothe-bell', 'razor-fang', 'razor-claw', 'black-augurite', 'peat-block', 'galarica-cuff', 'galarica-wreath',
+                'sweet-apple', 'tart-apple', 'chipped-pot', 'cracked-pot', 'auspicious-armor', 'malicious-armor', 'scroll-of-darkness', 'scroll-of-waters', 'gimmighoul-coin'
+            ];
+            allStones.forEach(s => {
+                state.inventory.stones[s] = (state.inventory.stones[s] || 0) + 10;
+            });
+            vscode.window.showInformationMessage('Cheat : Toutes les pierres ajoutées !');
+        }
+        else if (type === 'balls') {
+            if (!state.inventory)
+                state.inventory = { stones: {}, balls: {} };
+            if (!state.inventory.balls)
+                state.inventory.balls = {};
+            const allBalls = ['pokeball', 'superball', 'hyperball', 'masterball', 'sombreball', 'quickball', 'luxeball', 'soinball', 'filetball', 'faibleball', 'scaphandreball', 'amourball'];
+            allBalls.forEach(b => {
+                state.inventory.balls[b] = (state.inventory.balls[b] || 0) + 100;
+            });
+            vscode.window.showInformationMessage('Cheat : 100 de chaque Pokéball ajoutées !');
+        }
+        state.lastUpdate = Date.now();
+        this._context.globalState.update('pokeState', state);
+        this._view?.webview.postMessage({ type: 'loadState', value: state });
+    }
+    async giveItem() {
+        const allStones = [
+            'fire-stone', 'water-stone', 'leaf-stone', 'thunder-stone', 'ice-stone', 'moon-stone', 'sun-stone', 'dusk-stone', 'shiny-stone', 'dawn-stone',
+            'kings-rock', 'metal-coat', 'protector', 'electirizer', 'magmarizer', 'reaper-cloth', 'dragon-scale', 'prism-scale', 'upgrade', 'dubious-disc',
+            'linking-cord', 'soothe-bell', 'razor-fang', 'razor-claw', 'black-augurite', 'peat-block', 'galarica-cuff', 'galarica-wreath',
+            'sweet-apple', 'tart-apple', 'chipped-pot', 'cracked-pot', 'auspicious-armor', 'malicious-armor', 'scroll-of-darkness', 'scroll-of-waters', 'gimmighoul-coin'
+        ];
+        const allBalls = ['pokeball', 'superball', 'hyperball', 'masterball', 'sombreball', 'quickball', 'luxeball', 'soinball', 'filetball', 'faibleball', 'scaphandreball', 'amourball'];
+        const items = [
+            ...allBalls.map(b => ({ label: `Ball: ${b}`, id: b, type: 'ball' })),
+            ...allStones.map(s => ({ label: `Pierre: ${s}`, id: s, type: 'stone' }))
+        ];
+        const selected = await vscode.window.showQuickPick(items, { placeHolder: 'Sélectionnez un objet à obtenir' });
+        if (!selected)
+            return;
+        const quantityStr = await vscode.window.showInputBox({
+            prompt: `Quantité pour ${selected.label}`,
+            placeHolder: 'Ex: 50',
+            validateInput: (value) => isNaN(Number(value)) ? 'Entrez un nombre valide' : null
+        });
+        if (!quantityStr)
+            return;
+        const quantity = Math.floor(Number(quantityStr));
+        let state = this._context.globalState.get('pokeState');
+        if (!state)
+            return;
+        if (!state.inventory)
+            state.inventory = { stones: {}, balls: {} };
+        if (selected.type === 'ball') {
+            if (!state.inventory.balls)
+                state.inventory.balls = {};
+            state.inventory.balls[selected.id] = (state.inventory.balls[selected.id] || 0) + quantity;
+        }
+        else {
+            if (!state.inventory.stones)
+                state.inventory.stones = {};
+            state.inventory.stones[selected.id] = (state.inventory.stones[selected.id] || 0) + quantity;
+        }
+        state.lastUpdate = Date.now();
+        this._context.globalState.update('pokeState', state);
+        this._view?.webview.postMessage({ type: 'loadState', value: state });
+        vscode.window.showInformationMessage(`Cheat : ${quantity}x ${selected.label} ajouté(s) !`);
+    }
     _mergeStates(s1, s2) {
         if (!s1)
             return s2;
@@ -135,10 +217,12 @@ class PokeIdleProvider {
         const newer = s2Time >= s1Time ? s2 : s1;
         const older = s2Time >= s1Time ? s1 : s2;
         const merged = { ...newer };
+        // Fusion des Relâchés (Tombstone pour les ventes)
+        merged.released = Array.from(new Set([...(s1.released || []), ...(s2.released || [])]));
         // Fusion du Pokédex (Union)
         const pokedexMap = new Map();
         [...(s1.pokedex || []), ...(s2.pokedex || [])].forEach(p => {
-            if (!p)
+            if (!p || merged.released.includes(p.instanceId))
                 return;
             const existing = pokedexMap.get(p.instanceId);
             if (!existing || (p.level || 0) > (existing.level || 0) || (p.xp || 0) > (existing.xp || 0)) {
@@ -205,6 +289,9 @@ class PokeIdleProvider {
                         </div>
                         <div class="inventory-bar" id="ball-inventory">
                             <!-- Les balls seront générées dynamiquement ici -->
+                        </div>
+                        <div class="inventory-bar" id="stone-inventory" style="margin-top: 10px;">
+                            <!-- Les pierres seront générées dynamiquement ici -->
                         </div>
                     </div>
 

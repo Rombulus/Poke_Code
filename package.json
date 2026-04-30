@@ -13,6 +13,24 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "pokeidle.giveCoins",
+        "title": "PokeIdle: Cheat - 100000 Pièces"
+      },
+      {
+        "command": "pokeidle.giveStones",
+        "title": "PokeIdle: Cheat - Toutes les pierres"
+      },
+      {
+        "command": "pokeidle.giveBalls",
+        "title": "PokeIdle: Cheat - 100 de chaque Pokéball"
+      },
+      {
+        "command": "pokeidle.giveItem",
+        "title": "PokeIdle: Cheat - Obtenir un objet spécifique..."
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {

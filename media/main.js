@@ -17,7 +17,8 @@
             claimed: []
         },
         spawnTimer: 180,
-        discovery: {} // ID -> { name, sprite }
+        discovery: {}, // ID -> { name, sprite }
+        spriteCache: {} // ItemName -> SpriteURL
     };
 
     const UI = {
@@ -35,6 +36,22 @@
         missionCaptureProgress: document.getElementById('mission-capture-progress'),
         claimMission1: document.getElementById('claim-mission-1'),
         pokeSearch: document.getElementById('poke-search')
+    };
+    
+    const stoneTranslations = { 
+        'fire-stone': 'Pierre Feu', 'water-stone': 'Pierre Eau', 'leaf-stone': 'Pierre Plante', 
+        'thunder-stone': 'Pierre Foudre', 'ice-stone': 'Pierre Glace', 'moon-stone': 'Pierre Lune', 
+        'sun-stone': 'Pierre Soleil', 'dusk-stone': 'Pierre Nuit', 'shiny-stone': 'Pierre Éclat', 
+        'dawn-stone': 'Pierre Aube', 'kings-rock': 'Roche Royale', 'metal-coat': 'Peau Métal', 
+        'protector': 'Protecteur', 'reaper-cloth': 'Tissu Faucheur', 'dragon-scale': 'Écaille Draco', 
+        'prism-scale': "Bel'Écaille", 'razor-claw': 'Griffe Rasoir', 'razor-fang': 'Croc Rasoir', 
+        'black-augurite': 'Obsidienne', 'linking-cord': 'Câble Link', 'soothe-bell': 'Grelot Zen',
+        'upgrade': 'Améliorateur', 'dubious-disc': 'CD Douteux', 'electirizer': 'Électriseur',
+        'magmarizer': 'Magmariseur', 'peat-block': 'Bloc de Tourbe', 'galarica-cuff': 'Bracelet Galarica',
+        'galarica-wreath': 'Couronne Galarica', 'sweet-apple': 'Pomme Sucrée', 'tart-apple': 'Pomme Acidulée',
+        'chipped-pot': 'Théière Ébréchée', 'cracked-pot': 'Théière Fêlée', 'auspicious-armor': 'Armure Auspicieuse',
+        'malicious-armor': 'Armure Malveillante', 'scroll-of-darkness': 'Rouleau des Ténèbres',
+        'scroll-of-waters': 'Rouleau des Eaux', 'gimmighoul-coin': 'Pièce de Mordudor'
     };
 
     let currentPokemon = null;
@@ -195,6 +212,7 @@
             if (UI.xpProgress) UI.xpProgress.style.width = `${progress}%`;
 
             renderBallInventory();
+            renderStoneInventory();
             renderMissions();
 
             // Easter Egg Debug
@@ -215,6 +233,24 @@
         } catch (err) {
             console.error("updateUI error:", err);
         }
+        updateTimeCycle();
+    }
+
+    function updateTimeCycle() {
+        const hour = new Date().getHours();
+        const body = document.body;
+        body.classList.remove('day', 'night', 'sunset');
+        
+        if (hour >= 6 && hour < 17) {
+            body.classList.add('day');
+            state.timeOfDay = 'day';
+        } else if (hour >= 17 && hour < 19) {
+            body.classList.add('sunset');
+            state.timeOfDay = 'day'; // Sunset counts as day for some evos
+        } else {
+            body.classList.add('night');
+            state.timeOfDay = 'night';
+        }
     }
 
     const BALL_TYPES = [
@@ -234,20 +270,35 @@
 
     function renderBallInventory() {
         const container = document.getElementById('ball-inventory');
+        UI.itemSlots.forEach(slot => {
+            const ball = slot.dataset.ball;
+            const count = state.inventory.balls[ball] || 0;
+            slot.querySelector('span').innerText = count;
+            slot.classList.toggle('active', selectedBall === ball);
+            
+            // Fix contrast and visibility
+            const img = slot.querySelector('img');
+            if (img) {
+                img.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))';
+            }
+        });
+    }
+
+    function renderStoneInventory() {
+        const container = document.getElementById('stone-inventory');
         container.innerHTML = '';
-        BALL_TYPES.forEach(ball => {
-            const count = state.inventory.balls[ball.id] || 0;
-            const slot = document.createElement('div');
-            slot.className = `item-slot ${selectedBall === ball.id ? 'active' : ''}`;
-            slot.innerHTML = `
-                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${ball.img}.png">
-                <span>${count}</span>
-            `;
-            slot.onclick = () => {
-                selectedBall = ball.id;
-                updateUI();
-            };
-            container.appendChild(slot);
+        Object.entries(state.inventory.stones).forEach(([stone, count]) => {
+            if (count > 0) {
+                const slot = document.createElement('div');
+                slot.className = 'item-slot';
+                slot.title = stoneTranslations[stone] || stone;
+                slot.innerHTML = `
+                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${stone}.png" 
+                         onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/mystery-egg.png'">
+                    <span>${count}</span>
+                `;
+                container.appendChild(slot);
+            }
         });
     }
 
@@ -277,14 +328,16 @@
                     state.spawnTimer = Math.floor(Math.random() * (180 - 30 + 1)) + 30;
                 }
             }
+            
+            updateTimeCycle();
 
             // 2. XP Passive et Argent Passif
             if (new Date().getSeconds() % 3 === 0) {
                 gainPassiveXP();
             }
-            // Argent passif toutes les 2 minutes
-            if (new Date().getTime() % 120000 < 1000) {
-                state.coins += 10;
+            // Argent passif toutes les minutes
+            if (new Date().getTime() % 60000 < 1000) {
+                state.coins += 20;
                 updateUI();
                 saveState();
             }
@@ -401,6 +454,7 @@
                         sprite: sprite,
                         types: data.types.map(t => t.type.name),
                         isShiny: Math.random() < (1 / 512),
+                        gender: Math.random() < 0.5 ? 1 : 2, // 1: female, 2: male
                         baseExperience: data.base_experience || 50,
                         level: Math.max(1, Math.floor(state.level * 0.8) + Math.floor(Math.random() * 5))
                     };
@@ -529,7 +583,7 @@
         };
 
         state.pokedex.push(newPoke);
-        state.coins += 5;
+        state.coins += 5; // Gain de capture
         state.xp += Math.floor(currentPokemon.baseExperience / 5);
         state.missions.captures++;
 
@@ -586,21 +640,27 @@
             state.coins -= price;
             state.inventory.balls[id] = (state.inventory.balls[id] || 0) + 1;
             updateUI();
+            renderShop();
             saveState();
         } else {
             vscode.postMessage({ type: 'showInfo', value: "Pas assez de pièces !" });
         }
     };
 
-    window.claimMission = (id, stone) => {
+    window.claimMission = (id, rewardType, rewardId, rewardQty) => {
         if (!state.missions.claimed) state.missions.claimed = [];
         state.missions.claimed.push(id);
 
         // Gains
-        state.coins += 50;
-        state.inventory.stones[stone] = (state.inventory.stones[stone] || 0) + 1;
+        if (rewardType === 'coins') {
+            state.coins += rewardQty;
+            vscode.postMessage({ type: 'showInfo', value: `Mission accomplie ! +${rewardQty} 🪙` });
+        } else if (rewardType === 'stone') {
+            state.inventory.stones[rewardId] = (state.inventory.stones[rewardId] || 0) + rewardQty;
+            const name = stoneTranslations[rewardId] || rewardId.replace('-', ' ');
+            vscode.postMessage({ type: 'showInfo', value: `Mission accomplie ! +${rewardQty}x ${name}` });
+        }
 
-        vscode.postMessage({ type: 'showInfo', value: `Mission accomplie ! +50 🪙 et 1x ${stone.replace('-', ' ')}` });
         saveState();
         updateUI();
     };
@@ -678,11 +738,97 @@
                     <div class="evo-timer">${evoInfo}</div>
                 </div>
                 <div class="poke-actions">
-                    <button class="sell-btn" onclick="sellPokemon(${p.instanceId})">Libérer (20$)</button>
+                    ${(p.evolutions || []).map(evo => {
+                        if (evo.item) {
+                            return `<button class="evo-btn" onclick="tryEvolve(${p.instanceId}, '${evo.species}')">Évoluer (${stoneTranslations[evo.item] || evo.item})</button>`;
+                        }
+                        return '';
+                    }).join('')}
+                    <button class="sell-btn" onclick="sellPokemon(${p.instanceId})">Libérer (40$)</button>
                 </div>
             `;
             UI.pokedexList.appendChild(item);
         });
+    }
+
+    function renderBallInventory() {
+        const container = document.getElementById('ball-inventory');
+        if (!container) return;
+        container.innerHTML = '';
+        BALL_TYPES.forEach(ball => {
+            const count = state.inventory.balls[ball.id] || 0;
+            const slot = document.createElement('div');
+            slot.className = `item-slot ${selectedBall === ball.id ? 'active' : ''}`;
+            slot.innerHTML = `
+                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${ball.img}.png">
+                <span>${count}</span>
+            `;
+            slot.onclick = () => {
+                selectedBall = ball.id;
+                updateUI();
+            };
+            container.appendChild(slot);
+        });
+    }
+
+    async function getItemSprite(name) {
+        if (state.spriteCache && state.spriteCache[name]) return state.spriteCache[name];
+        
+        // Liste de corrections pour les noms d'objets problématiques dans les sprites GitHub
+        const corrections = {
+            'linking-cord': 'link-cable',
+            'chipped-pot': 'chipped-pot',
+            'cracked-pot': 'cracked-pot',
+            'sweet-apple': 'sweet-apple',
+            'tart-apple': 'tart-apple',
+            'auspicious-armor': 'auspicious-armor',
+            'malicious-armor': 'malicious-armor',
+            'gimmighoul-coin': 'gimmighoul-coin'
+        };
+
+        const spriteName = corrections[name] || name;
+        const directUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${spriteName}.png`;
+        
+        try {
+            // Pour les objets récents, on essaie de demander à l'API le sprite "officiel"
+            if (['sweet-apple', 'tart-apple', 'auspicious-armor', 'malicious-armor', 'gimmighoul-coin', 'scroll-of-darkness', 'scroll-of-waters'].includes(name)) {
+                const res = await fetch(`https://pokeapi.co/api/v2/item/${name}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const sprite = data.sprites.default;
+                    if (sprite) {
+                        if (!state.spriteCache) state.spriteCache = {};
+                        state.spriteCache[name] = sprite;
+                        return sprite;
+                    }
+                }
+            }
+        } catch (e) {}
+        
+        return directUrl;
+    }
+
+    async function renderStoneInventory() {
+        const container = document.getElementById('stone-inventory');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        const entries = Object.entries(state.inventory.stones);
+        for (const [stone, count] of entries) {
+            if (count > 0) {
+                const slot = document.createElement('div');
+                slot.className = 'item-slot';
+                slot.title = stoneTranslations[stone] || stone;
+                
+                const spriteUrl = await getItemSprite(stone);
+                
+                slot.innerHTML = `
+                    <img src="${spriteUrl}" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/mystery-egg.png'">
+                    <span>${count}</span>
+                `;
+                container.appendChild(slot);
+            }
+        }
     }
 
     function renderNationalPokedex() {
@@ -712,13 +858,18 @@
     }
 
     function calculateEvoTime(p) {
-        if (!p.nextEvoLevel) {
+        if (!p.evolutions) {
             fetchNextEvoLevel(p);
             return "Analyse...";
         }
-        if (p.nextEvoLevel === "MAX") return "Stade Final";
-        if (typeof p.nextEvoLevel === "string") return p.nextEvoLevel;
-        return p.level >= p.nextEvoLevel ? "Évolution prête !" : `Nv. requis : ${p.nextEvoLevel}`;
+        if (p.evolutions.length === 0) return "Stade Final";
+        
+        const next = p.evolutions[0];
+        if (next.item) return `Objet requis`;
+        if (typeof next.level === "number") {
+            return p.level >= next.level ? "Évolution prête !" : `Nv. requis : ${next.level}`;
+        }
+        return "Prêt !";
     }
 
     async function fetchNextEvoLevel(p) {
@@ -732,26 +883,46 @@
 
             const englishName = speciesData.name;
             const evoDetails = findEvoDetails(evoData.chain, englishName);
+            
+            p.evolutions = [];
             if (evoDetails && evoDetails.length > 0) {
-                const detail = evoDetails[0];
-                if (detail.trigger.name === "level-up") {
-                    p.nextEvoLevel = detail.min_level || (p.level + 1);
-                } else {
-                    p.nextEvoLevel = `Item requis`;
-                }
-            } else {
-                p.nextEvoLevel = "MAX";
+                evoDetails.forEach(detail => {
+                    const trigger = detail.trigger.name;
+                    let evo = { species: detail.species_name, trigger: trigger };
+                    
+                    if (trigger === "level-up") {
+                        evo.level = detail.min_level || (p.level + 1);
+                        if (detail.min_happiness || detail.min_affection || detail.min_beauty) evo.item = 'soothe-bell';
+                        if (detail.held_item) evo.item = detail.held_item.name;
+                        if (detail.time_of_day) evo.time = detail.time_of_day;
+                        if (detail.gender) evo.gender = detail.gender; // 1: female, 2: male
+                        if (detail.known_move || detail.location) evo.level = Math.max(evo.level, p.level + 2);
+                    } else if (trigger === "use-item") {
+                        evo.item = detail.item.name;
+                    } else if (trigger === "trade") {
+                        evo.item = detail.held_item ? detail.held_item.name : 'linking-cord';
+                    }
+                    p.evolutions.push(evo);
+                });
             }
             renderPokedex();
-        } catch (e) { p.nextEvoLevel = "Erreur"; }
+        } catch (e) { 
+            console.error("Evo fetch error:", e);
+        }
         p.fetchingEvo = false;
     }
 
     window.sellPokemon = (instanceId) => {
         const index = state.pokedex.findIndex(p => p.instanceId === instanceId);
         if (index > -1) {
-            state.coins += 20;
+            state.coins += 40; // Prix de vente
+            if (!state.released) state.released = [];
+            state.released.push(instanceId);
             state.pokedex.splice(index, 1);
+            
+            // Tracking mission
+            state.missions.released = (state.missions.released || 0) + 1;
+            
             saveState();
             updateUI();
             renderPokedex();
@@ -760,17 +931,23 @@
 
     async function checkAutoEvolution(pokemon) {
         try {
-            const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemon.id}/`);
-            const speciesData = await speciesRes.json();
-            const evoRes = await fetch(speciesData.evolution_chain.url);
-            const evoData = await evoRes.json();
-
-            const englishName = speciesData.name;
-            const evoDetails = findEvoDetails(evoData.chain, englishName);
-            if (evoDetails && evoDetails.length > 0) {
-                const detail = evoDetails[0];
-                if (detail.trigger.name === "level-up" && detail.min_level <= pokemon.level) {
-                    evolvePokemon(pokemon, detail.species_name);
+            if (!pokemon.evolutions) return;
+            
+            for (let evo of pokemon.evolutions) {
+                if (evo.trigger === "level-up" && !evo.item) {
+                    let conditionsMet = pokemon.level >= evo.level;
+                    
+                    if (evo.time) {
+                        conditionsMet = conditionsMet && (state.timeOfDay === evo.time);
+                    }
+                    if (evo.gender) {
+                        conditionsMet = conditionsMet && (pokemon.gender === evo.gender);
+                    }
+                    
+                    if (conditionsMet) {
+                        evolvePokemon(pokemon, evo.species);
+                        break;
+                    }
                 }
             }
         } catch (e) { }
@@ -787,31 +964,45 @@
         return null;
     }
 
-    window.tryEvolve = async (id) => {
-        const p = state.pokedex.find(poke => poke.id === id);
+    window.tryEvolve = async (instanceId, targetSpecies) => {
+        const p = state.pokedex.find(poke => poke.instanceId === instanceId);
         if (!p) return;
-        const stoneNeeded = getStoneForType(p.types[0]);
-        if (state.inventory.stones[stoneNeeded] > 0) {
-            state.inventory.stones[stoneNeeded]--;
-            // Logique simplifié pour cet exemple
-            const next = await fetchNextEvolution(p.id, p.name);
-            if (next) evolvePokemon(p, next);
+
+        const evo = p.evolutions.find(e => e.species === targetSpecies);
+        if (!evo || !evo.item) return;
+
+        const itemNeeded = evo.item;
+        
+        if (state.inventory.stones[itemNeeded] > 0) {
+            state.inventory.stones[itemNeeded]--;
+            const itemName = stoneTranslations[itemNeeded] || itemNeeded.replace('-', ' ');
+            vscode.postMessage({ type: 'showInfo', value: `Évolution en ${targetSpecies.toUpperCase()} avec ${itemName}...` });
+            evolvePokemon(p, targetSpecies);
         } else {
-            vscode.postMessage({ type: 'showInfo', value: `Besoin d'une Pierre ${stoneNeeded.toUpperCase()}` });
+            const translatedItem = stoneTranslations[itemNeeded] || itemNeeded.replace('-', ' ');
+            vscode.postMessage({ type: 'showInfo', value: `Il vous manque : 1x ${translatedItem.toUpperCase()}` });
         }
     };
 
-    async function fetchNextEvolution(id, name) {
+    async function fetchNextEvolution(id) {
         const res = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`);
         const data = await res.json();
+        const englishName = data.name;
         const chainRes = await fetch(data.evolution_chain.url);
         const chainData = await chainRes.json();
-        const evo = findNextEvolution(chainData.chain, name);
+        const evo = findNextEvolution(chainData.chain, englishName);
         return evo;
     }
 
     function findNextEvolution(chain, currentName) {
-        if (chain.species.name === currentName) return chain.evolves_to[0] ? chain.evolves_to[0].species.name : null;
+        if (chain.species.name === currentName) {
+            // Si plusieurs évolutions (ex: Évoli), on en prend une au hasard ou la première
+            if (chain.evolves_to.length > 0) {
+                const choice = Math.floor(Math.random() * chain.evolves_to.length);
+                return chain.evolves_to[choice].species.name;
+            }
+            return null;
+        }
         for (let next of chain.evolves_to) {
             const res = findNextEvolution(next, currentName);
             if (res) return res;
@@ -820,27 +1011,41 @@
     }
 
     async function evolvePokemon(oldPoke, newName) {
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${newName}`);
-        const data = await response.json();
-        const speciesRes = await fetch(data.species.url);
-        const speciesData = await speciesRes.json();
-        const frenchName = speciesData.names.find(n => n.language.name === 'fr')?.name || data.name;
+        try {
+            const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${newName}`);
+            const data = await response.json();
+            const speciesRes = await fetch(data.species.url);
+            const speciesData = await speciesRes.json();
+            const frenchName = speciesData.names.find(n => n.language.name === 'fr')?.name || data.name;
 
-        const index = state.pokedex.findIndex(p => p.instanceId === oldPoke.instanceId);
-        state.pokedex[index] = { ...oldPoke, id: data.id, name: frenchName, sprite: data.sprites.other['official-artwork'].front_default };
+            const index = state.pokedex.findIndex(p => p.instanceId === oldPoke.instanceId);
+            if (index === -1) return;
 
-        // Ajout à la découverte permanente
-        state.discovery[data.id] = {
-            name: frenchName,
-            sprite: data.sprites.other['official-artwork'].front_default,
-            caught: true
-        };
+            // On réinitialise les infos d'évolution pour le nouveau stade
+            state.pokedex[index] = { 
+                ...oldPoke, 
+                id: data.id, 
+                name: frenchName, 
+                sprite: data.sprites.other['official-artwork'].front_default,
+                types: data.types.map(t => t.type.name),
+                evolutions: null
+            };
 
-        vscode.postMessage({ type: 'showInfo', value: `Évolution en ${frenchName} !` });
-        state.missions.evolutions++;
-        saveState();
-        renderPokedex();
-        updateUI();
+            // Ajout à la découverte permanente
+            state.discovery[data.id] = {
+                name: frenchName,
+                sprite: data.sprites.other['official-artwork'].front_default,
+                caught: true
+            };
+
+            vscode.postMessage({ type: 'evoNotify', value: frenchName });
+            state.missions.evolutions++;
+            saveState();
+            renderPokedex();
+            updateUI();
+        } catch (e) {
+            console.error("Evolution apply error:", e);
+        }
     }
 
     function getStoneForType(type) {
@@ -856,24 +1061,46 @@
     }
 
     const MISSIONS = [
-        { id: 'm1', type: 'fire', stone: 'fire-stone', target: 5, label: 'Brasier Ardent I' },
-        { id: 'm2', type: 'water', stone: 'water-stone', target: 5, label: 'Source Océane I' },
-        { id: 'm3', type: 'grass', stone: 'leaf-stone', target: 5, label: 'Floraison Sylvestre I' },
-        { id: 'm4', type: 'electric', stone: 'thunder-stone', target: 5, label: 'Éclair Volt' },
-        { id: 'm5', type: 'ice', stone: 'ice-stone', target: 5, label: 'Givre Éternel' },
-        { id: 'm6', type: 'normal', stone: 'moon-stone', target: 10, label: 'Force Tranquille' },
-        { id: 'm7', type: 'psychic', stone: 'sun-stone', target: 10, label: 'Esprit Supérieur' },
-        { id: 'm8', type: 'poison', stone: 'dusk-stone', target: 10, label: 'Venin Mortel' },
-        { id: 'm9', type: 'fairy', stone: 'shiny-stone', target: 10, label: 'Éclat Féerique' },
-        { id: 'm10', type: 'fighting', stone: 'kings-rock', target: 10, label: 'Aura de Combat' },
-        { id: 'm11', type: 'steel', stone: 'metal-coat', target: 5, label: 'Blindage Métal' },
-        { id: 'm12', type: 'rock', stone: 'protector', target: 8, label: 'Cœur de Roche' },
-        { id: 'm13', type: 'ground', stone: 'razor-fang', target: 8, label: 'Terres Arides' },
-        { id: 'm14', type: 'bug', stone: 'razor-claw', target: 8, label: 'Essaim Vorace' },
-        { id: 'm15', type: 'dragon', stone: 'dragon-scale', target: 5, label: 'Souffle du Dragon' },
-        { id: 'm16', type: 'ghost', stone: 'reaper-cloth', target: 5, label: 'Hantise Spectrale' },
-        { id: 'm17', type: 'flying', stone: 'prism-scale', target: 8, label: 'Ciel Azur' },
-        { id: 'm18', type: 'dark', stone: 'black-augurite', target: 5, label: 'Ombre Obscure' }
+        // Type Missions
+        { id: 'm1', type: 'capture-type', subType: 'fire', rewardType: 'stone', rewardId: 'fire-stone', target: 10, label: 'Brasier Ardent' },
+        { id: 'm2', type: 'capture-type', subType: 'water', rewardType: 'stone', rewardId: 'water-stone', target: 10, label: 'Source Océane' },
+        { id: 'm3', type: 'capture-type', subType: 'grass', rewardType: 'stone', rewardId: 'leaf-stone', target: 10, label: 'Floraison Sylvestre' },
+        { id: 'm4', type: 'capture-type', subType: 'electric', rewardType: 'stone', rewardId: 'thunder-stone', target: 10, label: 'Éclair Volt' },
+        { id: 'm5', type: 'capture-type', subType: 'ice', rewardType: 'stone', rewardId: 'ice-stone', target: 10, label: 'Givre Éternel' },
+        { id: 'm6', type: 'capture-type', subType: 'normal', rewardType: 'stone', rewardId: 'moon-stone', target: 15, label: 'Force Tranquille' },
+        { id: 'm7', type: 'capture-type', subType: 'psychic', rewardType: 'stone', rewardId: 'sun-stone', target: 15, label: 'Esprit Supérieur' },
+        { id: 'm8', type: 'capture-type', subType: 'poison', rewardType: 'stone', rewardId: 'dusk-stone', target: 15, label: 'Venin Mortel' },
+        { id: 'm9', type: 'capture-type', subType: 'fairy', rewardType: 'stone', rewardId: 'shiny-stone', target: 15, label: 'Éclat Féerique' },
+        { id: 'm10', type: 'capture-type', subType: 'fighting', rewardType: 'stone', rewardId: 'kings-rock', target: 15, label: 'Aura de Combat' },
+        { id: 'm11', type: 'capture-type', subType: 'steel', rewardType: 'stone', rewardId: 'metal-coat', target: 10, label: 'Blindage Métal' },
+        { id: 'm12', type: 'capture-type', subType: 'rock', rewardType: 'stone', rewardId: 'protector', target: 12, label: 'Cœur de Roche' },
+        { id: 'm13', type: 'capture-type', subType: 'ground', rewardType: 'stone', rewardId: 'razor-fang', target: 12, label: 'Terres Arides' },
+        { id: 'm14', type: 'capture-type', subType: 'bug', rewardType: 'stone', rewardId: 'razor-claw', target: 12, label: 'Essaim Vorace' },
+        { id: 'm15', type: 'capture-type', subType: 'dragon', rewardType: 'stone', rewardId: 'dragon-scale', target: 8, label: 'Souffle du Dragon' },
+        { id: 'm16', type: 'capture-type', subType: 'ghost', rewardType: 'stone', rewardId: 'reaper-cloth', target: 8, label: 'Hantise Spectrale' },
+        { id: 'm17', type: 'capture-type', subType: 'flying', rewardType: 'stone', rewardId: 'prism-scale', target: 12, label: 'Ciel Azur' },
+        { id: 'm18', type: 'capture-type', subType: 'dark', rewardType: 'stone', rewardId: 'black-augurite', target: 10, label: 'Ombre Obscure' },
+        
+        // Diverse Missions
+        { id: 'm19', type: 'evolutions', rewardType: 'stone', rewardId: 'link-cable', target: 5, label: 'Le Maître de la Mutation' },
+        { id: 'm20', type: 'player-level', rewardType: 'stone', rewardId: 'soothe-bell', target: 5, label: 'Ascension' },
+        { id: 'm21', type: 'discovery', rewardType: 'stone', rewardId: 'upgrade', target: 20, label: 'Explorateur Débutant' },
+        { id: 'm22', type: 'coins-earned', rewardType: 'stone', rewardId: 'dawn-stone', target: 1000, label: 'Fortune en Marche' },
+        { id: 'm23', type: 'total-captures', rewardType: 'stone', rewardId: 'electirizer', target: 50, label: 'Grand Chasseur' },
+        { id: 'm24', type: 'evolutions', rewardType: 'stone', rewardId: 'magmarizer', target: 15, label: 'Généticien Pokémon' },
+        { id: 'm25', type: 'discovery', rewardType: 'stone', rewardId: 'dubious-disc', target: 50, label: 'Naturaliste chevronné' },
+        { id: 'm26', type: 'release', rewardType: 'coins', rewardQty: 500, target: 10, label: 'Liberté !' },
+        
+        // Gen 8/9 Items Missions
+        { id: 'm27', type: 'discovery', rewardType: 'stone', rewardId: 'sweet-apple', target: 60, label: 'Verger Sucré' },
+        { id: 'm28', type: 'discovery', rewardType: 'stone', rewardId: 'tart-apple', target: 70, label: 'Verger Acidulé' },
+        { id: 'm29', type: 'evolutions', rewardType: 'stone', rewardId: 'chipped-pot', target: 20, label: 'Heure du Thé Antique' },
+        { id: 'm30', type: 'evolutions', rewardType: 'stone', rewardId: 'cracked-pot', target: 25, label: 'Heure du Thé Fragile' },
+        { id: 'm31', type: 'total-captures', rewardType: 'stone', rewardId: 'auspicious-armor', target: 100, label: 'Armure d\'Éclat' },
+        { id: 'm32', type: 'total-captures', rewardType: 'stone', rewardId: 'malicious-armor', target: 120, label: 'Armure d\'Ombre' },
+        { id: 'm33', type: 'discovery', rewardType: 'stone', rewardId: 'scroll-of-darkness', target: 150, label: 'Manuscrit Interdit' },
+        { id: 'm34', type: 'discovery', rewardType: 'stone', rewardId: 'scroll-of-waters', target: 180, label: 'Manuscrit de l\'Onde' },
+        { id: 'm35', type: 'coins-earned', rewardType: 'stone', rewardId: 'gimmighoul-coin', target: 5000, label: 'Collectionneur Avare' }
     ];
 
     function renderMissions() {
@@ -882,39 +1109,62 @@
 
         if (!state.missions.typeProgress) state.missions.typeProgress = {};
         if (!state.missions.claimed) state.missions.claimed = [];
+        if (state.missions.released === undefined) state.missions.released = 0;
 
-        const typeMissions = {};
-        MISSIONS.forEach(m => {
-            if (!typeMissions[m.type]) typeMissions[m.type] = [];
-            typeMissions[m.type].push(m);
-        });
+        MISSIONS.forEach(mission => {
+            if (state.missions.claimed.includes(mission.id)) return;
 
-        const typeTranslations = { fire: 'Feu', water: 'Eau', grass: 'Plante', electric: 'Électrik', ice: 'Glace', normal: 'Normal', psychic: 'Psy', poison: 'Poison', fairy: 'Fée', fighting: 'Combat', steel: 'Acier', rock: 'Roche', dark: 'Ténèbres', dragon: 'Dragon', ghost: 'Spectre', ground: 'Sol', bug: 'Insecte', flying: 'Vol' };
-        const stoneTranslations = { 'fire-stone': 'Pierre Feu', 'water-stone': 'Pierre Eau', 'leaf-stone': 'Pierre Plante', 'thunder-stone': 'Pierre Foudre', 'ice-stone': 'Pierre Glace', 'moon-stone': 'Pierre Lune', 'sun-stone': 'Pierre Soleil', 'dusk-stone': 'Pierre Nuit', 'shiny-stone': 'Pierre Éclat', 'dawn-stone': 'Pierre Aube', 'kings-rock': 'Roche Royale', 'metal-coat': 'Peau Métal', 'protector': 'Protecteur', 'reaper-cloth': 'Tissu Faucheur', 'dragon-scale': 'Écaille Draco', 'prism-scale': "Bel'Écaille", 'razor-claw': 'Griffe Rasoir', 'razor-fang': 'Croc Rasoir', 'black-augurite': 'Obsidienne' };
+            let current = 0;
+            let description = "";
 
-        Object.keys(typeMissions).forEach(type => {
-            const series = typeMissions[type];
-            const nextMission = series.find(m => !state.missions.claimed.includes(m.id));
-
-            if (nextMission) {
-                const current = state.missions.typeProgress[nextMission.type] || 0;
-                const progress = Math.min(100, (current / nextMission.target) * 100);
-                const typeFr = typeTranslations[nextMission.type] || nextMission.type.toUpperCase();
-                const stoneFr = stoneTranslations[nextMission.stone] || nextMission.stone.replace('-', ' ');
-
-                const card = document.createElement('div');
-                card.className = `mission-card`;
-                card.innerHTML = `
-                    <h3>${nextMission.label}</h3>
-                    <p>Capturer des Pokémon de type ${typeFr} : ${current}/${nextMission.target}</p>
-                    <div class="progress-bar"><div style="width: ${progress}%"></div></div>
-                    <div class="reward">Cadeau: ${stoneFr}</div>
-                    <button class="claim-btn" ${current >= nextMission.target ? '' : 'disabled'} onclick="claimMission('${nextMission.id}', '${nextMission.stone}', ${nextMission.target})">
-                        Réclamer
-                    </button>
-                `;
-                container.appendChild(card);
+            switch (mission.type) {
+                case 'capture-type':
+                    current = state.missions.typeProgress[mission.subType] || 0;
+                    const typeFr = { fire: 'Feu', water: 'Eau', grass: 'Plante', electric: 'Électrik', ice: 'Glace', normal: 'Normal', psychic: 'Psy', poison: 'Poison', fairy: 'Fée', fighting: 'Combat', steel: 'Acier', rock: 'Roche', dark: 'Ténèbres', dragon: 'Dragon', ghost: 'Spectre', ground: 'Sol', bug: 'Insecte', flying: 'Vol' }[mission.subType] || mission.subType;
+                    description = `Capturer des Pokémon de type ${typeFr}`;
+                    break;
+                case 'evolutions':
+                    current = state.missions.evolutions || 0;
+                    description = `Faire évoluer des Pokémon`;
+                    break;
+                case 'player-level':
+                    current = state.level || 1;
+                    description = `Atteindre le niveau de joueur`;
+                    break;
+                case 'discovery':
+                    current = Object.keys(state.discovery || {}).length;
+                    description = `Découvrir de nouvelles espèces`;
+                    break;
+                case 'coins-earned':
+                    current = state.coins || 0; // On simplifie avec le solde actuel
+                    description = `Accumuler des pièces`;
+                    break;
+                case 'total-captures':
+                    current = state.missions.captures || 0;
+                    description = `Capturer des Pokémon au total`;
+                    break;
+                case 'release':
+                    current = state.missions.released || 0;
+                    description = `Libérer des Pokémon`;
+                    break;
             }
+
+            const progress = Math.min(100, (current / mission.target) * 100);
+            const rewardName = mission.rewardType === 'coins' ? `${mission.rewardQty} 🪙` : (stoneTranslations[mission.rewardId] || mission.rewardId);
+
+            const card = document.createElement('div');
+            card.className = `mission-card`;
+            card.innerHTML = `
+                <h3>${mission.label}</h3>
+                <p>${description} : ${current}/${mission.target}</p>
+                <div class="progress-bar"><div style="width: ${progress}%"></div></div>
+                <div class="reward">Cadeau: ${rewardName}</div>
+                <button class="claim-btn" ${current >= mission.target ? '' : 'disabled'} 
+                    onclick="claimMission('${mission.id}', '${mission.rewardType}', '${mission.rewardId}', ${mission.rewardQty || 1})">
+                    Réclamer
+                </button>
+            `;
+            container.appendChild(card);
         });
     }
 
