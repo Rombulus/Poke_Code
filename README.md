@@ -12,8 +12,8 @@
 - **🐘 Safari Interactif** : Les Pokémon apparaissent dans les hautes herbes (avec animations !).
 - **📈 Progression Passive** : Tes Pokémon gagnent de l'XP et évoluent même quand tu ne regardes pas.
 - **📜 Missions d'Entraîneur** : Complète des quêtes thématiques (Brasier Ardent, Source Océane...) pour gagner des pierres d'évolution rares.
-- **🛒 Boutique Complète** : Achète différentes balls (Super Ball, Hyper Ball, Sombre Ball...) pour capturer les Pokémon les plus rares.
-- **💾 Sauvegarde Blindée** : Ta progression est stockée localement dans ton dossier utilisateur. Tu ne perds jamais ton Pokédex !
+- 🛒 **Boutique Complète** : Achète différentes balls (Super Ball, Hyper Ball, Sombre Ball...) pour capturer les Pokémon les plus rares.
+- ☁️ **Sauvegarde Synchronisée** : Ta progression est désormais liée à ton compte VS Code (via Settings Sync). Tes Pokémon te suivent partout !
 
 ---
 

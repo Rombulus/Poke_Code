@@ -4,6 +4,9 @@ import * as fs from 'fs';
 import * as os from 'os';
 
 export function activate(context: vscode.ExtensionContext) {
+	// Permet la synchronisation des données entre différents ordinateurs via VS Code Settings Sync
+	context.globalState.setKeysForSync(['pokeState']);
+
 	const provider = new PokeIdleProvider(context.extensionUri, context);
 
 	context.subscriptions.push(
@@ -43,36 +46,36 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 			switch (data.type) {
 				case 'saveState':
 					try {
+						const currentState = this._context.globalState.get('pokeState') as any;
+						const mergedState = this._mergeStates(currentState, data.value);
+
 						const savePath = this._getSavePath();
-						fs.writeFileSync(savePath, JSON.stringify(data.value, null, 2));
+						fs.writeFileSync(savePath, JSON.stringify(mergedState, null, 2));
+
+						this._context.globalState.update('pokeState', mergedState);
 					} catch (e) {
 						console.error("Save error:", e);
 					}
-					this._context.globalState.update('pokeState', data.value);
 					break;
 				case 'getState':
-					let stateToLoad = null;
+					let stateToLoad = this._context.globalState.get('pokeState') as any;
 					const savePath = this._getSavePath();
 
-					// 1. Essayer de charger depuis le fichier externe
-					if (fs.existsSync(savePath)) {
+					// Si le globalState est vide, on tente de migrer depuis l'ancien fichier local
+					if (!stateToLoad && fs.existsSync(savePath)) {
 						try {
 							const fileContent = fs.readFileSync(savePath, 'utf8');
 							stateToLoad = JSON.parse(fileContent);
+							this._context.globalState.update('pokeState', stateToLoad);
 						} catch (e) {
 							console.error("Load file error:", e);
 						}
 					}
 
-					// 2. Fallback sur le globalState si le fichier n'existe pas ou est corrompu
-					if (!stateToLoad) {
-						stateToLoad = this._context.globalState.get('pokeState');
-					}
-
 					if (stateToLoad) {
 						this._view?.webview.postMessage({ type: 'loadState', value: stateToLoad });
 					} else {
-						// État initial si aucune sauvegarde
+						// État initial
 						this._view?.webview.postMessage({
 							type: 'loadState', value: {
 								pokedex: [],
@@ -81,7 +84,8 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 								xp: 0,
 								level: 1,
 								missions: { captures: 0, evolutions: 0, typeProgress: {}, claimed: [] },
-								spawnTimer: 180
+								spawnTimer: 180,
+								discovery: {}
 							}
 						});
 					}
@@ -109,6 +113,49 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 					break;
 			}
 		});
+	}
+
+	private _mergeStates(s1: any, s2: any): any {
+		if (!s1) return s2;
+		if (!s2) return s1;
+
+		// Stratégie de fusion :
+		// 1. Pokédex et Missions : Union (on ne veut jamais perdre un Pokémon ou une quête faite)
+		// 2. Monnaie, Inventaire, XP : Le plus récent gagne (pour permettre de dépenser/consommer)
+
+		const s1Time = s1.lastUpdate || 0;
+		const s2Time = s2.lastUpdate || 0;
+		const newer = s2Time >= s1Time ? s2 : s1;
+		const older = s2Time >= s1Time ? s1 : s2;
+
+		const merged = { ...newer };
+
+		// Fusion du Pokédex (Union)
+		const pokedexMap = new Map();
+		[...(s1.pokedex || []), ...(s2.pokedex || [])].forEach(p => {
+			if (!p) return;
+			const existing = pokedexMap.get(p.instanceId);
+			if (!existing || (p.level || 0) > (existing.level || 0) || (p.xp || 0) > (existing.xp || 0)) {
+				pokedexMap.set(p.instanceId, p);
+			}
+		});
+		merged.pokedex = Array.from(pokedexMap.values());
+
+		// Fusion des Missions (Union des terminées + Max progrès)
+		merged.missions = {
+			...newer.missions,
+			claimed: Array.from(new Set([...(s1.missions?.claimed || []), ...(s2.missions?.claimed || [])]))
+		};
+		
+		// Pour le progrès des types, on garde le max pour ne pas reculer
+		merged.missions.typeProgress = { ...(s1.missions?.typeProgress || {}) };
+		if (s2.missions?.typeProgress) {
+			Object.keys(s2.missions.typeProgress).forEach(k => {
+				merged.missions.typeProgress[k] = Math.max(merged.missions.typeProgress[k] || 0, s2.missions.typeProgress[k]);
+			});
+		}
+
+		return merged;
 	}
 
 	private _getHtmlForWebview(webview: vscode.Webview) {

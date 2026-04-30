@@ -16,7 +16,8 @@
             typeProgress: {},
             claimed: []
         },
-        spawnTimer: 180 // 3 minutes en secondes
+        spawnTimer: 180,
+        discovery: {} // ID -> { name, sprite }
     };
 
     const UI = {
@@ -45,37 +46,84 @@
     window.addEventListener('message', event => {
         const message = event.data;
         if (message.type === 'loadState') {
+            if (!message.value) return;
             state = message.value;
-            // Migrer l'ancien état vers le nouveau système
-            if (!state.inventory.balls) {
-                state.inventory = { balls: { pokeball: 20 }, stones: {} };
-            }
+
+            // Initialisation des modes UI
+            UI.pokedexMode = UI.pokedexMode || 'collection';
+
+            // Migrations de données
+            if (!state.inventory) state.inventory = { balls: { pokeball: 20 }, stones: {} };
+            if (!state.inventory.balls) state.inventory.balls = { pokeball: 20 };
+            if (!state.inventory.stones) state.inventory.stones = {};
+            
             if (state.spawnTimer === undefined || isNaN(state.spawnTimer)) {
                 state.spawnTimer = 180;
             }
-            if (!state.missions.typeProgress) {
-                state.missions.typeProgress = {};
+            if (!state.missions) state.missions = { captures: 0, evolutions: 0, typeProgress: {}, claimed: [] };
+            if (!state.missions.typeProgress) state.missions.typeProgress = {};
+
+            if (!state.discovery) {
+                state.discovery = {}; 
+            } else if (Array.isArray(state.discovery)) {
+                // Migration propre : on garde les IDs mais on n'a pas encore les noms/sprites
+                const oldDiscovery = state.discovery;
+                state.discovery = {};
+                oldDiscovery.forEach(id => {
+                    state.discovery[id] = { name: "Pokémon Découvert", sprite: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png` };
+                });
             }
 
             // Migration : Ajouter des IDs et Niveaux aux Pokémon qui n'en ont pas
-            state.pokedex.forEach(p => {
-                if (!p.instanceId) p.instanceId = Date.now() + Math.random();
-                if (!p.level) p.level = 5;
-                if (p.xp === undefined) p.xp = 0;
-            });
+            if (Array.isArray(state.pokedex)) {
+                state.pokedex.forEach(p => {
+                    if (p) {
+                        if (!p.instanceId) p.instanceId = Date.now() + Math.random();
+                        if (!p.level) p.level = 5;
+                        if (p.xp === undefined) p.xp = 0;
+                    }
+                });
+            } else {
+                state.pokedex = [];
+            }
 
-            // Traduction automatique des noms existants (si en anglais/minuscules)
             translateExistingPokedex();
-
+            syncDiscovery();
             updateUI();
             renderShop();
             startGameLoop();
         }
     });
 
+    function syncDiscovery() {
+        let changed = false;
+        if (!state.discovery) state.discovery = {};
+        
+        // S'assurer que tout ce qui est dans le pokedex (collection) est marqué comme capturé
+        if (Array.isArray(state.pokedex)) {
+            state.pokedex.forEach(p => {
+                if (p && p.id) {
+                    if (!state.discovery[p.id] || !state.discovery[p.id].caught) {
+                        state.discovery[p.id] = {
+                            name: p.name,
+                            sprite: p.sprite,
+                            caught: true
+                        };
+                        changed = true;
+                    }
+                }
+            });
+        }
+        
+        if (changed) {
+            saveState();
+        }
+    }
+
     async function translateExistingPokedex() {
+        let changed = false;
         for (let p of state.pokedex) {
-            // Si le nom est en minuscule et sans espace, c'est probablement un nom anglais de l'API
+            if (!p) continue;
             if (p.name === p.name.toLowerCase() && !p.name.includes(' ')) {
                 try {
                     const res = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${p.id}/`);
@@ -83,63 +131,90 @@
                     const fr = data.names.find(n => n.language.name === 'fr')?.name;
                     if (fr) {
                         p.name = fr;
-                        renderPokedex();
-                        saveState();
+                        changed = true;
                     }
                 } catch (e) { }
             }
         }
+        if (changed) {
+            renderPokedex();
+            saveState();
+        }
     }
 
-    // Gestion des Onglets
-    UI.tabs.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tabId = btn.dataset.tab;
-            UI.tabs.forEach(b => b.classList.remove('active'));
-            UI.tabContents.forEach(c => c.classList.add('hidden'));
+    function init() {
+        try {
+            // Gestion des Onglets
+            if (UI.tabs) {
+                UI.tabs.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        try {
+                            const tabId = btn.dataset.tab;
+                            UI.tabs.forEach(b => b.classList.remove('active'));
+                            UI.tabContents.forEach(c => c.classList.add('hidden'));
 
-            btn.classList.add('active');
-            document.getElementById(tabId).classList.remove('hidden');
+                            btn.classList.add('active');
+                            const content = document.getElementById(tabId);
+                            if (content) content.classList.remove('hidden');
 
-            if (tabId === 'pokedex-tab') renderPokedex();
-            if (tabId === 'shop-tab') renderShop();
-            if (tabId === 'missions-tab') renderMissions();
-        });
-    });
+                            if (tabId === 'pokedex-tab') renderPokedex();
+                            if (tabId === 'shop-tab') renderShop();
+                            if (tabId === 'missions-tab') renderMissions();
+                        } catch (err) {
+                            console.error("Tab error:", err);
+                        }
+                    });
+                });
+            }
 
-    // Gestion de l'inventaire
-    UI.itemSlots.forEach(slot => {
-        slot.addEventListener('click', () => {
-            UI.itemSlots.forEach(s => s.classList.remove('active'));
-            slot.classList.add('active');
-            selectedBall = slot.dataset.ball;
-        });
-    });
+            // Gestion de la recherche dans le Pokédex
+            if (UI.pokeSearch) {
+                UI.pokeSearch.addEventListener('input', () => {
+                    try {
+                        renderPokedex();
+                    } catch (err) { }
+                });
+            }
+        } catch (err) {
+            console.error("Init error:", err);
+        }
+    }
+
+    // Lancer l'init au chargement
+    init();
 
     function updateUI() {
-        UI.coinCount.innerText = state.coins;
-        UI.pokedexCount.innerText = state.pokedex.length;
-        UI.playerLevel.innerText = state.level;
+        try {
+            if (UI.coinCount) UI.coinCount.innerText = state.coins || 0;
+            if (UI.pokedexCount) UI.pokedexCount.innerText = state.pokedex ? state.pokedex.length : 0;
+            if (UI.playerLevel) UI.playerLevel.innerText = state.level || 1;
 
-        const xpToNext = Math.floor(Math.pow(state.level, 1.8) * 150);
-        const progress = Math.min(100, (state.xp / xpToNext) * 100);
-        UI.xpProgress.style.width = `${progress}%`;
+            const lvl = state.level || 1;
+            const xpToNext = Math.floor(Math.pow(lvl, 1.8) * 150);
+            const progress = Math.min(100, ((state.xp || 0) / xpToNext) * 100);
+            if (UI.xpProgress) UI.xpProgress.style.width = `${progress}%`;
 
-        renderBallInventory();
-        renderMissions();
+            renderBallInventory();
+            renderMissions();
 
-        // Easter Egg Debug : 5 clics sur le header donne 2000 pièces
-        let debugClicks = 0;
-        document.querySelector('header').onclick = () => {
-            debugClicks++;
-            if (debugClicks >= 5) {
-                state.coins += 2000;
-                debugClicks = 0;
-                vscode.postMessage({ type: 'showInfo', value: "DEBUG: +2000 pièces ajoutées !" });
-                updateUI();
-                saveState();
+            // Easter Egg Debug
+            let debugClicks = 0;
+            const header = document.querySelector('header');
+            if (header) {
+                header.onclick = () => {
+                    debugClicks++;
+                    if (debugClicks >= 5) {
+                        state.coins += 2000;
+                        debugClicks = 0;
+                        vscode.postMessage({ type: 'showInfo', value: "DEBUG: +2000 pièces ajoutées !" });
+                        updateUI();
+                        saveState();
+                    }
+                };
             }
-        };
+        } catch (err) {
+            console.error("updateUI error:", err);
+        }
     }
 
     const BALL_TYPES = [
@@ -270,12 +345,31 @@
             let found = false;
 
             while (!found) {
-                // On peut maintenant piocher dans toute la liste (1025)
                 const id = Math.floor(Math.random() * 1025) + 1;
                 const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`);
                 speciesData = await speciesRes.json();
 
-                // Logique de rareté basée sur le capture_rate (255 = très commun, 3 = légendaire)
+                // 1. Choisir une variété (Normal, Alola, Galar, etc.)
+                // On exclut les Megas/Gmax pour l'instant pour garder les évolutions classiques
+                const validVarieties = speciesData.varieties.filter(v => !v.pokemon.name.includes('-mega') && !v.pokemon.name.includes('-gmax'));
+                const variety = validVarieties[Math.floor(Math.random() * validVarieties.length)];
+                
+                const response = await fetch(variety.pokemon.url);
+                data = await response.json();
+
+                // 2. Choisir une forme esthétique (Vivaldaim, Meteno, etc.)
+                let sprite = data.sprites.other['official-artwork'].front_default || data.sprites.front_default;
+                let formName = "";
+
+                if (data.forms.length > 1) {
+                    const formIndex = Math.floor(Math.random() * data.forms.length);
+                    const formRes = await fetch(data.forms[formIndex].url);
+                    const formData = await formRes.json();
+                    sprite = formData.sprites.front_default; // Les formes n'ont pas toujours d'official-artwork
+                    if (formData.form_name) formName = ` (${formData.form_name})`;
+                }
+
+                // Logique de rareté
                 const capRate = speciesData.capture_rate;
                 let rarity = "Commun";
                 let chance = 1;
@@ -285,27 +379,43 @@
                 else if (capRate <= 100) { rarity = "Rare"; chance = 0.3; }
                 else if (capRate <= 150) { rarity = "Peu Commun"; chance = 0.6; }
 
-                // Condition de niveau : certains Pokémon ne spawnent qu'à partir d'un certain niveau joueur
                 const minLevelRequired = rarity === "Légendaire" ? 50 : (rarity === "Épique" ? 20 : 1);
 
                 if (state.level >= minLevelRequired && Math.random() < chance) {
-                    const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
-                    data = await response.json();
                     found = true;
 
-                    const frenchName = speciesData.names.find(n => n.language.name === 'fr')?.name || data.name;
+                    let frenchName = speciesData.names.find(n => n.language.name === 'fr')?.name || speciesData.name;
+                    
+                    // Gérer le nom des formes régionales
+                    if (variety.pokemon.name.includes('-alola')) frenchName += " d'Alola";
+                    if (variety.pokemon.name.includes('-galar')) frenchName += " de Galar";
+                    if (variety.pokemon.name.includes('-hisui')) frenchName += " de Hisui";
+                    if (variety.pokemon.name.includes('-paldea')) frenchName += " de Paldea";
 
                     currentPokemon = {
-                        id: data.id,
-                        name: frenchName,
+                        id: data.id, // ID du Pokémon spécifique (ex: Raichu d'Alola)
+                        speciesId: speciesData.id,
+                        name: frenchName + formName,
                         rarity: rarity,
                         captureRate: capRate,
-                        sprite: data.sprites.other['official-artwork'].front_default || data.sprites.front_default,
+                        sprite: sprite,
                         types: data.types.map(t => t.type.name),
                         isShiny: Math.random() < (1 / 512),
                         baseExperience: data.base_experience || 50,
                         level: Math.max(1, Math.floor(state.level * 0.8) + Math.floor(Math.random() * 5))
                     };
+
+                    // Ajout aux découvertes en tant que "Rencontré"
+                    if (!state.discovery[currentPokemon.id]) {
+                        state.discovery[currentPokemon.id] = {
+                            name: currentPokemon.name,
+                            sprite: currentPokemon.sprite,
+                            caught: false
+                        };
+                        saveState();
+                        // Pas de refresh UI ici pour ne pas spoil si on est sur l'onglet Pokedex, 
+                        // ou alors on le fait si on veut que ça s'affiche direct
+                    }
                 }
             }
 
@@ -340,10 +450,52 @@
         }
 
         const ball = BALL_TYPES.find(b => b.id === selectedBall);
-        const difficulty = Math.min(0.35, (currentPokemon.baseExperience / 800));
-        const catchSuccess = Math.random() < Math.max(0.1, ball.rate - difficulty);
-
+        
+        // --- Décrémentation immédiate ---
         state.inventory.balls[selectedBall]--;
+        updateUI();
+        saveState();
+
+        // --- Animation de Lancer ---
+        const ballImg = document.createElement('img');
+        ballImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${ball.img}.png`;
+        ballImg.className = 'thrown-ball throw-arc';
+        
+        // Positionner la ball par rapport au Pokémon
+        const pokeEl = document.getElementById('active-pokemon');
+        const rect = pokeEl.getBoundingClientRect();
+        ballImg.style.left = `${rect.left + rect.width / 2 - 15}px`;
+        ballImg.style.top = `${rect.top + rect.height / 2 - 15}px`;
+        
+        document.body.appendChild(ballImg);
+
+        // Retirer la ball et déclencher la capture après l'animation
+        setTimeout(() => {
+            ballImg.remove();
+            executeCatchLogic(ball);
+        }, 600);
+    }
+
+    function executeCatchLogic(ball) {
+        let catchSuccess = false;
+        
+        if (ball.id === 'masterball') {
+            catchSuccess = true;
+        } else {
+            // currentPokemon.captureRate varie de 3 (Légendaire) à 255 (très commun)
+            let chance = currentPokemon.captureRate / 255.0;
+            
+            // On ajoute un bonus fixe selon la puissance de la Pokéball
+            // ball.rate est de 0.4 pour la Pokéball standard, donc (0.4 - 0.4) = +0%
+            // Hyperball a 0.85, donc (0.85 - 0.4) = +45% de chance de capture
+            chance += (ball.rate - 0.4);
+            
+            // On s'assure que la chance est entre 5% et 100%
+            chance = Math.max(0.05, Math.min(1.0, chance));
+            
+            catchSuccess = Math.random() < chance;
+        }
+
         const pokemonEl = document.getElementById('active-pokemon');
 
         if (catchSuccess) {
@@ -380,6 +532,13 @@
         state.coins += 5;
         state.xp += Math.floor(currentPokemon.baseExperience / 5);
         state.missions.captures++;
+
+        // Mise à jour de la liste des découvertes (Pokédex permanent)
+        state.discovery[newPoke.id] = {
+            name: newPoke.name,
+            sprite: newPoke.sprite,
+            caught: true
+        };
 
         currentPokemon.types.forEach(t => {
             state.missions.typeProgress[t] = (state.missions.typeProgress[t] || 0) + 1;
@@ -449,6 +608,41 @@
     function renderPokedex() {
         if (!UI.pokedexList) return;
         UI.pokedexList.innerHTML = '';
+        
+        const discoveries = Object.values(state.discovery || {});
+        const encounteredCount = discoveries.length;
+        const capturedCount = discoveries.filter(d => d.caught).length;
+
+        // Affichage du progrès global
+        const statsHeader = document.createElement('div');
+        statsHeader.className = 'pokedex-header-stats';
+        statsHeader.innerHTML = `
+            <div class="stats-row">
+                <div class="discovery-count">National : <span>${capturedCount}</span> / 1025</div>
+                <div class="current-count">Rencontrés : <span>${encounteredCount}</span></div>
+            </div>
+            <div class="pokedex-mode-toggle">
+                <button id="btn-view-collection" class="mini-btn ${UI.pokedexMode === 'national' ? '' : 'active'}">Ma Collection</button>
+                <button id="btn-view-national" class="mini-btn ${UI.pokedexMode === 'national' ? 'active' : ''}">Pokédex National</button>
+            </div>
+        `;
+        UI.pokedexList.appendChild(statsHeader);
+
+        // Event listeners pour le toggle (on utilise une variable globale simple)
+        statsHeader.querySelector('#btn-view-collection').onclick = () => {
+            UI.pokedexMode = 'collection';
+            renderPokedex();
+        };
+        statsHeader.querySelector('#btn-view-national').onclick = () => {
+            UI.pokedexMode = 'national';
+            renderPokedex();
+        };
+
+        if (UI.pokedexMode === 'national') {
+            renderNationalPokedex();
+            return;
+        }
+
         const search = (UI.pokeSearch?.value || '').toLowerCase();
 
         // Sécurité : s'assurer que pokedex est un tableau
@@ -465,23 +659,56 @@
 
             const xpToNext = calculatePokeXPToNext(p.level || 1);
             const xpProgress = Math.min(100, (p.xp / xpToNext) * 100);
-            const minsLeft = Math.ceil(((xpToNext - p.xp) * 3) / 60);
+            
+            // On utilise les icones de la Gen VIII pour le look "PC"
+            const iconUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/${p.id}.png`;
 
             item.innerHTML = `
+                <div class="tooltip">
+                    <span class="tooltip-title">${p.isShiny ? '✨ ' : ''}${p.name}</span>
+                    <div class="tooltip-row"><span class="tooltip-label">Nv.</span><span>${p.level}</span></div>
+                    <div class="tooltip-row"><span class="tooltip-label">Rareté</span><span>${p.rarity}</span></div>
+                    <div class="tooltip-row"><span class="tooltip-label">Capturé le</span><span>${p.date || 'Inconnue'}</span></div>
+                </div>
                 <div class="poke-info">
-                    <img src="${p.sprite || ''}">
+                    <img src="${iconUrl}" onerror="this.src='${p.sprite}'">
                     <span class="p-name">${p.name || 'Inconnu'} ${p.isShiny ? '✨' : ''}</span>
                     <span class="p-lvl">Nv.${p.level || '?'}</span>
                     <div class="p-xp-bar"><div style="width: ${xpProgress}%"></div></div>
-                    <div class="p-xp-info">Prog: ${minsLeft} min</div>
                     <div class="evo-timer">${evoInfo}</div>
                 </div>
                 <div class="poke-actions">
-                    <button class="sell-btn" onclick="sellPokemon(${p.instanceId})">Vendre (20$)</button>
+                    <button class="sell-btn" onclick="sellPokemon(${p.instanceId})">Libérer (20$)</button>
                 </div>
             `;
             UI.pokedexList.appendChild(item);
         });
+    }
+
+    function renderNationalPokedex() {
+        const container = document.createElement('div');
+        container.className = 'national-grid';
+        
+        for (let i = 1; i <= 1025; i++) {
+            const disc = state.discovery[i];
+            const item = document.createElement('div');
+            
+            const isCaught = disc && disc.caught;
+            const isSeen = !!disc;
+            
+            item.className = `national-item ${isCaught ? 'caught' : (isSeen ? 'seen' : 'unknown')}`;
+            
+            const spriteUrl = isSeen ? disc.sprite : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${i}.png`;
+            const name = isSeen ? disc.name : `???`;
+
+            item.innerHTML = `
+                <span class="nat-id">#${i}</span>
+                <img src="${spriteUrl}" loading="lazy" class="${isCaught ? '' : 'silhouette'}">
+                <span class="nat-name">${name}</span>
+            `;
+            container.appendChild(item);
+        }
+        UI.pokedexList.appendChild(container);
     }
 
     function calculateEvoTime(p) {
@@ -602,6 +829,13 @@
         const index = state.pokedex.findIndex(p => p.instanceId === oldPoke.instanceId);
         state.pokedex[index] = { ...oldPoke, id: data.id, name: frenchName, sprite: data.sprites.other['official-artwork'].front_default };
 
+        // Ajout à la découverte permanente
+        state.discovery[data.id] = {
+            name: frenchName,
+            sprite: data.sprites.other['official-artwork'].front_default,
+            caught: true
+        };
+
         vscode.postMessage({ type: 'showInfo', value: `Évolution en ${frenchName} !` });
         state.missions.evolutions++;
         saveState();
@@ -610,29 +844,36 @@
     }
 
     function getStoneForType(type) {
-        const map = { fire: 'fire-stone', water: 'water-stone', grass: 'leaf-stone', electric: 'thunder-stone', ice: 'ice-stone', normal: 'moon-stone', psychic: 'sun-stone', poison: 'dusk-stone', fairy: 'shiny-stone', steel: 'metal-coat', rock: 'module_mag', dark: 'lentille_inv', dragon: 'dragon-scale', ghost: 'reaper-cloth' };
+        const map = { 
+            fire: 'fire-stone', water: 'water-stone', grass: 'leaf-stone', 
+            electric: 'thunder-stone', ice: 'ice-stone', normal: 'moon-stone', 
+            psychic: 'sun-stone', poison: 'dusk-stone', fairy: 'shiny-stone', 
+            fighting: 'kings-rock', steel: 'metal-coat', rock: 'protector', 
+            ground: 'razor-fang', bug: 'razor-claw', ghost: 'reaper-cloth',
+            dragon: 'dragon-scale', flying: 'prism-scale'
+        };
         return map[type] || 'moon-stone';
     }
 
     const MISSIONS = [
         { id: 'm1', type: 'fire', stone: 'fire-stone', target: 5, label: 'Brasier Ardent I' },
-        { id: 'm2', type: 'fire', stone: 'fire-stone', target: 15, label: 'Brasier Ardent II' },
-        { id: 'm3', type: 'water', stone: 'water-stone', target: 5, label: 'Source Océane I' },
-        { id: 'm4', type: 'water', stone: 'water-stone', target: 15, label: 'Source Océane II' },
-        { id: 'm5', type: 'grass', stone: 'leaf-stone', target: 5, label: 'Floraison Sylvestre I' },
-        { id: 'm6', type: 'grass', stone: 'leaf-stone', target: 15, label: 'Floraison Sylvestre II' },
-        { id: 'm7', type: 'electric', stone: 'thunder-stone', target: 5, label: 'Éclair Volt' },
-        { id: 'm8', type: 'ice', stone: 'ice-stone', target: 5, label: 'Givre Éternel' },
-        { id: 'm9', type: 'normal', stone: 'moon-stone', target: 10, label: 'Force Tranquille' },
-        { id: 'm10', type: 'psychic', stone: 'sun-stone', target: 10, label: 'Esprit Supérieur' },
-        { id: 'm11', type: 'poison', stone: 'dusk-stone', target: 10, label: 'Venin Mortel' },
-        { id: 'm12', type: 'fairy', stone: 'shiny-stone', target: 10, label: 'Éclat Féerique' },
-        { id: 'm13', type: 'fighting', stone: 'lien_amitie', target: 10, label: 'Aura de Combat' },
-        { id: 'm14', type: 'steel', stone: 'metal-coat', target: 5, label: 'Blindage Métal' },
-        { id: 'm15', type: 'rock', stone: 'module_mag', target: 8, label: 'Cœur de Roche' },
-        { id: 'm16', type: 'dark', stone: 'lentille_inv', target: 8, label: 'Ombre Obscure' },
-        { id: 'm17', type: 'dragon', stone: 'dragon-scale', target: 5, label: 'Souffle du Dragon' },
-        { id: 'm18', type: 'ghost', stone: 'reaper-cloth', target: 5, label: 'Hantise Spectrale' }
+        { id: 'm2', type: 'water', stone: 'water-stone', target: 5, label: 'Source Océane I' },
+        { id: 'm3', type: 'grass', stone: 'leaf-stone', target: 5, label: 'Floraison Sylvestre I' },
+        { id: 'm4', type: 'electric', stone: 'thunder-stone', target: 5, label: 'Éclair Volt' },
+        { id: 'm5', type: 'ice', stone: 'ice-stone', target: 5, label: 'Givre Éternel' },
+        { id: 'm6', type: 'normal', stone: 'moon-stone', target: 10, label: 'Force Tranquille' },
+        { id: 'm7', type: 'psychic', stone: 'sun-stone', target: 10, label: 'Esprit Supérieur' },
+        { id: 'm8', type: 'poison', stone: 'dusk-stone', target: 10, label: 'Venin Mortel' },
+        { id: 'm9', type: 'fairy', stone: 'shiny-stone', target: 10, label: 'Éclat Féerique' },
+        { id: 'm10', type: 'fighting', stone: 'kings-rock', target: 10, label: 'Aura de Combat' },
+        { id: 'm11', type: 'steel', stone: 'metal-coat', target: 5, label: 'Blindage Métal' },
+        { id: 'm12', type: 'rock', stone: 'protector', target: 8, label: 'Cœur de Roche' },
+        { id: 'm13', type: 'ground', stone: 'razor-fang', target: 8, label: 'Terres Arides' },
+        { id: 'm14', type: 'bug', stone: 'razor-claw', target: 8, label: 'Essaim Vorace' },
+        { id: 'm15', type: 'dragon', stone: 'dragon-scale', target: 5, label: 'Souffle du Dragon' },
+        { id: 'm16', type: 'ghost', stone: 'reaper-cloth', target: 5, label: 'Hantise Spectrale' },
+        { id: 'm17', type: 'flying', stone: 'prism-scale', target: 8, label: 'Ciel Azur' },
+        { id: 'm18', type: 'dark', stone: 'black-augurite', target: 5, label: 'Ombre Obscure' }
     ];
 
     function renderMissions() {
@@ -648,8 +889,8 @@
             typeMissions[m.type].push(m);
         });
 
-        const typeTranslations = { fire: 'FEU', water: 'EAU', grass: 'PLANTE', electric: 'ÉLECTRIK', ice: 'GLACE', normal: 'NORMAL', psychic: 'PSY', poison: 'POISON', fairy: 'FÉE', fighting: 'COMBAT', steel: 'ACIER', rock: 'ROCHE', dark: 'TÉNÈBRES', dragon: 'DRAGON', ghost: 'SPECTRE' };
-        const stoneTranslations = { 'fire-stone': 'Pierre Feu', 'water-stone': 'Pierre Eau', 'leaf-stone': 'Pierre Plante', 'thunder-stone': 'Pierre Foudre', 'ice-stone': 'Pierre Glace', 'moon-stone': 'Pierre Lune', 'sun-stone': 'Pierre Soleil', 'dusk-stone': 'Pierre Nuit', 'shiny-stone': 'Pierre Éclat', 'lien_amitie': 'Lien d\'Amitié', 'metal-coat': 'Peau Métal', 'module_mag': 'Module Mag.', 'lentille_inv': 'Lentille Inv.', 'dragon-scale': 'Écaille Draco', 'reaper-cloth': 'Tissu Faucheur' };
+        const typeTranslations = { fire: 'Feu', water: 'Eau', grass: 'Plante', electric: 'Électrik', ice: 'Glace', normal: 'Normal', psychic: 'Psy', poison: 'Poison', fairy: 'Fée', fighting: 'Combat', steel: 'Acier', rock: 'Roche', dark: 'Ténèbres', dragon: 'Dragon', ghost: 'Spectre', ground: 'Sol', bug: 'Insecte', flying: 'Vol' };
+        const stoneTranslations = { 'fire-stone': 'Pierre Feu', 'water-stone': 'Pierre Eau', 'leaf-stone': 'Pierre Plante', 'thunder-stone': 'Pierre Foudre', 'ice-stone': 'Pierre Glace', 'moon-stone': 'Pierre Lune', 'sun-stone': 'Pierre Soleil', 'dusk-stone': 'Pierre Nuit', 'shiny-stone': 'Pierre Éclat', 'dawn-stone': 'Pierre Aube', 'kings-rock': 'Roche Royale', 'metal-coat': 'Peau Métal', 'protector': 'Protecteur', 'reaper-cloth': 'Tissu Faucheur', 'dragon-scale': 'Écaille Draco', 'prism-scale': "Bel'Écaille", 'razor-claw': 'Griffe Rasoir', 'razor-fang': 'Croc Rasoir', 'black-augurite': 'Obsidienne' };
 
         Object.keys(typeMissions).forEach(type => {
             const series = typeMissions[type];
@@ -665,7 +906,7 @@
                 card.className = `mission-card`;
                 card.innerHTML = `
                     <h3>${nextMission.label}</h3>
-                    <p>Captures ${typeFr}: ${current}/${nextMission.target}</p>
+                    <p>Capturer des Pokémon de type ${typeFr} : ${current}/${nextMission.target}</p>
                     <div class="progress-bar"><div style="width: ${progress}%"></div></div>
                     <div class="reward">Cadeau: ${stoneFr}</div>
                     <button class="claim-btn" ${current >= nextMission.target ? '' : 'disabled'} onclick="claimMission('${nextMission.id}', '${nextMission.stone}', ${nextMission.target})">
@@ -678,6 +919,7 @@
     }
 
     function saveState() {
+        state.lastUpdate = Date.now();
         vscode.postMessage({ type: 'saveState', value: state });
     }
 
