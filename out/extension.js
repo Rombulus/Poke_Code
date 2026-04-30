@@ -284,14 +284,14 @@ class PokeIdleProvider {
                         </div>
                         <div class="game-container">
                             <div id="spawn-area">
-                                <div class="loader">Recherche de Pokémon...</div>
+                                <div class="loader">Zone de Safari calme...</div>
                             </div>
                         </div>
                         <div class="inventory-bar" id="ball-inventory">
-                            <!-- Les balls seront générées dynamiquement ici -->
+                            <!-- Balls generees dynamiquement -->
                         </div>
                         <div class="inventory-bar" id="stone-inventory" style="margin-top: 10px;">
-                            <!-- Les pierres seront générées dynamiquement ici -->
+                            <!-- Pierres generees dynamiquement -->
                         </div>
                     </div>
 
