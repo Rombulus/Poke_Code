@@ -272,10 +272,10 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
                     </header>
 
                     <nav class="tabs">
-                        <button class="tab-btn active" data-tab="safari-tab">Safari</button>
+                        <button class="tab-btn active" data-tab="safari-tab">Safari <div class="notification-badge" id="badge-safari"></div></button>
                         <button class="tab-btn" data-tab="pokedex-tab">Pokédex</button>
                         <button class="tab-btn" data-tab="shop-tab">Boutique</button>
-                        <button class="tab-btn" data-tab="missions-tab">Missions</button>
+                        <button class="tab-btn" data-tab="missions-tab">Missions <div class="notification-badge" id="badge-missions"></div></button>
                     </nav>
 
                     <div class="tab-content" id="safari-tab">

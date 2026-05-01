@@ -65,6 +65,7 @@
             }
             if (!state.missions) state.missions = { captures: 0, evolutions: 0, typeProgress: {}, claimed: [] };
             if (!state.missions.typeProgress) state.missions.typeProgress = {};
+            if (!state.stats) state.stats = { totalCoins: 0, shinies: 0, epics: 0, uniques: 0, evolved: 0, liberated: 0 };
             if (!state.released) state.released = [];
             if (!state.recentSpawns) state.recentSpawns = [];
 
@@ -89,6 +90,7 @@
                         if (p.speciesId > 10000) p.speciesId = null;
                         if (!p.speciesId && p.id <= 10000) p.speciesId = p.id;
                         if (p.nextEvoLevel === "Erreur") p.nextEvoLevel = null;
+                        if (!p.captureTimestamp) p.captureTimestamp = Date.now();
 
                         // Migration de genre robuste
                         if (p.gender === 'mâle') p.gender = 'male';
@@ -153,6 +155,12 @@
                 }
             });
         }
+
+        let count = 0;
+        Object.keys(state.discovery).forEach(k => {
+            if (state.discovery[k].caught) count++;
+        });
+        state.stats.uniques = count;
 
         if (changed) {
             saveState();
@@ -232,17 +240,22 @@
     const stoneTranslations = {
         'fire-stone': 'Pierre Feu', 'water-stone': 'Pierre Eau', 'leaf-stone': 'Pierre Plante',
         'thunder-stone': 'Pierre Foudre', 'ice-stone': 'Pierre Glace', 'moon-stone': 'Pierre Lune',
-        'sun-stone': 'Pierre Soleil', 'dusk-stone': 'Pierre Nuit', 'shiny-stone': 'Pierre Eclat',
-        'dawn-stone': 'Pierre Aube', 'kings-rock': 'Roche Royale', 'metal-coat': 'Peau Metal',
-        'protector': 'Protecteur', 'reaper-cloth': 'Tissu Faucheur', 'dragon-scale': 'Ecaille Draco',
-        'prism-scale': 'Bel Ecaille', 'razor-claw': 'Griffe Rasoir', 'razor-fang': 'Croc Rasoir',
-        'black-augurite': 'Obsidienne', 'linking-cord': 'Cable Link', 'soothe-bell': 'Grelot Zen',
-        'upgrade': 'Ameliorateur', 'dubious-disc': 'CD Douteux', 'electirizer': 'Electriseur',
-        'magmarizer': 'Magmariseur', 'peat-block': 'Bloc de Tourbe', 'galarica-cuff': 'Bracelet Galarica',
-        'galarica-wreath': 'Couronne Galarica', 'sweet-apple': 'Pomme Sucree', 'tart-apple': 'Pomme Acidulee',
-        'chipped-pot': 'Theiere Ebrechee', 'cracked-pot': 'Theiere Felee', 'auspicious-armor': 'Armure Auspicieuse',
-        'malicious-armor': 'Armure Malveillante', 'scroll-of-darkness': 'Rouleau des Tenebres',
-        'scroll-of-waters': 'Rouleau des Eaux', 'gimmighoul-coin': 'Piece de Mordudor'
+        'sun-stone': 'Pierre Soleil', 'dusk-stone': 'Pierre Nuit', 'shiny-stone': 'Pierre Éclat',
+        'dawn-stone': 'Pierre Aube', 'kings-rock': 'Roche Royale', 'metal-coat': 'Peau Métal',
+        'protector': 'Protecteur', 'reaper-cloth': 'Tissu Fauche', 'dragon-scale': 'Écaille Draco',
+        'prism-scale': "Bel'Écaille", 'razor-claw': 'Griffe Rasoir', 'razor-fang': 'Croc Rasoir',
+        'black-augurite': 'Obsidienne', 'linking-cord': 'Câble Link', 'soothe-bell': 'Grelot Zen',
+        'upgrade': 'Améliorator', 'dubious-disc': 'CD Douteux', 'electirizer': 'Électriseur',
+        'magmarizer': 'Magmariseur', 'peat-block': 'Bloc de Tourbe', 'galarica-cuff': 'Bracelet Galanoa',
+        'galarica-wreath': 'Couronne Galanoa', 'sweet-apple': 'Pomme Sucrée', 'tart-apple': 'Pomme Acide',
+        'chipped-pot': 'Théière Ébréchée', 'cracked-pot': 'Théière Fêlée', 'auspicious-armor': 'Armure Fortune',
+        'malicious-armor': 'Armure Rancune', 'scroll-of-darkness': 'Rouleau Ténèbres',
+        'scroll-of-waters': 'Rouleau Eau', 'gimmighoul-coin': 'Pièce de Mordudor',
+        'syrupy-apple': 'Pomme en Alliage', 'unremarkable-teacup': 'Bol Médiocre',
+        'masterpiece-teacup': 'Bol Exceptionnel', 'metal-alloy': 'Métal Composite',
+        'sachet': 'Sachet Senteur', 'whipped-dream': 'Chantibonbon',
+        'deep-sea-tooth': 'Dent Océan', 'deep-sea-scale': 'Écaille Océan',
+        'leaders-crest': 'Emblème du Général', 'strawberry-sweet': 'Objet en Sucre'
     };
 
     function updateUI() {
@@ -259,6 +272,24 @@
             renderBallInventory();
             renderStoneInventory();
             renderMissions();
+
+            // Gestion des badges de notification
+            const badgeSafari = document.getElementById('badge-safari');
+            if (badgeSafari) {
+                badgeSafari.classList.toggle('active', currentPokemon !== null);
+            }
+
+            const badgeMissions = document.getElementById('badge-missions');
+            if (badgeMissions && typeof MISSIONS !== 'undefined') {
+                const hasClaimable = MISSIONS.some(m => {
+                    if (state.missions.claimed.includes(m.id)) return false;
+                    let curr = 0;
+                    if (m.reqType === 'type') curr = state.missions.typeProgress[m.type] || 0;
+                    if (m.reqType === 'stat') curr = state.stats[m.statKey] || 0;
+                    return curr >= m.target;
+                });
+                badgeMissions.classList.toggle('active', hasClaimable);
+            }
 
             // Easter Egg Debug
             let debugClicks = 0;
@@ -392,7 +423,7 @@
                 p.level = (p.level || 1) + 1;
                 p.xp = 0;
                 leveledUp = true;
-                checkAutoEvolution(p);
+                checkAutoEvolution(p, false); // isManual = false
             }
         });
 
@@ -622,7 +653,8 @@
             instanceId: Date.now() + Math.random(),
             xp: 0,
             gender: gender,
-            date: new Date().toLocaleDateString()
+            date: new Date().toLocaleDateString(),
+            captureTimestamp: Date.now()
         };
 
         state.pokedex.push(newPoke);
@@ -660,7 +692,7 @@
     }
 
     function renderShop() {
-        UI.shopList.innerHTML = '';
+        UI.shopList.innerHTML = '<h3>Poké Balls</h3>';
         BALL_TYPES.forEach(item => {
             const owned = state.inventory.balls[item.id] || 0;
             const card = document.createElement('div');
@@ -676,12 +708,115 @@
             `;
             UI.shopList.appendChild(card);
         });
+
+        const itemsHeader = document.createElement('h3');
+        itemsHeader.innerText = "Objets d'Évolution";
+        itemsHeader.style.marginTop = "20px";
+        UI.shopList.appendChild(itemsHeader);
+
+        const EVOLUTION_ITEMS = [
+            { id: 'linking-cord', name: 'Câble Link', price: 1000 },
+            { id: 'fire-stone', name: 'Pierre Feu', price: 500 },
+            { id: 'water-stone', name: 'Pierre Eau', price: 500 },
+            { id: 'thunder-stone', name: 'Pierre Foudre', price: 500 },
+            { id: 'leaf-stone', name: 'Pierre Plante', price: 500 },
+            { id: 'moon-stone', name: 'Pierre Lune', price: 500 },
+            { id: 'sun-stone', name: 'Pierre Soleil', price: 500 },
+            { id: 'ice-stone', name: 'Pierre Glace', price: 500 },
+            { id: 'dusk-stone', name: 'Pierre Nuit', price: 500 },
+            { id: 'shiny-stone', name: 'Pierre Éclat', price: 500 },
+            { id: 'dawn-stone', name: 'Pierre Aube', price: 500 },
+            { id: 'metal-coat', name: 'Peau Métal', price: 1500 },
+            { id: 'kings-rock', name: 'Roche Royale', price: 1500 },
+            { id: 'dragon-scale', name: 'Écaille Draco', price: 1500 },
+            { id: 'upgrade', name: 'Améliorator', price: 1500 },
+            { id: 'dubious-disc', name: 'CD Douteux', price: 2000 },
+            { id: 'protector', name: 'Protecteur', price: 1500 },
+            { id: 'reaper-cloth', name: 'Tissu Fauche', price: 1500 },
+            { id: 'electirizer', name: 'Électriseur', price: 1500 },
+            { id: 'magmarizer', name: 'Magmariseur', price: 1500 },
+            { id: 'prism-scale', name: "Bel'Écaille", price: 1500 },
+            { id: 'razor-claw', name: 'Griffe Rasoir', price: 1500 },
+            { id: 'razor-fang', name: 'Croc Rasoir', price: 1500 },
+            { id: 'sweet-apple', name: 'Pomme Sucrée', price: 800 },
+            { id: 'tart-apple', name: 'Pomme Acide', price: 800 },
+            { id: 'syrupy-apple', name: 'Pomme en Alliage', price: 800 },
+            { id: 'cracked-pot', name: 'Théière Fêlée', price: 800 },
+            { id: 'chipped-pot', name: 'Théière Ébréchée', price: 1500 },
+            { id: 'malicious-armor', name: 'Armure Rancune', price: 1500 },
+            { id: 'auspicious-armor', name: 'Armure Fortune', price: 1500 },
+            { id: 'black-augurite', name: 'Obsidienne', price: 1500 },
+            { id: 'peat-block', name: 'Bloc de Tourbe', price: 1500 },
+            { id: 'galarica-cuff', name: 'Bracelet Galanoa', price: 1500 },
+            { id: 'galarica-wreath', name: 'Couronne Galanoa', price: 1500 },
+            { id: 'unremarkable-teacup', name: 'Bol Médiocre', price: 800 },
+            { id: 'masterpiece-teacup', name: 'Bol Exceptionnel', price: 1500 },
+            { id: 'metal-alloy', name: 'Métal Composite', price: 1500 },
+            { id: 'sachet', name: 'Sachet Senteur', price: 1000 },
+            { id: 'whipped-dream', name: 'Chantibonbon', price: 1000 },
+            { id: 'deep-sea-tooth', name: 'Dent Océan', price: 1500 },
+            { id: 'deep-sea-scale', name: 'Écaille Océan', price: 1500 },
+            { id: 'leaders-crest', name: 'Emblème du Général', price: 1500 },
+            { id: 'strawberry-sweet', name: 'Objet en Sucre', price: 800 }
+        ];
+
+        const unlockedItems = new Set();
+        if (typeof MISSIONS !== 'undefined' && state.missions && state.missions.claimed) {
+            // Pour chaque objet du jeu d'évolution
+            EVOLUTION_ITEMS.forEach(evoItem => {
+                // On compte combien de quêtes terminées récompensent cet objet
+                const count = MISSIONS.filter(m => m.item === evoItem.id && state.missions.claimed.includes(m.id)).length;
+                if (count >= 3) {
+                    unlockedItems.add(evoItem.id);
+                }
+            });
+        }
+
+        const availableEvoItems = EVOLUTION_ITEMS.filter(item => unlockedItems.has(item.id));
+
+        if (availableEvoItems.length === 0) {
+            const msg = document.createElement('p');
+            msg.innerText = "Accomplissez les 3 paliers de missions d'un objet pour le débloquer ici !";
+            msg.style.opacity = 0.7;
+            msg.style.margin = "10px 0";
+            msg.style.fontStyle = "italic";
+            UI.shopList.appendChild(msg);
+        } else {
+            availableEvoItems.forEach(item => {
+                const owned = (state.inventory.stones && state.inventory.stones[item.id]) ? state.inventory.stones[item.id] : 0;
+                const card = document.createElement('div');
+                card.className = 'shop-item';
+                card.innerHTML = `
+                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.id}.png" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                    <div class="item-info">
+                        <span>${item.name}</span>
+                        <span class="owned">Possédé : ${owned}</span>
+                        <span class="price">${item.price} <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/nugget.png" class="mini-icon"></span>
+                    </div>
+                    <button onclick="buyStone('${item.id}', ${item.price})">Acheter</button>
+                `;
+                UI.shopList.appendChild(card);
+            });
+        }
     }
 
     window.buyItem = (id, price) => {
         if (state.coins >= price) {
             state.coins -= price;
             state.inventory.balls[id] = (state.inventory.balls[id] || 0) + 1;
+            updateUI();
+            saveState();
+            renderShop();
+        } else {
+            vscode.postMessage({ type: 'showInfo', value: "Pas assez de pièces !" });
+        }
+    };
+
+    window.buyStone = (id, price) => {
+        if (state.coins >= price) {
+            state.coins -= price;
+            if (!state.inventory.stones) state.inventory.stones = {};
+            state.inventory.stones[id] = (state.inventory.stones[id] || 0) + 1;
             updateUI();
             saveState();
             renderShop();
@@ -846,7 +981,27 @@
             if (!p.nextEvoLevel) return "Analyse...";
         }
         if (p.nextEvoLevel === "MAX") return "MAX";
-        if (typeof p.nextEvoLevel === "string") return p.nextEvoLevel;
+        if (typeof p.nextEvoLevel === "string") {
+            if (p.nextEvoLevel.startsWith("item:")) {
+                const reqItem = p.nextEvoLevel.split(":")[1];
+                if (state.inventory.stones && state.inventory.stones[reqItem] > 0) {
+                    return "Évolution prête !";
+                } else {
+                    return `Requiert: ${stoneTranslations[reqItem] || reqItem.replace('-', ' ')}`;
+                }
+            }
+            if (p.nextEvoLevel.startsWith("loyalty:")) {
+                const targetSecs = parseInt(p.nextEvoLevel.split(":")[1]);
+                const currentSecs = (Date.now() - (p.captureTimestamp || Date.now())) / 1000;
+                if (currentSecs >= targetSecs) {
+                    return "Évolution prête !";
+                } else {
+                    const remaining = Math.ceil((targetSecs - currentSecs) / 60);
+                    return `Amitié: ${remaining} min restantes`;
+                }
+            }
+            return p.nextEvoLevel;
+        }
         return p.level >= p.nextEvoLevel ? "Évolution prête !" : `Nv. requis : ${p.nextEvoLevel}`;
     }
 
@@ -905,10 +1060,21 @@
 
             if (evoDetails && evoDetails.length > 0) {
                 const detail = evoDetails[0];
-                if (detail.trigger.name === "level-up") {
-                    p.nextEvoLevel = detail.min_level || 1;
+                if (detail.trigger.name === "level-up" && !detail.item && !detail.held_item) {
+                    if (detail.min_happiness) {
+                        p.nextEvoLevel = "loyalty:1800"; // 30 minutes d'amitié
+                    } else {
+                        p.nextEvoLevel = detail.min_level || 1;
+                    }
+                } else if (detail.item) {
+                    p.nextEvoLevel = `item:${detail.item.name}`;
+                } else if (detail.held_item) {
+                    p.nextEvoLevel = `item:${detail.held_item.name}`;
+                } else if (detail.trigger.name === "trade") {
+                    p.nextEvoLevel = `item:linking-cord`;
                 } else {
-                    p.nextEvoLevel = `Item requis`;
+                    // Fallback
+                    p.nextEvoLevel = `item:moon-stone`;
                 }
             } else {
                 p.nextEvoLevel = "MAX";
@@ -931,6 +1097,8 @@
         const index = state.pokedex.findIndex(p => p.instanceId == instanceId);
         if (index > -1) {
             state.coins += 40;
+            state.stats.totalCoins += 40;
+            state.stats.liberated++;
             if (!state.released) state.released = [];
             state.released.push(state.pokedex[index].instanceId);
             state.pokedex.splice(index, 1);
@@ -942,18 +1110,14 @@
 
     window.manualEvolve = (instanceId) => {
         const p = state.pokedex.find(poke => poke.instanceId == instanceId);
-        if (p) checkAutoEvolution(p);
+        if (p) checkAutoEvolution(p, true); // isManual = true
     };
 
-    async function checkAutoEvolution(pokemon) {
+    async function checkAutoEvolution(pokemon, isManual = false) {
         if (!pokemon) return;
         try {
             const speciesId = await getSpeciesId(pokemon);
-
-            if (!speciesCache[speciesId]) {
-                await fetchNextEvoLevel(pokemon);
-            }
-
+            if (!speciesCache[speciesId]) await fetchNextEvoLevel(pokemon);
             const cache = speciesCache[speciesId];
             if (!cache) return;
 
@@ -961,8 +1125,34 @@
             const evoDetails = findEvoDetails(cache.chain.chain, englishName);
             if (evoDetails && evoDetails.length > 0) {
                 const detail = evoDetails[0];
-                // Evolution par niveau
-                if (detail.trigger.name === "level-up" && detail.min_level <= pokemon.level) {
+                let isReady = false;
+                let reqItem = null;
+
+                if (detail.trigger.name === "level-up" && !detail.item && !detail.held_item) {
+                    const levelMet = pokemon.level >= (detail.min_level || 1);
+                    let happinessMet = true;
+                    if (detail.min_happiness) {
+                        const loyaltySecs = (Date.now() - (pokemon.captureTimestamp || Date.now())) / 1000;
+                        happinessMet = loyaltySecs >= 1800; // 30 minutes
+                    }
+                    if (levelMet && happinessMet) isReady = true;
+                } else if (detail.item || detail.held_item || detail.trigger.name === "trade" || detail.trigger.name === "use-item") {
+                    // Si ce n'est pas un clic manuel, on n'auto-evolue PAS avec des objets
+                    if (!isManual) return;
+
+                    reqItem = 'linking-cord';
+                    if (detail.item) reqItem = detail.item.name;
+                    if (detail.held_item) reqItem = detail.held_item.name;
+
+                    if (state.inventory.stones && state.inventory.stones[reqItem] > 0) {
+                        isReady = true;
+                    }
+                }
+
+                if (isReady) {
+                    if (reqItem) {
+                        state.inventory.stones[reqItem]--;
+                    }
                     evolvePokemon(pokemon, detail.species_name);
                 }
             } else {
@@ -977,40 +1167,6 @@
         }
         for (let next of chain.evolves_to) {
             const res = findEvoDetails(next, currentName);
-            if (res) return res;
-        }
-        return null;
-    }
-
-    window.tryEvolve = async (id) => {
-        const p = state.pokedex.find(poke => poke.id === id);
-        if (!p) return;
-        const stoneNeeded = getStoneForType(p.types[0]);
-        if (state.inventory.stones[stoneNeeded] > 0) {
-            state.inventory.stones[stoneNeeded]--;
-            // Logique simplifié pour cet exemple
-            const next = await fetchNextEvolution(p.id, p.name);
-            if (next) evolvePokemon(p, next);
-        } else {
-            vscode.postMessage({ type: 'showInfo', value: `Besoin d'une Pierre ${stoneNeeded.toUpperCase()}` });
-        }
-    };
-
-    async function fetchNextEvolution(id, name) {
-        const p = state.pokedex.find(poke => poke.id === id);
-        const speciesId = p ? (p.speciesId || id) : id;
-        const res = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${speciesId}/`);
-        const data = await res.json();
-        const chainRes = await fetch(data.evolution_chain.url);
-        const chainData = await chainRes.json();
-        const evo = findNextEvolution(chainData.chain, name);
-        return evo;
-    }
-
-    function findNextEvolution(chain, currentName) {
-        if (chain.species.name === currentName) return chain.evolves_to[0] ? chain.evolves_to[0].species.name : null;
-        for (let next of chain.evolves_to) {
-            const res = findNextEvolution(next, currentName);
             if (res) return res;
         }
         return null;
@@ -1060,6 +1216,7 @@
 
                 vscode.postMessage({ type: 'showInfo', value: `Évolution en ${frenchName} !` });
                 state.missions.evolutions++;
+                state.stats.evolved++;
                 saveState();
                 renderPokedex();
                 updateUI();
@@ -1082,67 +1239,296 @@
     }
 
     const MISSIONS = [
-        { id: 'm1', type: 'fire', stone: 'fire-stone', target: 5, label: 'Brasier Ardent I' },
-        { id: 'm2', type: 'water', stone: 'water-stone', target: 5, label: 'Source Oceane I' },
-        { id: 'm3', type: 'grass', stone: 'leaf-stone', target: 5, label: 'Floraison Sylvestre I' },
-        { id: 'm4', type: 'electric', stone: 'thunder-stone', target: 5, label: 'Eclair Volt' },
-        { id: 'm5', type: 'ice', stone: 'ice-stone', target: 5, label: 'Givre Eternel' },
-        { id: 'm6', type: 'normal', stone: 'moon-stone', target: 10, label: 'Force Tranquille' },
-        { id: 'm7', type: 'psychic', stone: 'sun-stone', target: 10, label: 'Esprit Superieur' },
-        { id: 'm8', type: 'poison', stone: 'dusk-stone', target: 10, label: 'Venin Mortel' },
-        { id: 'm9', type: 'fairy', stone: 'shiny-stone', target: 10, label: 'Eclat Feerique' },
-        { id: 'm10', type: 'fighting', stone: 'kings-rock', target: 10, label: 'Aura de Combat' },
-        { id: 'm11', type: 'steel', stone: 'metal-coat', target: 5, label: 'Blindage Metal' },
-        { id: 'm12', type: 'rock', stone: 'protector', target: 8, label: 'Coeur de Roche' },
-        { id: 'm13', type: 'ground', stone: 'razor-fang', target: 8, label: 'Terres Arides' },
-        { id: 'm14', type: 'bug', stone: 'razor-claw', target: 8, label: 'Essaim Vorace' },
-        { id: 'm15', type: 'dragon', stone: 'dragon-scale', target: 5, label: 'Souffle du Dragon' },
-        { id: 'm16', type: 'ghost', stone: 'reaper-cloth', target: 5, label: 'Hantise Spectrale' },
-        { id: 'm17', type: 'flying', stone: 'prism-scale', target: 8, label: 'Ciel Azur' },
-        { id: 'm18', type: 'dark', stone: 'black-augurite', target: 5, label: 'Ombre Obscure' }
+        // --- LES EXPERTS (Stats Globales) ---
+        // Linking Cord (Câble Link)
+        { id: 'm_collec1', reqType: 'stat', statKey: 'uniques', target: 20, item: 'linking-cord', label: 'Le Collectionneur I', desc: 'Avoir 20 Pokémon uniques' },
+        { id: 'm_collec2', reqType: 'stat', statKey: 'uniques', target: 45, item: 'linking-cord', label: 'Le Collectionneur II', desc: 'Avoir 45 Pokémon uniques' },
+        { id: 'm_collec3', reqType: 'stat', statKey: 'uniques', target: 80, item: 'linking-cord', label: 'Le Collectionneur III', desc: 'Avoir 80 Pokémon uniques' },
+
+        // Soothe Bell (Grelot Zen)
+        { id: 'm_zen1', reqType: 'stat', statKey: 'uniques', target: 30, item: 'soothe-bell', label: 'Sérénité I', desc: 'Avoir 30 Pokémon uniques' },
+        { id: 'm_zen2', reqType: 'stat', statKey: 'uniques', target: 60, item: 'soothe-bell', label: 'Sérénité II', desc: 'Avoir 60 Pokémon uniques' },
+        { id: 'm_zen3', reqType: 'stat', statKey: 'uniques', target: 100, item: 'soothe-bell', label: 'Sérénité III', desc: 'Avoir 100 Pokémon uniques' },
+
+        // Upgrade (Améliorator)
+        { id: 'm_evo1', reqType: 'stat', statKey: 'evolved', target: 5, item: 'upgrade', label: 'Le Spécialiste I', desc: 'Faire évoluer 5 Pokémon' },
+        { id: 'm_evo2', reqType: 'stat', statKey: 'evolved', target: 15, item: 'upgrade', label: 'Le Spécialiste II', desc: 'Faire évoluer 15 Pokémon' },
+        { id: 'm_evo3', reqType: 'stat', statKey: 'evolved', target: 30, item: 'upgrade', label: 'Le Spécialiste III', desc: 'Faire évoluer 30 Pokémon' },
+
+        // Dubious Disc (CD Douteux)
+        { id: 'm_disc1', reqType: 'stat', statKey: 'evolved', target: 10, item: 'dubious-disc', label: 'Data Corrompue I', desc: 'Faire évoluer 10 Pokémon' },
+        { id: 'm_disc2', reqType: 'stat', statKey: 'evolved', target: 25, item: 'dubious-disc', label: 'Data Corrompue II', desc: 'Faire évoluer 25 Pokémon' },
+        { id: 'm_disc3', reqType: 'stat', statKey: 'evolved', target: 50, item: 'dubious-disc', label: 'Data Corrompue III', desc: 'Faire évoluer 50 Pokémon' },
+
+        // Auspicious Armor (Armure Fortune)
+        { id: 'm_coin1', reqType: 'stat', statKey: 'totalCoins', target: 1000, item: 'auspicious-armor', label: 'Le Mécène I', desc: 'Accumuler 1000 pièces' },
+        { id: 'm_coin2', reqType: 'stat', statKey: 'totalCoins', target: 3000, item: 'auspicious-armor', label: 'Le Mécène II', desc: 'Accumuler 3000 pièces' },
+        { id: 'm_coin3', reqType: 'stat', statKey: 'totalCoins', target: 7000, item: 'auspicious-armor', label: 'Le Mécène III', desc: 'Accumuler 7000 pièces' },
+
+        // Malicious Armor (Armure Rancune)
+        { id: 'm_ranc1', reqType: 'stat', statKey: 'totalCoins', target: 2000, item: 'malicious-armor', label: 'Le Magnat I', desc: 'Accumuler 2000 pièces' },
+        { id: 'm_ranc2', reqType: 'stat', statKey: 'totalCoins', target: 5000, item: 'malicious-armor', label: 'Le Magnat II', desc: 'Accumuler 5000 pièces' },
+        { id: 'm_ranc3', reqType: 'stat', statKey: 'totalCoins', target: 10000, item: 'malicious-armor', label: 'Le Magnat III', desc: 'Accumuler 10000 pièces' },
+
+        // Gimmighoul Coin (Pièce de Mordudor)
+        { id: 'm_mordu1', reqType: 'stat', statKey: 'uniques', target: 40, item: 'gimmighoul-coin', label: 'Avarice I', desc: 'Avoir 40 Pokémon uniques' },
+        { id: 'm_mordu2', reqType: 'stat', statKey: 'uniques', target: 75, item: 'gimmighoul-coin', label: 'Avarice II', desc: 'Avoir 75 Pokémon uniques' },
+        { id: 'm_mordu3', reqType: 'stat', statKey: 'uniques', target: 120, item: 'gimmighoul-coin', label: 'Avarice III', desc: 'Avoir 120 Pokémon uniques' },
+
+        // --- LES TYPES (Classiques) ---
+        // Fire Stone
+        { id: 'm_fire1', reqType: 'type', type: 'fire', target: 5, item: 'fire-stone', label: 'Brasier I', desc: 'Capturer 5 Type Feu' },
+        { id: 'm_fire2', reqType: 'type', type: 'fire', target: 15, item: 'fire-stone', label: 'Brasier II', desc: 'Capturer 15 Type Feu' },
+        { id: 'm_fire3', reqType: 'type', type: 'fire', target: 40, item: 'fire-stone', label: 'Brasier III', desc: 'Capturer 40 Type Feu' },
+
+        // Water Stone
+        { id: 'm_water1', reqType: 'type', type: 'water', target: 5, item: 'water-stone', label: 'Océan I', desc: 'Capturer 5 Type Eau' },
+        { id: 'm_water2', reqType: 'type', type: 'water', target: 15, item: 'water-stone', label: 'Océan II', desc: 'Capturer 15 Type Eau' },
+        { id: 'm_water3', reqType: 'type', type: 'water', target: 40, item: 'water-stone', label: 'Océan III', desc: 'Capturer 40 Type Eau' },
+
+        // Leaf Stone
+        { id: 'm_leaf1', reqType: 'type', type: 'grass', target: 5, item: 'leaf-stone', label: 'Forêt I', desc: 'Capturer 5 Type Plante' },
+        { id: 'm_leaf2', reqType: 'type', type: 'grass', target: 15, item: 'leaf-stone', label: 'Forêt II', desc: 'Capturer 15 Type Plante' },
+        { id: 'm_leaf3', reqType: 'type', type: 'grass', target: 40, item: 'leaf-stone', label: 'Forêt III', desc: 'Capturer 40 Type Plante' },
+
+        // Thunder Stone
+        { id: 'm_bolt1', reqType: 'type', type: 'electric', target: 5, item: 'thunder-stone', label: 'Voltage I', desc: 'Capturer 5 Type Électrique' },
+        { id: 'm_bolt2', reqType: 'type', type: 'electric', target: 15, item: 'thunder-stone', label: 'Voltage II', desc: 'Capturer 15 Type Électrique' },
+        { id: 'm_bolt3', reqType: 'type', type: 'electric', target: 40, item: 'thunder-stone', label: 'Voltage III', desc: 'Capturer 40 Type Électrique' },
+
+        // Moon Stone
+        { id: 'm_moon1', reqType: 'type', type: 'normal', target: 10, item: 'moon-stone', label: 'Luminescence I', desc: 'Capturer 10 Type Normal' },
+        { id: 'm_moon2', reqType: 'type', type: 'normal', target: 25, item: 'moon-stone', label: 'Luminescence II', desc: 'Capturer 25 Type Normal' },
+        { id: 'm_moon3', reqType: 'type', type: 'normal', target: 60, item: 'moon-stone', label: 'Luminescence III', desc: 'Capturer 60 Type Normal' },
+
+        // Sun Stone
+        { id: 'm_sun1', reqType: 'type', type: 'psychic', target: 10, item: 'sun-stone', label: 'Zénith I', desc: 'Capturer 10 Type Psy' },
+        { id: 'm_sun2', reqType: 'type', type: 'psychic', target: 25, item: 'sun-stone', label: 'Zénith II', desc: 'Capturer 25 Type Psy' },
+        { id: 'm_sun3', reqType: 'type', type: 'psychic', target: 60, item: 'sun-stone', label: 'Zénith III', desc: 'Capturer 60 Type Psy' },
+
+        // Ice Stone
+        { id: 'm_ice1', reqType: 'type', type: 'ice', target: 5, item: 'ice-stone', label: 'Glacé I', desc: 'Capturer 5 Type Glace' },
+        { id: 'm_ice2', reqType: 'type', type: 'ice', target: 15, item: 'ice-stone', label: 'Glacé II', desc: 'Capturer 15 Type Glace' },
+        { id: 'm_ice3', reqType: 'type', type: 'ice', target: 40, item: 'ice-stone', label: 'Glacé III', desc: 'Capturer 40 Type Glace' },
+
+        // Dusk Stone
+        { id: 'm_dusk1', reqType: 'type', type: 'poison', target: 10, item: 'dusk-stone', label: 'Crépuscule I', desc: 'Capturer 10 Type Poison' },
+        { id: 'm_dusk2', reqType: 'type', type: 'poison', target: 25, item: 'dusk-stone', label: 'Crépuscule II', desc: 'Capturer 25 Type Poison' },
+        { id: 'm_dusk3', reqType: 'type', type: 'poison', target: 60, item: 'dusk-stone', label: 'Crépuscule III', desc: 'Capturer 60 Type Poison' },
+
+        // Shiny Stone
+        { id: 'm_shin1', reqType: 'type', type: 'fairy', target: 10, item: 'shiny-stone', label: 'Éclat I', desc: 'Capturer 10 Type Fée' },
+        { id: 'm_shin2', reqType: 'type', type: 'fairy', target: 25, item: 'shiny-stone', label: 'Éclat II', desc: 'Capturer 25 Type Fée' },
+        { id: 'm_shin3', reqType: 'type', type: 'fairy', target: 60, item: 'shiny-stone', label: 'Éclat III', desc: 'Capturer 60 Type Fée' },
+
+        // Dawn Stone
+        { id: 'm_dawn1', reqType: 'stat', statKey: 'uniques', target: 35, item: 'dawn-stone', label: 'Aube I', desc: 'Avoir 35 Pokémon uniques' },
+        { id: 'm_dawn2', reqType: 'stat', statKey: 'uniques', target: 65, item: 'dawn-stone', label: 'Aube II', desc: 'Avoir 65 Pokémon uniques' },
+        { id: 'm_dawn3', reqType: 'stat', statKey: 'uniques', target: 95, item: 'dawn-stone', label: 'Aube III', desc: 'Avoir 95 Pokémon uniques' },
+
+        // Metal Coat
+        { id: 'm_met1', reqType: 'type', type: 'steel', target: 5, item: 'metal-coat', label: 'Acier I', desc: 'Capturer 5 Type Acier' },
+        { id: 'm_met2', reqType: 'type', type: 'steel', target: 15, item: 'metal-coat', label: 'Acier II', desc: 'Capturer 15 Type Acier' },
+        { id: 'm_met3', reqType: 'type', type: 'steel', target: 40, item: 'metal-coat', label: 'Acier III', desc: 'Capturer 40 Type Acier' },
+
+        // Kings Rock
+        { id: 'm_king1', reqType: 'type', type: 'fighting', target: 10, item: 'kings-rock', label: 'Royauté I', desc: 'Capturer 10 Type Combat' },
+        { id: 'm_king2', reqType: 'type', type: 'fighting', target: 25, item: 'kings-rock', label: 'Royauté II', desc: 'Capturer 25 Type Combat' },
+        { id: 'm_king3', reqType: 'type', type: 'fighting', target: 60, item: 'kings-rock', label: 'Royauté III', desc: 'Capturer 60 Type Combat' },
+
+        // Dragon Scale
+        { id: 'm_scale1', reqType: 'type', type: 'dragon', target: 5, item: 'dragon-scale', label: 'Draco I', desc: 'Capturer 5 Type Dragon' },
+        { id: 'm_scale2', reqType: 'type', type: 'dragon', target: 15, item: 'dragon-scale', label: 'Draco II', desc: 'Capturer 15 Type Dragon' },
+        { id: 'm_scale3', reqType: 'type', type: 'dragon', target: 40, item: 'dragon-scale', label: 'Draco III', desc: 'Capturer 40 Type Dragon' },
+
+        // Protector
+        { id: 'm_prot1', reqType: 'type', type: 'rock', target: 8, item: 'protector', label: 'Rempart I', desc: 'Capturer 8 Type Roche' },
+        { id: 'm_prot2', reqType: 'type', type: 'rock', target: 20, item: 'protector', label: 'Rempart II', desc: 'Capturer 20 Type Roche' },
+        { id: 'm_prot3', reqType: 'type', type: 'rock', target: 50, item: 'protector', label: 'Rempart III', desc: 'Capturer 50 Type Roche' },
+
+        // Reaper Cloth
+        { id: 'm_ghost1', reqType: 'type', type: 'ghost', target: 5, item: 'reaper-cloth', label: 'Faucheur I', desc: 'Capturer 5 Type Spectre' },
+        { id: 'm_ghost2', reqType: 'type', type: 'ghost', target: 15, item: 'reaper-cloth', label: 'Faucheur II', desc: 'Capturer 15 Type Spectre' },
+        { id: 'm_ghost3', reqType: 'type', type: 'ghost', target: 40, item: 'reaper-cloth', label: 'Faucheur III', desc: 'Capturer 40 Type Spectre' },
+
+        // Electirizer
+        { id: 'm_elec1', reqType: 'stat', statKey: 'liberated', target: 10, item: 'electirizer', label: 'Surtension I', desc: 'Relâcher 10 Pokémon' },
+        { id: 'm_elec2', reqType: 'stat', statKey: 'liberated', target: 25, item: 'electirizer', label: 'Surtension II', desc: 'Relâcher 25 Pokémon' },
+        { id: 'm_elec3', reqType: 'stat', statKey: 'liberated', target: 50, item: 'electirizer', label: 'Surtension III', desc: 'Relâcher 50 Pokémon' },
+
+        // Magmarizer
+        { id: 'm_mag1', reqType: 'stat', statKey: 'liberated', target: 20, item: 'magmarizer', label: 'Magma I', desc: 'Relâcher 20 Pokémon' },
+        { id: 'm_mag2', reqType: 'stat', statKey: 'liberated', target: 45, item: 'magmarizer', label: 'Magma II', desc: 'Relâcher 45 Pokémon' },
+        { id: 'm_mag3', reqType: 'stat', statKey: 'liberated', target: 80, item: 'magmarizer', label: 'Magma III', desc: 'Relâcher 80 Pokémon' },
+
+        // Prism Scale
+        { id: 'm_fly1', reqType: 'type', type: 'flying', target: 8, item: 'prism-scale', label: 'Prisme I', desc: 'Capturer 8 Type Vol' },
+        { id: 'm_fly2', reqType: 'type', type: 'flying', target: 20, item: 'prism-scale', label: 'Prisme II', desc: 'Capturer 20 Type Vol' },
+        { id: 'm_fly3', reqType: 'type', type: 'flying', target: 50, item: 'prism-scale', label: 'Prisme III', desc: 'Capturer 50 Type Vol' },
+
+        // Razor Claw
+        { id: 'm_claw1', reqType: 'type', type: 'bug', target: 8, item: 'razor-claw', label: 'Griffe I', desc: 'Capturer 8 Type Insecte' },
+        { id: 'm_claw2', reqType: 'type', type: 'bug', target: 20, item: 'razor-claw', label: 'Griffe II', desc: 'Capturer 20 Type Insecte' },
+        { id: 'm_claw3', reqType: 'type', type: 'bug', target: 50, item: 'razor-claw', label: 'Griffe III', desc: 'Capturer 50 Type Insecte' },
+
+        // Razor Fang
+        { id: 'm_fang1', reqType: 'type', type: 'ground', target: 8, item: 'razor-fang', label: 'Croc I', desc: 'Capturer 8 Type Sol' },
+        { id: 'm_fang2', reqType: 'type', type: 'ground', target: 20, item: 'razor-fang', label: 'Croc II', desc: 'Capturer 20 Type Sol' },
+        { id: 'm_fang3', reqType: 'type', type: 'ground', target: 50, item: 'razor-fang', label: 'Croc III', desc: 'Capturer 50 Type Sol' },
+
+        // Black Augurite
+        { id: 'm_aug1', reqType: 'type', type: 'dark', target: 5, item: 'black-augurite', label: 'Obsidienne I', desc: 'Capturer 5 Type Ténèbres' },
+        { id: 'm_aug2', reqType: 'type', type: 'dark', target: 15, item: 'black-augurite', label: 'Obsidienne II', desc: 'Capturer 15 Type Ténèbres' },
+        { id: 'm_aug3', reqType: 'type', type: 'dark', target: 40, item: 'black-augurite', label: 'Obsidienne III', desc: 'Capturer 40 Type Ténèbres' },
+
+        // Sweet Apple
+        { id: 'm_sweet1', reqType: 'type', type: 'grass', target: 15, item: 'sweet-apple', label: 'Douceur I', desc: 'Capturer 15 Type Plante' },
+        { id: 'm_sweet2', reqType: 'type', type: 'grass', target: 35, item: 'sweet-apple', label: 'Douceur II', desc: 'Capturer 35 Type Plante' },
+        { id: 'm_sweet3', reqType: 'type', type: 'grass', target: 70, item: 'sweet-apple', label: 'Douceur III', desc: 'Capturer 70 Type Plante' },
+
+        // Tart Apple
+        { id: 'm_tart1', reqType: 'type', type: 'dragon', target: 10, item: 'tart-apple', label: 'Acidité I', desc: 'Capturer 10 Type Dragon' },
+        { id: 'm_tart2', reqType: 'type', type: 'dragon', target: 25, item: 'tart-apple', label: 'Acidité II', desc: 'Capturer 25 Type Dragon' },
+        { id: 'm_tart3', reqType: 'type', type: 'dragon', target: 60, item: 'tart-apple', label: 'Acidité III', desc: 'Capturer 60 Type Dragon' },
+
+        // Syrupy Apple
+        { id: 'm_syrup1', reqType: 'type', type: 'dragon', target: 20, item: 'syrupy-apple', label: 'Sirop I', desc: 'Capturer 20 Type Dragon' },
+        { id: 'm_syrup2', reqType: 'type', type: 'dragon', target: 45, item: 'syrupy-apple', label: 'Sirop II', desc: 'Capturer 45 Type Dragon' },
+        { id: 'm_syrup3', reqType: 'type', type: 'dragon', target: 90, item: 'syrupy-apple', label: 'Sirop III', desc: 'Capturer 90 Type Dragon' },
+
+        // Pei's Armor / Peat Block
+        { id: 'm_urs1', reqType: 'type', type: 'normal', target: 25, item: 'peat-block', label: 'Tourbe I', desc: 'Capturer 25 Type Normal' },
+        { id: 'm_urs2', reqType: 'type', type: 'normal', target: 60, item: 'peat-block', label: 'Tourbe II', desc: 'Capturer 60 Type Normal' },
+        { id: 'm_urs3', reqType: 'type', type: 'normal', target: 120, item: 'peat-block', label: 'Tourbe III', desc: 'Capturer 120 Type Normal' },
+
+        // Cracked Pot
+        { id: 'm_potc1', reqType: 'stat', statKey: 'epics', target: 2, item: 'cracked-pot', label: 'Poterie I', desc: 'Capturer 2 Pokémon Épiques' },
+        { id: 'm_potc2', reqType: 'stat', statKey: 'epics', target: 5, item: 'cracked-pot', label: 'Poterie II', desc: 'Capturer 5 Pokémon Épiques' },
+        { id: 'm_potc3', reqType: 'stat', statKey: 'epics', target: 12, item: 'cracked-pot', label: 'Poterie III', desc: 'Capturer 12 Pokémon Épiques' },
+
+        // Chipped Pot
+        { id: 'm_potchi1', reqType: 'stat', statKey: 'epics', target: 3, item: 'chipped-pot', label: 'Émail I', desc: 'Capturer 3 Pokémon Épiques' },
+        { id: 'm_potchi2', reqType: 'stat', statKey: 'epics', target: 8, item: 'chipped-pot', label: 'Émail II', desc: 'Capturer 8 Pokémon Épiques' },
+        { id: 'm_potchi3', reqType: 'stat', statKey: 'epics', target: 20, item: 'chipped-pot', label: 'Émail III', desc: 'Capturer 20 Pokémon Épiques' },
+
+        // Galarica Items (Combined for simplicity in missions, still different items)
+        { id: 'm_gal1', reqType: 'stat', statKey: 'shinies', target: 1, item: 'galarica-cuff', label: 'Galanoa I', desc: 'Trouver 1 Pokémon Shiny' },
+        { id: 'm_gal2', reqType: 'stat', statKey: 'shinies', target: 2, item: 'galarica-cuff', label: 'Galanoa II', desc: 'Trouver 2 Pokémon Shiny' },
+        { id: 'm_gal3', reqType: 'stat', statKey: 'shinies', target: 5, item: 'galarica-cuff', label: 'Galanoa III', desc: 'Trouver 5 Pokémon Shiny' },
+
+        { id: 'm_galw1', reqType: 'stat', statKey: 'shinies', target: 1, item: 'galarica-wreath', label: 'Couronne I', desc: 'Trouver 1 Pokémon Shiny' },
+        { id: 'm_galw2', reqType: 'stat', statKey: 'shinies', target: 3, item: 'galarica-wreath', label: 'Couronne II', desc: 'Trouver 3 Pokémon Shiny' },
+        { id: 'm_galw3', reqType: 'stat', statKey: 'shinies', target: 7, item: 'galarica-wreath', label: 'Couronne III', desc: 'Trouver 7 Pokémon Shiny' },
+
+        // Teacups
+        { id: 'm_tea1', reqType: 'type', type: 'ghost', target: 10, item: 'unremarkable-teacup', label: 'Thé I', desc: 'Capturer 10 Type Spectre' },
+        { id: 'm_tea2', reqType: 'type', type: 'ghost', target: 25, item: 'unremarkable-teacup', label: 'Thé II', desc: 'Capturer 25 Type Spectre' },
+        { id: 'm_tea3', reqType: 'type', type: 'ghost', target: 60, item: 'unremarkable-teacup', label: 'Thé III', desc: 'Capturer 60 Type Spectre' },
+
+        { id: 'm_teap1', reqType: 'type', type: 'ghost', target: 20, item: 'masterpiece-teacup', label: 'Perfection I', desc: 'Capturer 20 Type Spectre' },
+        { id: 'm_teap2', reqType: 'type', type: 'ghost', target: 50, item: 'masterpiece-teacup', label: 'Perfection II', desc: 'Capturer 50 Type Spectre' },
+        { id: 'm_teap3', reqType: 'type', type: 'ghost', target: 100, item: 'masterpiece-teacup', label: 'Perfection III', desc: 'Capturer 100 Type Spectre' },
+
+        // Metal Alloy
+        { id: 'm_alloy1', reqType: 'type', type: 'steel', target: 20, item: 'metal-alloy', label: 'Alloys I', desc: 'Capturer 20 Type Acier' },
+        { id: 'm_alloy2', reqType: 'type', type: 'steel', target: 50, item: 'metal-alloy', label: 'Alloys II', desc: 'Capturer 50 Type Acier' },
+        { id: 'm_alloy3', reqType: 'type', type: 'steel', target: 100, item: 'metal-alloy', label: 'Alloys III', desc: 'Capturer 100 Type Acier' },
+
+        // Sachet &Whipped Dream
+        { id: 'm_sach1', reqType: 'type', type: 'fairy', target: 15, item: 'sachet', label: 'Senteur I', desc: 'Capturer 15 Type Fée' },
+        { id: 'm_sach2', reqType: 'type', type: 'fairy', target: 40, item: 'sachet', label: 'Senteur II', desc: 'Capturer 40 Type Fée' },
+        { id: 'm_sach3', reqType: 'type', type: 'fairy', target: 80, item: 'sachet', label: 'Senteur III', desc: 'Capturer 80 Type Fée' },
+
+        { id: 'm_whip1', reqType: 'type', type: 'fairy', target: 20, item: 'whipped-dream', label: 'Chantilly I', desc: 'Capturer 20 Type Fée' },
+        { id: 'm_whip2', reqType: 'type', type: 'fairy', target: 50, item: 'whipped-dream', label: 'Chantilly II', desc: 'Capturer 50 Type Fée' },
+        { id: 'm_whip3', reqType: 'type', type: 'fairy', target: 100, item: 'whipped-dream', label: 'Chantilly III', desc: 'Capturer 100 Type Fée' },
+
+        // Deep Sea Tooth & Scale
+        { id: 'm_tooth1', reqType: 'type', type: 'water', target: 25, item: 'deep-sea-tooth', label: 'Mordant I', desc: 'Capturer 25 Type Eau' },
+        { id: 'm_tooth2', reqType: 'type', type: 'water', target: 60, item: 'deep-sea-tooth', label: 'Mordant II', desc: 'Capturer 60 Type Eau' },
+        { id: 'm_tooth3', reqType: 'type', type: 'water', target: 120, item: 'deep-sea-tooth', label: 'Mordant III', desc: 'Capturer 120 Type Eau' },
+
+        { id: 'm_deeps1', reqType: 'type', type: 'water', target: 35, item: 'deep-sea-scale', label: 'Abysse I', desc: 'Capturer 35 Type Eau' },
+        { id: 'm_deeps2', reqType: 'type', type: 'water', target: 80, item: 'deep-sea-scale', label: 'Abysse II', desc: 'Capturer 80 Type Eau' },
+        { id: 'm_deeps3', reqType: 'type', type: 'water', target: 150, item: 'deep-sea-scale', label: 'Abysse III', desc: 'Capturer 150 Type Eau' },
+
+        // Leaders Crest
+        { id: 'm_lead1', reqType: 'type', type: 'dark', target: 25, item: 'leaders-crest', label: 'Commandant I', desc: 'Capturer 25 Type Ténèbres' },
+        { id: 'm_lead2', reqType: 'type', type: 'dark', target: 60, item: 'leaders-crest', label: 'Commandant II', desc: 'Capturer 60 Type Ténèbres' },
+        { id: 'm_lead3', reqType: 'type', type: 'dark', target: 120, item: 'leaders-crest', label: 'Commandant III', desc: 'Capturer 120 Type Ténèbres' },
+
+        // Strawberry Sweet
+        { id: 'm_berry1', reqType: 'stat', statKey: 'liberated', target: 30, item: 'strawberry-sweet', label: 'Sucrerie I', desc: 'Relâcher 30 Pokémon' },
+        { id: 'm_berry2', reqType: 'stat', statKey: 'liberated', target: 65, item: 'strawberry-sweet', label: 'Sucrerie II', desc: 'Relâcher 65 Pokémon' },
+        { id: 'm_berry3', reqType: 'stat', statKey: 'liberated', target: 110, item: 'strawberry-sweet', label: 'Sucrerie III', desc: 'Relâcher 110 Pokémon' }
     ];
 
     function renderMissions() {
         const container = document.getElementById('missions-list');
-        container.innerHTML = '<h2>Missions d\'Entraineur</h2>';
+        container.innerHTML = '<h2>Missions d\'Entraîneur</h2>';
 
         if (!state.missions.typeProgress) state.missions.typeProgress = {};
         if (!state.missions.claimed) state.missions.claimed = [];
 
-        const typeMissions = {};
+        const missionSeries = {};
         MISSIONS.forEach(m => {
-            if (!typeMissions[m.type]) typeMissions[m.type] = [];
-            typeMissions[m.type].push(m);
+            const seriesId = m.id.replace(/[0-9]+$/, ''); // Group m1, m2 to "m"
+            if (!missionSeries[seriesId]) missionSeries[seriesId] = [];
+            missionSeries[seriesId].push(m);
         });
 
-        const typeTranslations = { fire: 'Feu', water: 'Eau', grass: 'Plante', electric: 'Electrique', ice: 'Glace', normal: 'Normal', psychic: 'Psy', poison: 'Poison', fairy: 'Fee', fighting: 'Combat', steel: 'Acier', rock: 'Roche', dark: 'Tenebres', dragon: 'Dragon', ghost: 'Spectre', ground: 'Sol', bug: 'Insecte', flying: 'Vol' };
-        const stoneTranslations = { 'fire-stone': 'Pierre Feu', 'water-stone': 'Pierre Eau', 'leaf-stone': 'Pierre Plante', 'thunder-stone': 'Pierre Foudre', 'ice-stone': 'Pierre Glace', 'moon-stone': 'Pierre Lune', 'sun-stone': 'Pierre Soleil', 'dusk-stone': 'Pierre Nuit', 'shiny-stone': 'Pierre Eclat', 'dawn-stone': 'Pierre Aube', 'kings-rock': 'Roche Royale', 'metal-coat': 'Peau Metal', 'protector': 'Protecteur', 'reaper-cloth': 'Tissu Faucheur', 'dragon-scale': 'Ecaille Draco', 'prism-scale': "Bel'Ecaille", 'razor-claw': 'Griffe Rasoir', 'razor-fang': 'Croc Rasoir', 'black-augurite': 'Obsidienne' };
-
-        Object.keys(typeMissions).forEach(type => {
-            const series = typeMissions[type];
+        Object.keys(missionSeries).forEach(seriesId => {
+            const series = missionSeries[seriesId];
             const nextMission = series.find(m => !state.missions.claimed.includes(m.id));
 
             if (nextMission) {
-                const current = state.missions.typeProgress[nextMission.type] || 0;
+                let current = 0;
+                if (nextMission.reqType === 'type') {
+                    current = state.missions.typeProgress[nextMission.type] || 0;
+                } else if (nextMission.reqType === 'stat') {
+                    current = state.stats[nextMission.statKey] || 0;
+                }
+
                 const progress = Math.min(100, (current / nextMission.target) * 100);
-                const typeFr = typeTranslations[nextMission.type] || nextMission.type.toUpperCase();
-                const stoneFr = stoneTranslations[nextMission.stone] || nextMission.stone.replace('-', ' ');
+                const stoneFr = stoneTranslations[nextMission.item] || nextMission.item.replace('-', ' ');
 
                 const card = document.createElement('div');
                 card.className = `mission-card`;
                 card.innerHTML = `
                     <h3>${nextMission.label}</h3>
-                    <p>Capturer des Pokemon de type ${typeFr} : ${current}/${nextMission.target}</p>
+                    <p>${nextMission.desc} : ${current}/${nextMission.target}</p>
                     <div class="progress-bar"><div style="width: ${progress}%"></div></div>
                     <div class="reward">Cadeau: ${stoneFr}</div>
-                    <button class="claim-btn" ${current >= nextMission.target ? '' : 'disabled'} onclick="claimMission('${nextMission.id}', '${nextMission.stone}', ${nextMission.target})">
-                        Reclamer
+                    <button class="claim-btn" ${current >= nextMission.target ? '' : 'disabled'} onclick="claimMission('${nextMission.id}', '${nextMission.item}', '${nextMission.reqType}', '${nextMission.reqType === 'type' ? nextMission.type : nextMission.statKey}', ${nextMission.target})">
+                        Réclamer
                     </button>
                 `;
                 container.appendChild(card);
             }
         });
     }
+
+    window.claimMission = (missionId, itemReward, reqType, reqKey, target) => {
+        let current = 0;
+        if (reqType === 'type') current = state.missions.typeProgress[reqKey] || 0;
+        if (reqType === 'stat') current = state.stats[reqKey] || 0;
+
+        if (current >= target) {
+            state.missions.claimed.push(missionId);
+            if (!state.inventory.stones) state.inventory.stones = {};
+            state.inventory.stones[itemReward] = (state.inventory.stones[itemReward] || 0) + 1;
+
+            // On soustrait la progression pour les types de quêtes répétables si on veut, mais ici c'est cumulatif.
+
+            const frName = stoneTranslations[itemReward] || itemReward;
+
+            vscode.postMessage({ type: 'showInfo', value: `Mission "${missionId}" accomplie ! Vous obtenez : ${frName}` });
+            saveState();
+            renderMissions();
+            updateUI();
+        }
+    };
+
 
     function saveState() {
         state.lastUpdate = Date.now();
