@@ -9,6 +9,15 @@
     --glass-border: rgba(255, 255, 255, 0.1);
     --xp-color: #4caf50;
     --shiny-gold: #ffd700;
+    --gender-m: #3498db;
+    --gender-f: #e91e63;
+}
+
+body.night-mode {
+    --bg-primary: #050507;
+    --bg-secondary: #0a0a0f;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    filter: brightness(0.9) contrast(1.1);
 }
 
 body {
@@ -270,6 +279,16 @@ header {
 .pokemon-name .lvl {
     font-size: 0.8rem;
     color: var(--accent-light);
+}
+
+.gender-m {
+    color: var(--gender-m);
+    font-size: 1rem;
+}
+
+.gender-f {
+    color: var(--gender-f);
+    font-size: 1rem;
 }
 
 .rarity-tag {

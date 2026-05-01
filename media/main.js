@@ -41,6 +41,7 @@
     let currentPokemon = null;
     let selectedBall = 'pokeball';
     let speciesCache = {}; // Cache pour limiter les appels API
+    let dayNightInterval = null;
 
     // Initialisation
     vscode.postMessage({ type: 'getState' });
@@ -64,6 +65,8 @@
             }
             if (!state.missions) state.missions = { captures: 0, evolutions: 0, typeProgress: {}, claimed: [] };
             if (!state.missions.typeProgress) state.missions.typeProgress = {};
+            if (!state.released) state.released = [];
+            if (!state.recentSpawns) state.recentSpawns = [];
 
             if (!state.discovery) {
                 state.discovery = {};
@@ -86,6 +89,25 @@
                         if (p.speciesId > 10000) p.speciesId = null;
                         if (!p.speciesId && p.id <= 10000) p.speciesId = p.id;
                         if (p.nextEvoLevel === "Erreur") p.nextEvoLevel = null;
+
+                        // Migration de genre robuste
+                        if (p.gender === 'mâle') p.gender = 'male';
+                        if (p.gender === 'femelle') p.gender = 'female';
+                        if (p.gender === 'asexué') p.gender = 'genderless';
+
+                        // Genres forcés pour certaines espèces connues
+                        const maleOnly = [32, 33, 34, 106, 107, 128, 236, 237, 538, 539, 627, 628, 641, 642, 645];
+                        const femaleOnly = [29, 30, 31, 113, 115, 124, 238, 241, 242, 440, 548, 549, 629, 630, 488];
+
+                        if (maleOnly.includes(p.id)) p.gender = 'male';
+                        if (femaleOnly.includes(p.id)) p.gender = 'female';
+
+                        if (!p.gender || (p.gender !== 'male' && p.gender !== 'female' && p.gender !== 'genderless')) {
+                            p.gender = Math.random() < 0.5 ? 'male' : 'female';
+                        }
+
+                        // On marque pour une future synchronization API preçise
+                        if (p.synced === undefined) p.synced = false;
                     }
                 });
             } else {
@@ -96,9 +118,21 @@
             syncDiscovery();
             updateUI();
             renderShop();
+
+            updateDayNight();
+            if (dayNightInterval) clearInterval(dayNightInterval);
+            dayNightInterval = setInterval(updateDayNight, 60000); // Check toutes les minutes
+
             startGameLoop();
         }
     });
+
+    function updateDayNight() {
+        const hour = new Date().getHours();
+        // Jour de 7h a 19h
+        const isNight = hour >= 19 || hour < 7;
+        document.body.classList.toggle('night-mode', isNight);
+    }
 
     function syncDiscovery() {
         let changed = false;
@@ -427,8 +461,15 @@
 
                 const minLevelRequired = rarity === "Légendaire" ? 50 : (rarity === "Épique" ? 20 : 1);
 
-                if (state.level >= minLevelRequired && Math.random() < chance) {
+                // Anti-doublon (recentSpawns)
+                const isRecent = state.recentSpawns.includes(data.id);
+
+                if (state.level >= minLevelRequired && Math.random() < chance && !isRecent) {
                     found = true;
+
+                    // Mise a jour des doublons
+                    state.recentSpawns.push(data.id);
+                    if (state.recentSpawns.length > 5) state.recentSpawns.shift();
 
                     let frenchName = speciesData.names.find(n => n.language.name === 'fr')?.name || speciesData.name;
 
@@ -439,11 +480,12 @@
                     if (variety.pokemon.name.includes('-paldea')) frenchName += " de Paldea";
 
                     currentPokemon = {
-                        id: data.id, // ID du Pokémon spécifique (ex: Raichu d'Alola)
+                        id: data.id,
                         speciesId: speciesData.id,
                         name: frenchName + formName,
                         rarity: rarity,
                         captureRate: capRate,
+                        genderRate: speciesData.gender_rate, // On stocke pour la capture
                         sprite: sprite,
                         types: data.types.map(t => t.type.name),
                         isShiny: Math.random() < (1 / 512),
@@ -479,7 +521,9 @@
                 <div class="rarity-tag ${currentPokemon.rarity.toLowerCase()}">${currentPokemon.rarity}</div>
                 <img src="${currentPokemon.sprite}" class="pokemon-sprite">
                 <div class="pokemon-name">
-                    ${currentPokemon.isShiny ? 'Ô£¿ ' : ''}${currentPokemon.name} <span class="lvl">Nv.${currentPokemon.level}</span>
+                    ${currentPokemon.isShiny ? '✨ ' : ''}${currentPokemon.name}
+                    ${currentPokemon.gender === 'male' ? '<span class="gender-m">♂</span>' : (currentPokemon.gender === 'female' ? '<span class="gender-f">♀</span>' : '')}
+                    <span class="lvl">Nv.${currentPokemon.level}</span>
                 </div>
                 <div class="capture-hint">Cliquez pour capturer !</div>
             </div>
@@ -567,10 +611,17 @@
     }
 
     function finalizeCapture() {
+        let gender = 'genderless';
+        if (currentPokemon.genderRate !== -1 && currentPokemon.genderRate !== undefined) {
+            // gender_rate est la chance sur 8 d'etre femelle
+            gender = Math.random() < (currentPokemon.genderRate / 8) ? 'female' : 'male';
+        }
+
         const newPoke = {
             ...currentPokemon,
             instanceId: Date.now() + Math.random(),
             xp: 0,
+            gender: gender,
             date: new Date().toLocaleDateString()
         };
 
@@ -725,6 +776,8 @@
             item.className = `pokedex-item ${p.isShiny ? 'shiny-border' : ''}`;
             const evoInfo = calculateEvoTime(p);
 
+            const genderSign = p.gender === 'male' ? '<span class="gender-m">♂</span>' : (p.gender === 'female' ? '<span class="gender-f">♀</span>' : '');
+
             let evoDisplay = '';
             if (evoInfo !== 'MAX') {
                 const readyClass = evoInfo === 'Évolution prête !' ? 'evo-ready' : '';
@@ -743,11 +796,12 @@
                     <span class="tooltip-title">${p.isShiny ? '✨ ' : ''}${p.name}</span>
                     <div class="tooltip-row"><span class="tooltip-label">Nv.</span><span>${p.level}</span></div>
                     <div class="tooltip-row"><span class="tooltip-label">Rarete</span><span>${p.rarity}</span></div>
+                    <div class="tooltip-row"><span class="tooltip-label">Genre</span><span>${p.gender === 'male' ? 'Mâle' : (p.gender === 'female' ? 'Femelle' : 'Asexué')}</span></div>
                     <div class="tooltip-row"><span class="tooltip-label">Capture le</span><span>${p.date || 'Inconnue'}</span></div>
                 </div>
                 <div class="poke-info">
                     <img src="${iconUrl}" onerror="this.src='${p.sprite}'">
-                    <span class="p-name">${p.name || 'Inconnu'} ${p.isShiny ? '✨' : ''}</span>
+                    <span class="p-name">${p.name || 'Inconnu'} ${genderSign} ${p.isShiny ? '✨' : ''}</span>
                     <span class="p-lvl">Nv.${p.level || '?'}</span>
                     <div class="p-xp-bar"><div style="width: ${xpProgress}%"></div></div>
                     ${evoDisplay}
@@ -787,9 +841,9 @@
     }
 
     function calculateEvoTime(p) {
-        if (!p.nextEvoLevel) {
+        if (!p.nextEvoLevel || p.synced === false) {
             fetchNextEvoLevel(p);
-            return "Analyse...";
+            if (!p.nextEvoLevel) return "Analyse...";
         }
         if (p.nextEvoLevel === "MAX") return "MAX";
         if (typeof p.nextEvoLevel === "string") return p.nextEvoLevel;
@@ -840,6 +894,12 @@
 
 
             const cache = speciesCache[sId];
+
+            // Correction dynamique du genre si erroné (ex: Migration 50/50 sur un Nidoking)
+            if (cache.species.gender_rate === 0) p.gender = 'male';
+            if (cache.species.gender_rate === 8) p.gender = 'female';
+            if (cache.species.gender_rate === -1) p.gender = 'genderless';
+
             const englishName = cache.species.name;
             const evoDetails = findEvoDetails(cache.chain.chain, englishName);
 
@@ -853,6 +913,7 @@
             } else {
                 p.nextEvoLevel = "MAX";
             }
+            p.synced = true; // On marque comme synchronis├® avec les vraies donn├®es API
             renderPokedex();
         } catch (e) {
             console.error("Evo analysis error", p.name, e);
