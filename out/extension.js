@@ -298,6 +298,15 @@ class PokeIdleProvider {
                     <div class="tab-content hidden" id="pokedex-tab">
                         <div class="pokedex-controls">
                             <input type="text" id="poke-search" placeholder="Rechercher un Pokémon...">
+                            <select id="pokedex-sort">
+                                <option value="id">Ordre Pokéball</option>
+                                <option value="name-asc">Nom (A -> Z)</option>
+                                <option value="name-desc">Nom (Z -> A)</option>
+                                <option value="level-desc">Niveau (+ -> -)</option>
+                                <option value="level-asc">Niveau (- -> +)</option>
+                                <option value="can-evolve">Peut Evoluer</option>
+                                <option value="final-stage">Stade Final</option>
+                            </select>
                         </div>
                         <div id="pokedex-list" class="pokedex-list">
                             <!-- Pokedex items here -->

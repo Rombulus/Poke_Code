@@ -232,7 +232,7 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 			...newer.missions,
 			claimed: Array.from(new Set([...(s1.missions?.claimed || []), ...(s2.missions?.claimed || [])]))
 		};
-		
+
 		// Pour le progrès des types, on garde le max pour ne pas reculer
 		merged.missions.typeProgress = { ...(s1.missions?.typeProgress || {}) };
 		if (s2.missions?.typeProgress) {
@@ -299,6 +299,15 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
                     <div class="tab-content hidden" id="pokedex-tab">
                         <div class="pokedex-controls">
                             <input type="text" id="poke-search" placeholder="Rechercher un Pokémon...">
+                            <select id="pokedex-sort">
+                                <option value="id">Ordre Pokéball</option>
+                                <option value="name-asc">Nom (A -> Z)</option>
+                                <option value="name-desc">Nom (Z -> A)</option>
+                                <option value="level-desc">Niveau (+ -> -)</option>
+                                <option value="level-asc">Niveau (- -> +)</option>
+                                <option value="can-evolve">Peut Evoluer</option>
+                                <option value="final-stage">Stade Final</option>
+                            </select>
                         </div>
                         <div id="pokedex-list" class="pokedex-list">
                             <!-- Pokedex items here -->

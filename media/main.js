@@ -34,11 +34,13 @@
         missionCaptureTarget: document.getElementById('mission-capture-target'),
         missionCaptureProgress: document.getElementById('mission-capture-progress'),
         claimMission1: document.getElementById('claim-mission-1'),
-        pokeSearch: document.getElementById('poke-search')
+        pokeSearch: document.getElementById('poke-search'),
+        pokeSort: document.getElementById('pokedex-sort')
     };
 
     let currentPokemon = null;
     let selectedBall = 'pokeball';
+    let speciesCache = {}; // Cache pour limiter les appels API
 
     // Initialisation
     vscode.postMessage({ type: 'getState' });
@@ -56,7 +58,7 @@
             if (!state.inventory) state.inventory = { balls: { pokeball: 20 }, stones: {} };
             if (!state.inventory.balls) state.inventory.balls = { pokeball: 20 };
             if (!state.inventory.stones) state.inventory.stones = {};
-            
+
             if (state.spawnTimer === undefined || isNaN(state.spawnTimer)) {
                 state.spawnTimer = 180;
             }
@@ -64,7 +66,7 @@
             if (!state.missions.typeProgress) state.missions.typeProgress = {};
 
             if (!state.discovery) {
-                state.discovery = {}; 
+                state.discovery = {};
             } else if (Array.isArray(state.discovery)) {
                 // Migration propre : on garde les IDs mais on n'a pas encore les noms/sprites
                 const oldDiscovery = state.discovery;
@@ -81,6 +83,9 @@
                         if (!p.instanceId) p.instanceId = Date.now() + Math.random();
                         if (!p.level) p.level = 5;
                         if (p.xp === undefined) p.xp = 0;
+                        if (p.speciesId > 10000) p.speciesId = null;
+                        if (!p.speciesId && p.id <= 10000) p.speciesId = p.id;
+                        if (p.nextEvoLevel === "Erreur") p.nextEvoLevel = null;
                     }
                 });
             } else {
@@ -98,7 +103,7 @@
     function syncDiscovery() {
         let changed = false;
         if (!state.discovery) state.discovery = {};
-        
+
         // S'assurer que tout ce qui est dans le pokedex (collection) est marque comme capture
         if (Array.isArray(state.pokedex)) {
             state.pokedex.forEach(p => {
@@ -114,7 +119,7 @@
                 }
             });
         }
-        
+
         if (changed) {
             saveState();
         }
@@ -167,12 +172,19 @@
                 });
             }
 
-            // Gestion de la recherche dans le Pok├®dex
+            // Gestion de la recherche dans le Pokédex
             if (UI.pokeSearch) {
                 UI.pokeSearch.addEventListener('input', () => {
                     try {
                         renderPokedex();
                     } catch (err) { }
+                });
+            }
+
+            // Gestion du tri
+            if (UI.pokeSort) {
+                UI.pokeSort.addEventListener('change', () => {
+                    renderPokedex();
                 });
             }
         } catch (err) {
@@ -235,7 +247,7 @@
     }
 
     const BALL_TYPES = [
-        { id: 'pokeball', name: 'Pok├® Ball', rate: 0.4, price: 20, img: 'poke-ball' },
+        { id: 'pokeball', name: 'Poké Ball', rate: 0.4, price: 20, img: 'poke-ball' },
         { id: 'superball', name: 'Super Ball', rate: 0.6, price: 100, img: 'great-ball' },
         { id: 'hyperball', name: 'Hyper Ball', rate: 0.85, price: 400, img: 'ultra-ball' },
         { id: 'masterball', name: 'Master Ball', rate: 1.0, price: 5000, img: 'master-ball' },
@@ -350,7 +362,7 @@
             }
         });
 
-        // Mise ├á jour visuelle si on est sur l'onglet pokedex
+        // Mise à jour visuelle si on est sur l'onglet pokedex
         const isPokedexOpen = !document.getElementById('pokedex-tab').classList.contains('hidden');
         if (isPokedexOpen || leveledUp) {
             renderPokedex();
@@ -383,15 +395,15 @@
                 const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`);
                 speciesData = await speciesRes.json();
 
-                // 1. Choisir une vari├®t├® (Normal, Alola, Galar, etc.)
-                // On exclut les Megas/Gmax pour l'instant pour garder les ├®volutions classiques
+                // 1. Choisir une variété (Normal, Alola, Galar, etc.)
+                // On exclut les Megas/Gmax pour l'instant pour garder les évolutions classiques
                 const validVarieties = speciesData.varieties.filter(v => !v.pokemon.name.includes('-mega') && !v.pokemon.name.includes('-gmax'));
                 const variety = validVarieties[Math.floor(Math.random() * validVarieties.length)];
-                
+
                 const response = await fetch(variety.pokemon.url);
                 data = await response.json();
 
-                // 2. Choisir une forme esth├®tique (Vivaldaim, Meteno, etc.)
+                // 2. Choisir une forme esthétique (Vivaldaim, Meteno, etc.)
                 let sprite = data.sprites.other['official-artwork'].front_default || data.sprites.front_default;
                 let formName = "";
 
@@ -403,31 +415,31 @@
                     if (formData.form_name) formName = ` (${formData.form_name})`;
                 }
 
-                // Logique de raret├®
+                // Logique de rareté
                 const capRate = speciesData.capture_rate;
                 let rarity = "Commun";
                 let chance = 1;
 
-                if (capRate <= 3) { rarity = "L├®gendaire"; chance = 0.01; }
-                else if (capRate <= 45) { rarity = "├ëpique"; chance = 0.1; }
+                if (capRate <= 3) { rarity = "Légendaire"; chance = 0.01; }
+                else if (capRate <= 45) { rarity = "Épique"; chance = 0.1; }
                 else if (capRate <= 100) { rarity = "Rare"; chance = 0.3; }
                 else if (capRate <= 150) { rarity = "Peu Commun"; chance = 0.6; }
 
-                const minLevelRequired = rarity === "L├®gendaire" ? 50 : (rarity === "├ëpique" ? 20 : 1);
+                const minLevelRequired = rarity === "Légendaire" ? 50 : (rarity === "Épique" ? 20 : 1);
 
                 if (state.level >= minLevelRequired && Math.random() < chance) {
                     found = true;
 
                     let frenchName = speciesData.names.find(n => n.language.name === 'fr')?.name || speciesData.name;
-                    
-                    // G├®rer le nom des formes r├®gionales
+
+                    // Gérer le nom des formes régionales
                     if (variety.pokemon.name.includes('-alola')) frenchName += " d'Alola";
                     if (variety.pokemon.name.includes('-galar')) frenchName += " de Galar";
                     if (variety.pokemon.name.includes('-hisui')) frenchName += " de Hisui";
                     if (variety.pokemon.name.includes('-paldea')) frenchName += " de Paldea";
 
                     currentPokemon = {
-                        id: data.id, // ID du Pok├®mon sp├®cifique (ex: Raichu d'Alola)
+                        id: data.id, // ID du Pokémon spécifique (ex: Raichu d'Alola)
                         speciesId: speciesData.id,
                         name: frenchName + formName,
                         rarity: rarity,
@@ -439,7 +451,7 @@
                         level: Math.max(1, Math.floor(state.level * 0.8) + Math.floor(Math.random() * 5))
                     };
 
-                    // Ajout aux d├®couvertes en tant que "Rencontr├®"
+                    // Ajout aux découvertes en tant que "Rencontré"
                     if (!state.discovery[currentPokemon.id]) {
                         state.discovery[currentPokemon.id] = {
                             name: currentPokemon.name,
@@ -456,7 +468,7 @@
             renderPokemon();
         } catch (error) {
             console.error("Spawn error:", error);
-            state.spawnTimer = 10; // R├®essaie vite en cas d'erreur API
+            state.spawnTimer = 10; // Réessaie vite en cas d'erreur API
             vscode.postMessage({ type: 'updateStatus', active: false });
         }
     }
@@ -479,13 +491,13 @@
     function catchPokemon() {
         if (!currentPokemon) return;
         if ((state.inventory.balls[selectedBall] || 0) <= 0) {
-            vscode.postMessage({ type: 'showInfo', value: "Plus de Balls ! Attendez que vos pi├¿ces s'accumulent." });
+            vscode.postMessage({ type: 'showInfo', value: "Plus de Balls ! Attendez que vos pièces s'accumulent." });
             return;
         }
 
         const ball = BALL_TYPES.find(b => b.id === selectedBall);
-        
-        // --- D├®cr├®mentation imm├®diate ---
+
+        // --- Décrémentation immédiate ---
         state.inventory.balls[selectedBall]--;
         updateUI();
         saveState();
@@ -494,16 +506,16 @@
         const ballImg = document.createElement('img');
         ballImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${ball.img}.png`;
         ballImg.className = 'thrown-ball throw-arc';
-        
-        // Positionner la ball par rapport au Pok├®mon
+
+        // Positionner la ball par rapport au Pokémon
         const pokeEl = document.getElementById('active-pokemon');
         const rect = pokeEl.getBoundingClientRect();
         ballImg.style.left = `${rect.left + rect.width / 2 - 15}px`;
         ballImg.style.top = `${rect.top + rect.height / 2 - 15}px`;
-        
+
         document.body.appendChild(ballImg);
 
-        // Retirer la ball et d├®clencher la capture apr├¿s l'animation
+        // Retirer la ball et déclencher la capture après l'animation
         setTimeout(() => {
             ballImg.remove();
             executeCatchLogic(ball);
@@ -512,21 +524,21 @@
 
     function executeCatchLogic(ball) {
         let catchSuccess = false;
-        
+
         if (ball.id === 'masterball') {
             catchSuccess = true;
         } else {
-            // currentPokemon.captureRate varie de 3 (L├®gendaire) ├á 255 (tr├¿s commun)
+            // currentPokemon.captureRate varie de 3 (Légendaire) à 255 (très commun)
             let chance = currentPokemon.captureRate / 255.0;
-            
-            // On ajoute un bonus fixe selon la puissance de la Pok├®ball
-            // ball.rate est de 0.4 pour la Pok├®ball standard, donc (0.4 - 0.4) = +0%
+
+            // On ajoute un bonus fixe selon la puissance de la Pokéball
+            // ball.rate est de 0.4 pour la Pokéball standard, donc (0.4 - 0.4) = +0%
             // Hyperball a 0.85, donc (0.85 - 0.4) = +45% de chance de capture
             chance += (ball.rate - 0.4);
-            
+
             // On s'assure que la chance est entre 5% et 100%
             chance = Math.max(0.05, Math.min(1.0, chance));
-            
+
             catchSuccess = Math.random() < chance;
         }
 
@@ -541,7 +553,7 @@
             pokemonEl.classList.add('shake-anim');
             setTimeout(() => { pokemonEl.classList.remove('shake-anim'); }, 500);
 
-            // V├®rifier si le joueur est ├á court de TOUTES les balls
+            // Vérifier si le joueur est à court de TOUTES les balls
             const totalBalls = Object.values(state.inventory.balls).reduce((a, b) => a + b, 0);
             if (totalBalls <= 0) {
                 vscode.postMessage({ type: 'showInfo', value: `Plus de Balls ! ${currentPokemon.name} s'enfuit pendant que vous fouillez vos poches...` });
@@ -567,7 +579,7 @@
         state.xp += Math.floor(currentPokemon.baseExperience / 5);
         state.missions.captures++;
 
-        // Mise ├á jour de la liste des d├®couvertes (Pok├®dex permanent)
+        // Mise à jour de la liste des découvertes (Pokédex permanent)
         state.discovery[newPoke.id] = {
             name: newPoke.name,
             sprite: newPoke.sprite,
@@ -606,7 +618,7 @@
                 <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.img}.png">
                 <div class="item-info">
                     <span>${item.name}</span>
-                    <span class="owned">Poss├®d├® : ${owned}</span>
+                    <span class="owned">Possédé : ${owned}</span>
                     <span class="price">${item.price} <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/nugget.png" class="mini-icon"></span>
                 </div>
                 <button onclick="buyItem('${item.id}', ${item.price})">Acheter</button>
@@ -621,8 +633,9 @@
             state.inventory.balls[id] = (state.inventory.balls[id] || 0) + 1;
             updateUI();
             saveState();
+            renderShop();
         } else {
-            vscode.postMessage({ type: 'showInfo', value: "Pas assez de pi├¿ces !" });
+            vscode.postMessage({ type: 'showInfo', value: "Pas assez de pièces !" });
         }
     };
 
@@ -634,7 +647,7 @@
         state.coins += 50;
         state.inventory.stones[stone] = (state.inventory.stones[stone] || 0) + 1;
 
-        vscode.postMessage({ type: 'showInfo', value: `Mission accomplie ! +50 ­ƒ¬Ö et 1x ${stone.replace('-', ' ')}` });
+        vscode.postMessage({ type: 'showInfo', value: `Mission accomplie ! +50 💰 et 1x ${stone.replace('-', ' ')}` });
         saveState();
         updateUI();
     };
@@ -642,22 +655,22 @@
     function renderPokedex() {
         if (!UI.pokedexList) return;
         UI.pokedexList.innerHTML = '';
-        
+
         const discoveries = Object.values(state.discovery || {});
         const encounteredCount = discoveries.length;
         const capturedCount = discoveries.filter(d => d.caught).length;
 
-        // Affichage du progr├¿s global
+        // Affichage du progrès global
         const statsHeader = document.createElement('div');
         statsHeader.className = 'pokedex-header-stats';
         statsHeader.innerHTML = `
             <div class="stats-row">
                 <div class="discovery-count">National : <span>${capturedCount}</span> / 1025</div>
-                <div class="current-count">Rencontr├®s : <span>${encounteredCount}</span></div>
+                <div class="current-count">Rencontrés : <span>${encounteredCount}</span></div>
             </div>
             <div class="pokedex-mode-toggle">
                 <button id="btn-view-collection" class="mini-btn ${UI.pokedexMode === 'national' ? '' : 'active'}">Ma Collection</button>
-                <button id="btn-view-national" class="mini-btn ${UI.pokedexMode === 'national' ? 'active' : ''}">Pok├®dex National</button>
+                <button id="btn-view-national" class="mini-btn ${UI.pokedexMode === 'national' ? 'active' : ''}">Pokédex National</button>
             </div>
         `;
         UI.pokedexList.appendChild(statsHeader);
@@ -679,11 +692,32 @@
 
         const search = (UI.pokeSearch?.value || '').toLowerCase();
 
-        // S├®curit├® : s'assurer que pokedex est un tableau
+        // Sécurité : s'assurer que pokedex est un tableau
         if (!Array.isArray(state.pokedex)) state.pokedex = [];
 
-        const filtered = state.pokedex.filter(p => p && p.name && p.name.toLowerCase().includes(search));
-        const sorted = filtered.sort((a, b) => (a.id || 0) - (b.id || 0));
+        let filtered = state.pokedex.filter(p => p && p.name && p.name.toLowerCase().includes(search));
+
+        // --- Système de Tri ---
+        const sortMode = UI.pokeSort ? UI.pokeSort.value : 'id';
+        const sorted = filtered.sort((a, b) => {
+            if (sortMode === 'name-asc') return a.name.localeCompare(b.name);
+            if (sortMode === 'name-desc') return b.name.localeCompare(a.name);
+            if (sortMode === 'level-desc') return b.level - a.level;
+            if (sortMode === 'level-asc') return a.level - b.level;
+            if (sortMode === 'can-evolve') {
+                const aCan = (typeof a.nextEvoLevel === 'number' && a.level >= a.nextEvoLevel) || a.nextEvoLevel === 'Item requis';
+                const bCan = (typeof b.nextEvoLevel === 'number' && b.level >= b.nextEvoLevel) || b.nextEvoLevel === 'Item requis';
+                if (aCan !== bCan) return bCan - aCan;
+                return (a.id || 0) - (b.id || 0);
+            }
+            if (sortMode === 'final-stage') {
+                const aFinal = a.nextEvoLevel === 'MAX';
+                const bFinal = b.nextEvoLevel === 'MAX';
+                if (aFinal !== bFinal) return bFinal - aFinal;
+                return (a.id || 0) - (b.id || 0);
+            }
+            return (a.id || 0) - (b.id || 0);
+        });
 
         sorted.forEach(p => {
             if (!p) return;
@@ -691,9 +725,16 @@
             item.className = `pokedex-item ${p.isShiny ? 'shiny-border' : ''}`;
             const evoInfo = calculateEvoTime(p);
 
+            let evoDisplay = '';
+            if (evoInfo !== 'MAX') {
+                const readyClass = evoInfo === 'Évolution prête !' ? 'evo-ready' : '';
+                const clickAttr = readyClass ? `onclick="manualEvolve('${p.instanceId}')"` : '';
+                evoDisplay = `<div class="evo-timer ${readyClass}" ${clickAttr}>${evoInfo}</div>`;
+            }
+
             const xpToNext = calculatePokeXPToNext(p.level || 1);
             const xpProgress = Math.min(100, (p.xp / xpToNext) * 100);
-            
+
             // On utilise les icones de la Gen VIII pour le look "PC"
             const iconUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/${p.id}.png`;
 
@@ -709,10 +750,10 @@
                     <span class="p-name">${p.name || 'Inconnu'} ${p.isShiny ? '✨' : ''}</span>
                     <span class="p-lvl">Nv.${p.level || '?'}</span>
                     <div class="p-xp-bar"><div style="width: ${xpProgress}%"></div></div>
-                    <div class="evo-timer">${evoInfo}</div>
+                    ${evoDisplay}
                 </div>
                 <div class="poke-actions">
-                    <button class="sell-btn" onclick="sellPokemon(${p.instanceId})">Liberer (40$)</button>
+                    <button class="sell-btn" onclick="sellPokemon('${p.instanceId}')">Liberer (40$)</button>
                 </div>
             `;
             UI.pokedexList.appendChild(item);
@@ -722,16 +763,16 @@
     function renderNationalPokedex() {
         const container = document.createElement('div');
         container.className = 'national-grid';
-        
+
         for (let i = 1; i <= 1025; i++) {
             const disc = state.discovery[i];
             const item = document.createElement('div');
-            
+
             const isCaught = disc && disc.caught;
             const isSeen = !!disc;
-            
+
             item.className = `national-item ${isCaught ? 'caught' : (isSeen ? 'seen' : 'unknown')}`;
-            
+
             const spriteUrl = isSeen ? disc.sprite : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${i}.png`;
             const name = isSeen ? disc.name : `???`;
 
@@ -750,26 +791,62 @@
             fetchNextEvoLevel(p);
             return "Analyse...";
         }
-        if (p.nextEvoLevel === "MAX") return "Stade Final";
+        if (p.nextEvoLevel === "MAX") return "MAX";
         if (typeof p.nextEvoLevel === "string") return p.nextEvoLevel;
-        return p.level >= p.nextEvoLevel ? "├ëvolution pr├¬te !" : `Nv. requis : ${p.nextEvoLevel}`;
+        return p.level >= p.nextEvoLevel ? "Évolution prête !" : `Nv. requis : ${p.nextEvoLevel}`;
     }
 
-    async function fetchNextEvoLevel(p) {
+    async function getSpeciesId(p) {
+        if (p.speciesId && p.speciesId <= 10000) return p.speciesId;
+        if (p.id <= 10000) {
+            p.speciesId = p.id;
+            return p.id;
+        }
+        try {
+            const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${p.id}/`);
+            if (!res.ok) return p.id;
+            const data = await res.json();
+            const parts = data.species.url.split('/');
+            const sId = parseInt(parts[parts.length - 2]);
+            p.speciesId = sId;
+            return sId;
+        } catch (e) {
+            return p.id;
+        }
+    }
+
+    async function fetchNextEvoLevel(p, retryCount = 0) {
         if (p.fetchingEvo) return;
         p.fetchingEvo = true;
         try {
-            const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${p.id}/`);
-            const speciesData = await speciesRes.json();
-            const evoRes = await fetch(speciesData.evolution_chain.url);
-            const evoData = await evoRes.json();
+            const sId = await getSpeciesId(p);
 
-            const englishName = speciesData.name;
-            const evoDetails = findEvoDetails(evoData.chain, englishName);
+            if (!speciesCache[sId]) {
+                const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${sId}/`);
+                if (!speciesRes.ok) {
+                    if (speciesRes.status === 404) {
+                        p.nextEvoLevel = "MAX";
+                        renderPokedex();
+                        p.fetchingEvo = false;
+                        return;
+                    }
+                    throw new Error("HTTP " + speciesRes.status);
+                }
+                const speciesData = await speciesRes.json();
+                const evoRes = await fetch(speciesData.evolution_chain.url);
+                const evoData = await evoRes.json();
+                speciesCache[sId] = { species: speciesData, chain: evoData };
+            }
+
+
+            const cache = speciesCache[sId];
+            const englishName = cache.species.name;
+            const evoDetails = findEvoDetails(cache.chain.chain, englishName);
+
             if (evoDetails && evoDetails.length > 0) {
                 const detail = evoDetails[0];
                 if (detail.trigger.name === "level-up") {
-                    p.nextEvoLevel = detail.min_level || (p.level + 1);
+                    p.nextEvoLevel = detail.min_level || 1;
                 } else {
                     p.nextEvoLevel = `Item requis`;
                 }
@@ -777,14 +854,24 @@
                 p.nextEvoLevel = "MAX";
             }
             renderPokedex();
-        } catch (e) { p.nextEvoLevel = "Erreur"; }
+        } catch (e) {
+            console.error("Evo analysis error", p.name, e);
+            if (retryCount < 2) {
+                setTimeout(() => { p.fetchingEvo = false; fetchNextEvoLevel(p, retryCount + 1); }, 1500);
+            } else {
+                p.nextEvoLevel = "Erreur";
+                renderPokedex();
+            }
+        }
         p.fetchingEvo = false;
     }
 
     window.sellPokemon = (instanceId) => {
-        const index = state.pokedex.findIndex(p => p.instanceId === instanceId);
+        const index = state.pokedex.findIndex(p => p.instanceId == instanceId);
         if (index > -1) {
             state.coins += 40;
+            if (!state.released) state.released = [];
+            state.released.push(state.pokedex[index].instanceId);
             state.pokedex.splice(index, 1);
             saveState();
             updateUI();
@@ -792,22 +879,35 @@
         }
     };
 
-    async function checkAutoEvolution(pokemon) {
-        try {
-            const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemon.id}/`);
-            const speciesData = await speciesRes.json();
-            const evoRes = await fetch(speciesData.evolution_chain.url);
-            const evoData = await evoRes.json();
+    window.manualEvolve = (instanceId) => {
+        const p = state.pokedex.find(poke => poke.instanceId == instanceId);
+        if (p) checkAutoEvolution(p);
+    };
 
-            const englishName = speciesData.name;
-            const evoDetails = findEvoDetails(evoData.chain, englishName);
+    async function checkAutoEvolution(pokemon) {
+        if (!pokemon) return;
+        try {
+            const speciesId = await getSpeciesId(pokemon);
+
+            if (!speciesCache[speciesId]) {
+                await fetchNextEvoLevel(pokemon);
+            }
+
+            const cache = speciesCache[speciesId];
+            if (!cache) return;
+
+            const englishName = cache.species.name;
+            const evoDetails = findEvoDetails(cache.chain.chain, englishName);
             if (evoDetails && evoDetails.length > 0) {
                 const detail = evoDetails[0];
+                // Evolution par niveau
                 if (detail.trigger.name === "level-up" && detail.min_level <= pokemon.level) {
                     evolvePokemon(pokemon, detail.species_name);
                 }
+            } else {
+                pokemon.nextEvoLevel = "MAX";
             }
-        } catch (e) { }
+        } catch (e) { console.error("Auto-evo check error", e); }
     }
 
     function findEvoDetails(chain, currentName) {
@@ -827,7 +927,7 @@
         const stoneNeeded = getStoneForType(p.types[0]);
         if (state.inventory.stones[stoneNeeded] > 0) {
             state.inventory.stones[stoneNeeded]--;
-            // Logique simplifi├® pour cet exemple
+            // Logique simplifié pour cet exemple
             const next = await fetchNextEvolution(p.id, p.name);
             if (next) evolvePokemon(p, next);
         } else {
@@ -836,7 +936,9 @@
     };
 
     async function fetchNextEvolution(id, name) {
-        const res = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`);
+        const p = state.pokedex.find(poke => poke.id === id);
+        const speciesId = p ? (p.speciesId || id) : id;
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${speciesId}/`);
         const data = await res.json();
         const chainRes = await fetch(data.evolution_chain.url);
         const chainData = await chainRes.json();
@@ -853,36 +955,65 @@
         return null;
     }
 
-    async function evolvePokemon(oldPoke, newName) {
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${newName}`);
-        const data = await response.json();
-        const speciesRes = await fetch(data.species.url);
-        const speciesData = await speciesRes.json();
-        const frenchName = speciesData.names.find(n => n.language.name === 'fr')?.name || data.name;
+    async function evolvePokemon(oldPoke, newSpeciesName) {
+        try {
+            const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${newSpeciesName}`);
+            const speciesData = await speciesRes.json();
 
-        const index = state.pokedex.findIndex(p => p.instanceId === oldPoke.instanceId);
-        state.pokedex[index] = { ...oldPoke, id: data.id, name: frenchName, sprite: data.sprites.other['official-artwork'].front_default };
+            let targetVarietyUrl = speciesData.varieties.find(v => v.is_default).pokemon.url;
 
-        // Ajout ├á la d├®couverte permanente
-        state.discovery[data.id] = {
-            name: frenchName,
-            sprite: data.sprites.other['official-artwork'].front_default,
-            caught: true
-        };
+            let currentPokemonRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${oldPoke.id}`);
+            let currentPokemonData = await currentPokemonRes.json();
 
-        vscode.postMessage({ type: 'showInfo', value: `├ëvolution en ${frenchName} !` });
-        state.missions.evolutions++;
-        saveState();
-        renderPokedex();
-        updateUI();
+            let currentNameParts = currentPokemonData.name.split('-');
+            if (currentNameParts.length > 1) {
+                const suffix = currentNameParts.slice(1).join('-');
+                const matchingVariety = speciesData.varieties.find(v => v.pokemon.name.includes(suffix));
+                if (matchingVariety) {
+                    targetVarietyUrl = matchingVariety.pokemon.url;
+                }
+            }
+
+            const response = await fetch(targetVarietyUrl);
+            const data = await response.json();
+
+            let frenchName = speciesData.names.find(n => n.language.name === 'fr')?.name || speciesData.name;
+            if (data.name.includes('-alola')) frenchName += " d'Alola";
+            if (data.name.includes('-galar')) frenchName += " de Galar";
+            if (data.name.includes('-hisui')) frenchName += " de Hisui";
+            if (data.name.includes('-paldea')) frenchName += " de Paldea";
+
+            const index = state.pokedex.findIndex(p => p.instanceId == oldPoke.instanceId);
+            if (index > -1) {
+                state.pokedex[index] = {
+                    ...oldPoke,
+                    id: data.id,
+                    speciesId: speciesData.id,
+                    name: frenchName,
+                    sprite: data.sprites.other['official-artwork'].front_default || data.sprites.front_default,
+                    nextEvoLevel: null,
+                    fetchingEvo: false
+                };
+
+                state.discovery[data.id] = { name: frenchName, sprite: state.pokedex[index].sprite, caught: true };
+
+                vscode.postMessage({ type: 'showInfo', value: `Évolution en ${frenchName} !` });
+                state.missions.evolutions++;
+                saveState();
+                renderPokedex();
+                updateUI();
+            }
+        } catch (e) {
+            console.error("Evolution failed", e);
+        }
     }
 
     function getStoneForType(type) {
-        const map = { 
-            fire: 'fire-stone', water: 'water-stone', grass: 'leaf-stone', 
-            electric: 'thunder-stone', ice: 'ice-stone', normal: 'moon-stone', 
-            psychic: 'sun-stone', poison: 'dusk-stone', fairy: 'shiny-stone', 
-            fighting: 'kings-rock', steel: 'metal-coat', rock: 'protector', 
+        const map = {
+            fire: 'fire-stone', water: 'water-stone', grass: 'leaf-stone',
+            electric: 'thunder-stone', ice: 'ice-stone', normal: 'moon-stone',
+            psychic: 'sun-stone', poison: 'dusk-stone', fairy: 'shiny-stone',
+            fighting: 'kings-rock', steel: 'metal-coat', rock: 'protector',
             ground: 'razor-fang', bug: 'razor-claw', ghost: 'reaper-cloth',
             dragon: 'dragon-scale', flying: 'prism-scale'
         };
