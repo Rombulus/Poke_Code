@@ -324,6 +324,18 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 			});
 		}
 
+		// Quest trackers
+		merged.middayCaptures = Math.max(s1.middayCaptures || 0, s2.middayCaptures || 0);
+		merged.dawnCaptureAchieved = s1.dawnCaptureAchieved || s2.dawnCaptureAchieved || false;
+		merged.soldLevel50 = s1.soldLevel50 || s2.soldLevel50 || false;
+		merged.ningaleEvolvedWithBalls = s1.ningaleEvolvedWithBalls || s2.ningaleEvolvedWithBalls || false;
+		merged.boughtAbove10000 = s1.boughtAbove10000 || s2.boughtAbove10000 || false;
+
+		// Timestamps (pick most recent)
+		merged.lastCaptureTimestamp = Math.max(s1.lastCaptureTimestamp || 0, s2.lastCaptureTimestamp || 0);
+		merged.lastEvoTimestamp = Math.max(s1.lastEvoTimestamp || 0, s2.lastEvoTimestamp || 0);
+		merged.lastPurchaseTimestamp = Math.max(s1.lastPurchaseTimestamp || 0, s2.lastPurchaseTimestamp || 0);
+
 		merged.lastUpdate = Date.now();
 		return merged;
 	}
