@@ -40,7 +40,11 @@
         missionCaptureProgress: document.getElementById('mission-capture-progress'),
         claimMission1: document.getElementById('claim-mission-1'),
         pokeSearch: document.getElementById('poke-search'),
-        pokeSort: document.getElementById('pokedex-sort')
+        pokeSort: document.getElementById('pokedex-sort'),
+        githubSync: document.getElementById('btn-github-sync'),
+        syncStatus: document.getElementById('sync-status'),
+        exportBtn: document.getElementById('btn-export'),
+        importBtn: document.getElementById('btn-import')
     };
 
     let currentPokemon = null;
@@ -148,8 +152,26 @@
             dayNightInterval = setInterval(updateDayNight, 60000); // Check toutes les minutes
 
             startGameLoop();
+        } else if (message.type === 'syncStatus') {
+            updateSyncStatus(message.value, message.date);
+        } else if (message.type === 'copyToClipboard') {
+            navigator.clipboard.writeText(message.value);
         }
     });
+
+    function updateSyncStatus(status, date) {
+        if (!UI.syncStatus) return;
+        if (status === 'inprogress') {
+            UI.syncStatus.innerText = "Synchronisation en cours...";
+            UI.syncStatus.className = "sync-status loading";
+        } else if (status === 'success') {
+            UI.syncStatus.innerText = `Dernière synchro : ${date}`;
+            UI.syncStatus.className = "sync-status success";
+        } else if (status === 'error') {
+            UI.syncStatus.innerText = "Erreur de synchronisation";
+            UI.syncStatus.className = "sync-status error";
+        }
+    }
 
     function updateDayNight() {
         const hour = new Date().getHours();
@@ -249,6 +271,27 @@
             if (UI.pokeSort) {
                 UI.pokeSort.addEventListener('change', () => {
                     renderPokedex();
+                });
+            }
+
+            // GitHub Sync
+            if (UI.githubSync) {
+                UI.githubSync.addEventListener('click', () => {
+                    vscode.postMessage({ type: 'githubSync' });
+                });
+            }
+
+            // Export
+            if (UI.exportBtn) {
+                UI.exportBtn.addEventListener('click', () => {
+                    vscode.postMessage({ type: 'exportState' });
+                });
+            }
+
+            // Import
+            if (UI.importBtn) {
+                UI.importBtn.addEventListener('click', () => {
+                    vscode.postMessage({ type: 'importState' });
                 });
             }
         } catch (err) {

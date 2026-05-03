@@ -1003,3 +1003,105 @@ select option {
 .tooltip-label {
     color: var(--text-dim);
 }
+
+.settings-view {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 10px 5px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.settings-view h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--accent-light);
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+}
+
+.main-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-btn:hover {
+    background: var(--glass-bg);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 83, 80, 0.2);
+}
+
+.main-btn .icon {
+    font-size: 1.2rem;
+}
+
+.sync-status {
+    font-size: 0.75rem;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-dim);
+}
+
+.sync-status.loading {
+    color: var(--shiny-gold);
+    border: 1px solid var(--shiny-gold);
+}
+
+.sync-status.success {
+    color: var(--xp-color);
+    border: 1px solid var(--xp-color);
+}
+
+.sync-status.error {
+    color: var(--accent);
+    border: 1px solid var(--accent);
+}
+
+.btn-row {
+    display: flex;
+    gap: 10px;
+}
+
+.mini-btn {
+    flex: 1;
+    padding: 8px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.mini-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--text-dim);
+}
+
+.hint {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    line-height: 1.4;
+    margin: 5px 0 0 0;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid var(--glass-border);
+    margin: 0;
+}

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import * as https from 'https';
 
 export function activate(context: vscode.ExtensionContext) {
 	// Permet la synchronisation des données entre différents ordinateurs via VS Code Settings Sync
@@ -46,7 +47,7 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 
 		webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
-		webviewView.webview.onDidReceiveMessage(data => {
+		webviewView.webview.onDidReceiveMessage(async data => {
 			switch (data.type) {
 				case 'saveState':
 					try {
@@ -62,37 +63,7 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 					}
 					break;
 				case 'getState':
-					let stateToLoad = this._context.globalState.get('pokeState') as any;
-					const savePath = this._getSavePath();
-
-					// Si le globalState est vide, on tente de migrer depuis l'ancien fichier local
-					if (!stateToLoad && fs.existsSync(savePath)) {
-						try {
-							const fileContent = fs.readFileSync(savePath, 'utf8');
-							stateToLoad = JSON.parse(fileContent);
-							this._context.globalState.update('pokeState', stateToLoad);
-						} catch (e) {
-							console.error("Load file error:", e);
-						}
-					}
-
-					if (stateToLoad) {
-						this._view?.webview.postMessage({ type: 'loadState', value: stateToLoad });
-					} else {
-						// État initial
-						this._view?.webview.postMessage({
-							type: 'loadState', value: {
-								pokedex: [],
-								inventory: { balls: { pokeball: 20 }, stones: {} },
-								coins: 200,
-								xp: 0,
-								level: 1,
-								missions: { captures: 0, evolutions: 0, typeProgress: {}, claimed: [] },
-								spawnTimer: 180,
-								discovery: {}
-							}
-						});
-					}
+					this._view?.webview.postMessage({ type: 'loadState', value: this._getCurrentState() });
 					break;
 				case 'showInfo':
 					vscode.window.showInformationMessage(data.value);
@@ -115,8 +86,103 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 						this._statusBarItem.backgroundColor = undefined;
 					}, 5000);
 					break;
+				case 'githubSync':
+					await this._handleGitHubSync();
+					break;
+				case 'exportState':
+					const stateToExport = this._getCurrentState();
+					this._view?.webview.postMessage({ type: 'copyToClipboard', value: JSON.stringify(stateToExport) });
+					vscode.window.showInformationMessage("Sauvegarde copiée dans le presse-papier !");
+					break;
+				case 'importState':
+					await this._handleImport();
+					break;
 			}
 		});
+	}
+
+	private _getCurrentState(): any {
+		let state = this._context.globalState.get('pokeState') as any;
+		const savePath = this._getSavePath();
+
+		if (!state && fs.existsSync(savePath)) {
+			try {
+				const fileContent = fs.readFileSync(savePath, 'utf8');
+				state = JSON.parse(fileContent);
+				this._context.globalState.update('pokeState', state);
+			} catch (e) {
+				console.error("Load file error:", e);
+			}
+		}
+
+		if (!state) {
+			return {
+				pokedex: [],
+				inventory: { balls: { pokeball: 20 }, stones: {} },
+				coins: 200,
+				xp: 0,
+				level: 1,
+				missions: { captures: 0, evolutions: 0, typeProgress: {}, claimed: [] },
+				spawnTimer: 180,
+				discovery: {}
+			};
+		}
+		return state;
+	}
+
+	private async _handleImport() {
+		const input = await vscode.window.showInputBox({
+			prompt: "Collez votre JSON de sauvegarde ici",
+			placeHolder: '{"pokedex": [...], ...}'
+		});
+
+		if (input) {
+			try {
+				const newState = JSON.parse(input);
+				const currentState = this._context.globalState.get('pokeState');
+				const merged = this._mergeStates(currentState, newState);
+				this._context.globalState.update('pokeState', merged);
+				this._view?.webview.postMessage({ type: 'loadState', value: merged });
+				vscode.window.showInformationMessage("Sauvegarde importée et fusionnée avec succès !");
+			} catch (e) {
+				vscode.window.showErrorMessage("Format de sauvegarde invalide.");
+			}
+		}
+	}
+
+	private async _handleGitHubSync() {
+		try {
+			const session = await vscode.authentication.getSession('github', ['gist'], { createIfNone: true });
+			if (!session) return;
+
+			this._view?.webview.postMessage({ type: 'syncStatus', value: 'inprogress' });
+
+			const sync = new GitHubSync(session.accessToken);
+			const localState = this._getCurrentState();
+
+			// 1. Chercher un Gist existant
+			let remoteState = await sync.fetchGist();
+
+			if (remoteState) {
+				// 2. Fusionner
+				const merged = this._mergeStates(localState, remoteState);
+				this._context.globalState.update('pokeState', merged);
+				// 3. Pousser vers GitHub
+				await sync.updateGist(merged);
+				this._view?.webview.postMessage({ type: 'loadState', value: merged });
+				this._view?.webview.postMessage({ type: 'syncStatus', value: 'success', date: new Date().toLocaleString() });
+				vscode.window.showInformationMessage("PokéCode : Synchronisation GitHub réussie !");
+			} else {
+				// Créer un nouveau Gist avec l'état local
+				await sync.createGist(localState);
+				this._view?.webview.postMessage({ type: 'syncStatus', value: 'success', date: new Date().toLocaleString() });
+				vscode.window.showInformationMessage("PokéCode : Premier Gist de sauvegarde créé sur GitHub !");
+			}
+		} catch (e) {
+			console.error("GitHub Sync Error:", e);
+			this._view?.webview.postMessage({ type: 'syncStatus', value: 'error' });
+			vscode.window.showErrorMessage("Erreur lors de la synchronisation GitHub.");
+		}
 	}
 
 	public cheat(type: string) {
@@ -202,38 +268,47 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 		if (!s1) return s2;
 		if (!s2) return s1;
 
-		// Stratégie de fusion :
-		// 1. Pokédex et Missions : Union (on ne veut jamais perdre un Pokémon ou une quête faite)
-		// 2. Monnaie, Inventaire, XP : Le plus récent gagne (pour permettre de dépenser/consommer)
-
 		const s1Time = s1.lastUpdate || 0;
 		const s2Time = s2.lastUpdate || 0;
 		const newer = s2Time >= s1Time ? s2 : s1;
-		const older = s2Time >= s1Time ? s1 : s2;
 
 		const merged = { ...newer };
 
-		// Fusion des Relâchés (Tombstone pour les ventes)
-		merged.released = Array.from(new Set([...(s1.released || []), ...(s2.released || [])]));
+		// Toujours prendre le max pour les ressources
+		merged.coins = Math.max(s1.coins || 0, s2.coins || 0);
+		merged.xp = Math.max(s1.xp || 0, s2.xp || 0);
+		merged.level = Math.max(s1.level || 0, s2.level || 0);
 
-		// Fusion du Pokédex (Union)
+		// Inventaire (Union et Max)
+		merged.inventory = { balls: { ...(s1.inventory?.balls || {}) }, stones: { ...(s1.inventory?.stones || {}) } };
+		if (s2.inventory?.balls) {
+			Object.entries(s2.inventory.balls).forEach(([k, v]) => {
+				merged.inventory.balls[k] = Math.max(merged.inventory.balls[k] || 0, v as number);
+			});
+		}
+		if (s2.inventory?.stones) {
+			Object.entries(s2.inventory.stones).forEach(([k, v]) => {
+				merged.inventory.stones[k] = Math.max(merged.inventory.stones[k] || 0, v as number);
+			});
+		}
+
+		// Pokédex (Union et Max niveau)
+		merged.released = Array.from(new Set([...(s1.released || []), ...(s2.released || [])]));
 		const pokedexMap = new Map();
 		[...(s1.pokedex || []), ...(s2.pokedex || [])].forEach(p => {
 			if (!p || merged.released.includes(p.instanceId)) return;
 			const existing = pokedexMap.get(p.instanceId);
-			if (!existing || (p.level || 0) > (existing.level || 0) || (p.xp || 0) > (existing.xp || 0)) {
+			if (!existing || (p.level || 0) > (existing.level || 0)) {
 				pokedexMap.set(p.instanceId, p);
 			}
 		});
 		merged.pokedex = Array.from(pokedexMap.values());
 
-		// Fusion des Missions (Union des terminées + Max progrès)
+		// Missions
 		merged.missions = {
 			...newer.missions,
 			claimed: Array.from(new Set([...(s1.missions?.claimed || []), ...(s2.missions?.claimed || [])]))
 		};
-
-		// Pour le progrès des types, on garde le max pour ne pas reculer
 		merged.missions.typeProgress = { ...(s1.missions?.typeProgress || {}) };
 		if (s2.missions?.typeProgress) {
 			Object.keys(s2.missions.typeProgress).forEach(k => {
@@ -241,6 +316,15 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 			});
 		}
 
+		// Stats
+		merged.stats = { ...(s1.stats || {}) };
+		if (s2.stats) {
+			Object.keys(s2.stats).forEach(k => {
+				merged.stats[k] = Math.max(merged.stats[k] || 0, s2.stats[k]);
+			});
+		}
+
+		merged.lastUpdate = Date.now();
 		return merged;
 	}
 
@@ -260,7 +344,7 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 				<div id="app">
                     <header>
                         <div class="user-profile">
-                            <div class="lvl-badge">Nv.<span id="player-level">1</span> <span class="v-tag">v0.6.2</span></div>
+                            <div class="lvl-badge">Nv.<span id="player-level">1</span> <span class="v-tag">v0.7.0</span></div>
                             <div class="xp-bar-container">
                                 <div id="xp-progress" class="xp-progress" style="width: 0%"></div>
                             </div>
@@ -276,6 +360,7 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
                         <button class="tab-btn" data-tab="pokedex-tab">Pokédex</button>
                         <button class="tab-btn" data-tab="shop-tab">Boutique</button>
                         <button class="tab-btn" data-tab="missions-tab">Missions <div class="notification-badge" id="badge-missions"></div></button>
+                        <button class="tab-btn" data-tab="settings-tab">⚙️</button>
                     </nav>
 
                     <div class="tab-content" id="safari-tab">
@@ -325,6 +410,25 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
                             <!-- Missions here -->
                         </div>
                     </div>
+
+                    <div class="tab-content hidden" id="settings-tab">
+                        <div class="settings-view">
+                            <h3>Synchronisation Cloud</h3>
+                            <button id="btn-github-sync" class="main-btn">
+                                <span class="icon">☁️</span> Synchroniser avec GitHub
+                            </button>
+                            <div id="sync-status" class="sync-status">Non connecté</div>
+
+                            <hr>
+
+                            <h3>Transfert Manuel</h3>
+                            <div class="btn-row">
+                                <button id="btn-export" class="mini-btn">Exporter JSON</button>
+                                <button id="btn-import" class="mini-btn">Importer JSON</button>
+                            </div>
+                            <p class="hint">Utilisez l'export/import pour transférer manuellement votre sauvegarde entre deux instances Antigravity.</p>
+                        </div>
+                    </div>
 				</div>
 
 				<script src="${scriptUri}"></script>
@@ -334,5 +438,80 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 
 	private _getSavePath(): string {
 		return path.join(os.homedir(), '.poke-idle-save.json');
+	}
+}
+
+class GitHubSync {
+	private readonly GIST_DESCRIPTION = "PokeIdle Save Game (Antigravity)";
+	private readonly FILE_NAME = "poke-idle-save.json";
+
+	constructor(private token: string) { }
+
+	async fetchGist(): Promise<any | null> {
+		const gists = await this._apiCall('GET', '/gists');
+		const pokeGist = gists.find((g: any) => g.description === this.GIST_DESCRIPTION);
+
+		if (!pokeGist) return null;
+
+		const fullGist = await this._apiCall('GET', `/gists/${pokeGist.id}`);
+		const content = fullGist.files[this.FILE_NAME]?.content;
+		return content ? JSON.parse(content) : null;
+	}
+
+	async createGist(state: any): Promise<void> {
+		await this._apiCall('POST', '/gists', {
+			description: this.GIST_DESCRIPTION,
+			public: false,
+			files: {
+				[this.FILE_NAME]: {
+					content: JSON.stringify(state)
+				}
+			}
+		});
+	}
+
+	async updateGist(state: any): Promise<void> {
+		const gists = await this._apiCall('GET', '/gists');
+		const pokeGist = gists.find((g: any) => g.description === this.GIST_DESCRIPTION);
+		if (!pokeGist) return this.createGist(state);
+
+		await this._apiCall('PATCH', `/gists/${pokeGist.id}`, {
+			files: {
+				[this.FILE_NAME]: {
+					content: JSON.stringify(state)
+				}
+			}
+		});
+	}
+
+	private _apiCall(method: string, endpoint: string, body?: any): Promise<any> {
+		return new Promise((resolve, reject) => {
+			const options = {
+				hostname: 'api.github.com',
+				path: endpoint,
+				method: method,
+				headers: {
+					'Authorization': `Bearer ${this.token}`,
+					'User-Agent': 'PokeIdle-VSCode-Extension',
+					'Content-Type': 'application/json'
+				}
+			};
+
+			const req = https.request(options, res => {
+				let data = '';
+				res.on('data', chunk => data += chunk);
+				res.on('end', () => {
+					if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+						resolve(data ? JSON.parse(data) : null);
+					} else {
+						reject(new Error(`GitHub API error: ${res.statusCode} ${data}`));
+					}
+				});
+			});
+
+			req.on('error', reject);
+			if (body) req.write(JSON.stringify(body));
+			req.end();
+		});
 	}
 }
