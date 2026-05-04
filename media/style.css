@@ -453,6 +453,20 @@ header {
     object-fit: contain;
 }
 
+.discount-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--accent);
+    color: white;
+    font-size: 0.6rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 800;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    z-index: 2;
+}
+
 .pokedex-item {
     display: flex;
     flex-direction: column;

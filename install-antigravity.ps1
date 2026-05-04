@@ -6,7 +6,7 @@ echo "==========================================="
 echo ""
 
 $extDir = "$env:USERPROFILE\.antigravity\extensions"
-$version = "0.7.0"
+$version = (Get-Content "package.json" | ConvertFrom-Json).version
 $targetDir = "$extDir\hugo.poke-idle-game-$version"
 
 echo "[1/3] Compilation..."

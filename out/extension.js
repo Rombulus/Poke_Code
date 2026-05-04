@@ -60,6 +60,8 @@ class PokeIdleProvider {
                         const savePath = this._getSavePath();
                         fs.writeFileSync(savePath, JSON.stringify(mergedState, null, 2));
                         this._context.globalState.update('pokeState', mergedState);
+                        // Push vers GitHub en arrière-plan (débounce 5 min)
+                        this._scheduledGitHubPush();
                     }
                     catch (e) {
                         console.error("Save error:", e);
@@ -67,6 +69,8 @@ class PokeIdleProvider {
                     break;
                 case 'getState':
                     this._view?.webview.postMessage({ type: 'loadState', value: this._getCurrentState() });
+                    // Auto-sync GitHub silencieux 3s après le chargement
+                    setTimeout(() => this._autoGitHubSync(), 3000);
                     break;
                 case 'showInfo':
                     vscode.window.showInformationMessage(data.value);
@@ -105,19 +109,21 @@ class PokeIdleProvider {
         });
     }
     _getCurrentState() {
-        let state = this._context.globalState.get('pokeState');
+        const globalState = this._context.globalState.get('pokeState');
         const savePath = this._getSavePath();
-        if (!state && fs.existsSync(savePath)) {
+        let fileState = null;
+        // Toujours lire le fichier JSON, même si globalState existe
+        if (fs.existsSync(savePath)) {
             try {
-                const fileContent = fs.readFileSync(savePath, 'utf8');
-                state = JSON.parse(fileContent);
-                this._context.globalState.update('pokeState', state);
+                fileState = JSON.parse(fs.readFileSync(savePath, 'utf8'));
             }
             catch (e) {
                 console.error("Load file error:", e);
             }
         }
-        if (!state) {
+        // Fusionner les deux sources pour récupérer le meilleur des deux mondes
+        const merged = this._mergeStates(globalState, fileState);
+        if (!merged) {
             return {
                 pokedex: [],
                 inventory: { balls: { pokeball: 20 }, stones: {} },
@@ -129,7 +135,15 @@ class PokeIdleProvider {
                 discovery: {}
             };
         }
-        return state;
+        // Resynchroniser les deux storages avec l'état fusionné
+        this._context.globalState.update('pokeState', merged);
+        try {
+            fs.writeFileSync(savePath, JSON.stringify(merged, null, 2));
+        }
+        catch (e) {
+            console.error("Sync file error:", e);
+        }
+        return merged;
     }
     async _handleImport() {
         const input = await vscode.window.showInputBox({
@@ -183,6 +197,68 @@ class PokeIdleProvider {
             vscode.window.showErrorMessage("Erreur lors de la synchronisation GitHub.");
         }
     }
+    /**
+     * Sync silencieuse au démarrage : si une session GitHub existe déjà (sans en créer),
+     * on fusionne le Gist avec l'état local. Aucune notification, aucun blocage.
+     */
+    async _autoGitHubSync() {
+        try {
+            const session = await vscode.authentication.getSession('github', ['gist'], { createIfNone: false });
+            if (!session)
+                return; // Pas de session → on ne fait rien
+            const sync = new GitHubSync(session.accessToken);
+            const remoteState = await sync.fetchGist();
+            if (!remoteState)
+                return; // Pas encore de Gist → on ne fait rien
+            const localState = this._context.globalState.get('pokeState');
+            const merged = this._mergeStates(localState, remoteState);
+            // Sauvegarder la fusion localement
+            this._context.globalState.update('pokeState', merged);
+            try {
+                fs.writeFileSync(this._getSavePath(), JSON.stringify(merged, null, 2));
+            }
+            catch { }
+            // Mettre à jour le Gist avec l'état fusionné
+            await sync.updateGist(merged);
+            // Mettre à jour le webview
+            this._view?.webview.postMessage({ type: 'loadState', value: merged });
+            this._view?.webview.postMessage({
+                type: 'syncStatus', value: 'success', date: new Date().toLocaleString()
+            });
+            console.log('[PokeCode] Auto-sync GitHub au démarrage réussie.');
+        }
+        catch (e) {
+            // Silencieux : on log juste en console, pas de notification utilisateur
+            console.warn('[PokeCode] Auto-sync GitHub échouée (normal si hors-ligne):', e);
+        }
+    }
+    /**
+     * Planifie un push vers GitHub dans 5 minutes.
+     * Chaque nouvel appel réinitialise le timer (débounce).
+     * Silencieux : aucune notification utilisateur.
+     */
+    _scheduledGitHubPush() {
+        if (this._githubPushTimer) {
+            clearTimeout(this._githubPushTimer);
+        }
+        this._githubPushTimer = setTimeout(async () => {
+            try {
+                const session = await vscode.authentication.getSession('github', ['gist'], { createIfNone: false });
+                if (!session)
+                    return;
+                const sync = new GitHubSync(session.accessToken);
+                const currentState = this._getCurrentState();
+                await sync.updateGist(currentState);
+                this._view?.webview.postMessage({
+                    type: 'syncStatus', value: 'success', date: new Date().toLocaleString()
+                });
+                console.log('[PokeCode] Push GitHub automatique réussi.');
+            }
+            catch (e) {
+                console.warn('[PokeCode] Push GitHub automatique échoué (normal si hors-ligne):', e);
+            }
+        }, 5 * 60 * 1000); // 5 minutes
+    }
     cheat(type) {
         let state = this._context.globalState.get('pokeState');
         if (!state)
@@ -200,7 +276,8 @@ class PokeIdleProvider {
                 'fire-stone', 'water-stone', 'leaf-stone', 'thunder-stone', 'ice-stone', 'moon-stone', 'sun-stone', 'dusk-stone', 'shiny-stone', 'dawn-stone',
                 'kings-rock', 'metal-coat', 'protector', 'electirizer', 'magmarizer', 'reaper-cloth', 'dragon-scale', 'prism-scale', 'upgrade', 'dubious-disc',
                 'linking-cord', 'soothe-bell', 'razor-fang', 'razor-claw', 'black-augurite', 'peat-block', 'galarica-cuff', 'galarica-wreath',
-                'sweet-apple', 'tart-apple', 'chipped-pot', 'cracked-pot', 'auspicious-armor', 'malicious-armor', 'scroll-of-darkness', 'scroll-of-waters', 'gimmighoul-coin'
+                'sweet-apple', 'tart-apple', 'syrupy-apple', 'chipped-pot', 'cracked-pot', 'auspicious-armor', 'malicious-armor', 'scroll-of-darkness', 'scroll-of-waters',
+                'gimmighoul-coin', 'unremarkable-teacup', 'masterpiece-teacup', 'leaders-crest', 'sachet', 'whipped-dream', 'deep-sea-tooth', 'deep-sea-scale', 'alora-sand'
             ];
             allStones.forEach(s => {
                 state.inventory.stones[s] = (state.inventory.stones[s] || 0) + 10;
@@ -227,7 +304,8 @@ class PokeIdleProvider {
             'fire-stone', 'water-stone', 'leaf-stone', 'thunder-stone', 'ice-stone', 'moon-stone', 'sun-stone', 'dusk-stone', 'shiny-stone', 'dawn-stone',
             'kings-rock', 'metal-coat', 'protector', 'electirizer', 'magmarizer', 'reaper-cloth', 'dragon-scale', 'prism-scale', 'upgrade', 'dubious-disc',
             'linking-cord', 'soothe-bell', 'razor-fang', 'razor-claw', 'black-augurite', 'peat-block', 'galarica-cuff', 'galarica-wreath',
-            'sweet-apple', 'tart-apple', 'chipped-pot', 'cracked-pot', 'auspicious-armor', 'malicious-armor', 'scroll-of-darkness', 'scroll-of-waters', 'gimmighoul-coin'
+            'sweet-apple', 'tart-apple', 'syrupy-apple', 'chipped-pot', 'cracked-pot', 'auspicious-armor', 'malicious-armor', 'scroll-of-darkness', 'scroll-of-waters',
+            'gimmighoul-coin', 'unremarkable-teacup', 'masterpiece-teacup', 'leaders-crest', 'sachet', 'whipped-dream', 'deep-sea-tooth', 'deep-sea-scale', 'alora-sand'
         ];
         const allBalls = ['pokeball', 'superball', 'hyperball', 'masterball', 'sombreball', 'quickball', 'luxeball', 'soinball', 'filetball', 'faibleball', 'scaphandreball', 'amourball'];
         const items = [
@@ -320,6 +398,8 @@ class PokeIdleProvider {
                 merged.stats[k] = Math.max(merged.stats[k] || 0, s2.stats[k]);
             });
         }
+        // Discovery (Pokédex des espèces vues) — union des deux sources
+        merged.discovery = { ...(s1.discovery || {}), ...(s2.discovery || {}) };
         // Quest trackers
         merged.middayCaptures = Math.max(s1.middayCaptures || 0, s2.middayCaptures || 0);
         merged.dawnCaptureAchieved = s1.dawnCaptureAchieved || s2.dawnCaptureAchieved || false;
@@ -348,7 +428,7 @@ class PokeIdleProvider {
 				<div id="app">
                     <header>
                         <div class="user-profile">
-                            <div class="lvl-badge">Nv.<span id="player-level">1</span> <span class="v-tag">v0.7.0</span></div>
+                            <div class="lvl-badge">Nv.<span id="player-level">1</span> <span class="v-tag">v0.8.0</span></div>
                             <div class="xp-bar-container">
                                 <div id="xp-progress" class="xp-progress" style="width: 0%"></div>
                             </div>

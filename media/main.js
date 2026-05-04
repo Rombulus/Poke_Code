@@ -146,6 +146,7 @@
             syncDiscovery();
             updateUI();
             renderShop();
+            renderMissions();
 
             updateDayNight();
             if (dayNightInterval) clearInterval(dayNightInterval);
@@ -251,6 +252,7 @@
                             if (tabId === 'pokedex-tab') renderPokedex();
                             if (tabId === 'shop-tab') renderShop();
                             if (tabId === 'missions-tab') renderMissions();
+                            if (tabId === 'settings-tab') renderMissions(); // Just to refresh if needed
                         } catch (err) {
                             console.error("Tab error:", err);
                         }
@@ -830,43 +832,58 @@
             { id: 'deep-sea-tooth', name: 'Dent Océan', price: 1500 },
             { id: 'deep-sea-scale', name: 'Écaille Océan', price: 1500 },
             { id: 'leaders-crest', name: 'Emblème du Général', price: 1500 },
-            { id: 'strawberry-sweet', name: 'Objet en Sucre', price: 800 }
+            { id: 'strawberry-sweet', name: 'Objet en Sucre', price: 800 },
+            { id: 'alora-sand', name: "Sable d'Alola", price: 1000 },
+            { id: 'scroll-of-darkness', name: 'Manuscrit des Ténèbres', price: 2000 },
+            { id: 'scroll-of-waters', name: 'Manuscrit des Eaux', price: 2000 },
+            { id: 'love-sweet', name: 'Sucre Cœur', price: 800 },
+            { id: 'berry-sweet', name: 'Sucre Baie', price: 800 },
+            { id: 'clover-sweet', name: 'Sucre Trèfle', price: 800 },
+            { id: 'flower-sweet', name: 'Sucre Fleur', price: 800 },
+            { id: 'star-sweet', name: 'Sucre Étoile', price: 800 },
+            { id: 'ribbon-sweet', name: 'Sucre Ruban', price: 800 }
         ];
 
-        const unlockedItems = new Set();
+        const availableItemsContainer = [];
         if (typeof MISSIONS !== 'undefined' && state.missions && state.missions.claimed) {
-            // Pour chaque objet du jeu d'évolution
             EVOLUTION_ITEMS.forEach(evoItem => {
-                // On compte combien de quêtes terminées récompensent cet objet
                 const count = MISSIONS.filter(m => m.item === evoItem.id && state.missions.claimed.includes(m.id)).length;
-                if (count >= 3) {
-                    unlockedItems.add(evoItem.id);
+                if (count >= 1) {
+                    let multiplier = (count === 1) ? 5 : (count === 2 ? 2 : 1);
+                    let finalPrice = Math.floor(evoItem.price * multiplier);
+                    availableItemsContainer.push({ ...evoItem, finalPrice, count });
                 }
             });
         }
 
-        const availableEvoItems = EVOLUTION_ITEMS.filter(item => unlockedItems.has(item.id));
-
-        if (availableEvoItems.length === 0) {
+        if (availableItemsContainer.length === 0) {
             const msg = document.createElement('p');
-            msg.innerText = "Accomplissez les 3 paliers de missions d'un objet pour le débloquer ici !";
+            msg.innerText = "Accomplissez au moins 1 mission d'un objet pour le débloquer ici !";
             msg.style.opacity = 0.7;
             msg.style.margin = "10px 0";
             msg.style.fontStyle = "italic";
             UI.shopList.appendChild(msg);
         } else {
-            availableEvoItems.forEach(item => {
+            availableItemsContainer.forEach(item => {
                 const owned = (state.inventory.stones && state.inventory.stones[item.id]) ? state.inventory.stones[item.id] : 0;
                 const card = document.createElement('div');
                 card.className = 'shop-item';
+
+                let discountBadge = "";
+                if (item.count === 2) discountBadge = '<span class="discount-badge">-60%</span>';
+                if (item.count === 3) discountBadge = '<span class="discount-badge">-80%</span>';
+
                 card.innerHTML = `
-                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.id}.png" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                    <div style="position:relative">
+                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.id}.png" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                        ${discountBadge}
+                    </div>
                     <div class="item-info">
                         <span>${item.name}</span>
                         <span class="owned">Possédé : ${owned}</span>
-                        <span class="price">${item.price} <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/nugget.png" class="mini-icon"></span>
+                        <span class="price">${item.finalPrice} <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/nugget.png" class="mini-icon"></span>
                     </div>
-                    <button onclick="buyStone('${item.id}', ${item.price})">Acheter</button>
+                    <button onclick="buyStone('${item.id}', ${item.finalPrice})">Acheter</button>
                 `;
                 UI.shopList.appendChild(card);
             });
@@ -1438,7 +1455,123 @@
         // Autres (Obsidienne, Tourbe, etc.)
         { id: 'm_geo_1', reqType: 'type', type: 'rock', target: 50, item: 'black-augurite', label: 'Petit Géologue', desc: '50 Pokémon Roche' },
         { id: 'm_geo_2', reqType: 'type', type: 'ground', target: 50, item: 'black-augurite', label: 'Mineur', desc: '50 Pokémon Sol' },
-        { id: 'm_geo_3', reqType: 'custom', check: () => ((state.missions.typeProgress['rock'] || 0) + (state.missions.typeProgress['ground'] || 0)) >= 200, progress: () => (state.missions.typeProgress['rock'] || 0) + (state.missions.typeProgress['ground'] || 0), target: 200, item: 'black-augurite', label: 'Géologue', desc: '200 Pokémon Roche ou Sol' }
+        { id: 'm_geo_3', reqType: 'custom', check: () => ((state.missions.typeProgress['rock'] || 0) + (state.missions.typeProgress['ground'] || 0)) >= 200, progress: () => (state.missions.typeProgress['rock'] || 0) + (state.missions.typeProgress['ground'] || 0), target: 200, item: 'black-augurite', label: 'Géologue', desc: '200 Pokémon Roche ou Sol' },
+
+        // --- NOUVELLES QUÊTES ET OBJETS ---
+
+        // Pomme Sucrée / Acide / Alliage (Verpom)
+        { id: 'm_apple_sweet3', reqType: 'custom', check: () => (state.pokedex || []).filter(p => (p.types || []).includes('grass')).length >= 100, progress: () => (state.pokedex || []).filter(p => (p.types || []).includes('grass')).length, target: 100, item: 'sweet-apple', label: 'Verger Éternel', desc: '100 Pokémon Plante' },
+        { id: 'm_apple_tart1', reqType: 'type', type: 'dragon', target: 20, item: 'tart-apple', label: 'Acidité I', desc: '20 Pokémon Dragon' },
+        { id: 'm_apple_tart2', reqType: 'custom', check: () => (state.stats.captures || 0) >= 400, progress: () => state.stats.captures || 0, target: 400, item: 'tart-apple', label: 'Grand Safari', desc: '400 Pokémon capturés' },
+        { id: 'm_apple_syrup1', reqType: 'custom', check: () => (state.pokedex || []).some(p => p.level >= 50), progress: () => (state.pokedex || []).reduce((max, p) => Math.max(max, p.level), 0), target: 50, item: 'syrupy-apple', label: 'Manuscrit Ancien', desc: 'Avoir un Pokémon Nv.50' },
+        { id: 'm_apple_syrup2', reqType: 'custom', check: () => (state.pokedex || []).filter(p => p.level >= 50).length >= 5, progress: () => (state.pokedex || []).filter(p => p.level >= 50).length, target: 5, item: 'syrupy-apple', label: 'L\'Écho des Âges', desc: '5 Pokémon au Nveau 50' },
+        { id: 'm_apple_syrup3', reqType: 'custom', check: () => (state.pokedex || []).some(p => p.level >= 80), progress: () => (state.pokedex || []).reduce((max, p) => Math.max(max, p.level), 0), target: 80, item: 'syrupy-apple', label: 'Sagesse Éternelle', desc: 'Un Pokémon au Niveau 80' },
+
+        // Améliorator / CD Douteux (Porygon)
+        { id: 'm_up_3', reqType: 'custom', check: () => (state.pokedex || []).filter(p => p.hasEvolved).length >= 150, progress: () => (state.pokedex || []).filter(p => p.hasEvolved).length, target: 150, item: 'upgrade', label: 'Perfectionniste', desc: '150 Pokémon ayant évolué' },
+        { id: 'm_disc_2', reqType: 'custom', check: () => (state.missions.typeProgress['electric'] || 0) >= 50, progress: () => state.missions.typeProgress['electric'] || 0, target: 50, item: 'dubious-disc', label: 'Surcharge I', desc: '50 Pokémon Électric' },
+        { id: 'm_disc_3', reqType: 'custom', check: () => state.boughtAbove10000, progress: () => state.boughtAbove10000 ? 1 : 0, target: 1, item: 'dubious-disc', label: 'Vapeur de Galar', desc: 'Acheter objet avec > 10 000 pièces' },
+
+        // Protecteur / Tissu Fauche (Rhinoféros / Téraclope)
+        { id: 'm_prot_3', reqType: 'custom', check: () => (state.missions.typeProgress['rock'] || 0) >= 100, progress: () => state.missions.typeProgress['rock'] || 0, target: 100, item: 'protector', label: 'Rempart Définitif', desc: '100 Pokémon Roche' },
+        { id: 'm_fauche_2', reqType: 'type', type: 'ghost', target: 20, item: 'reaper-cloth', label: 'Faucheur II', desc: '20 Pokémon Spectre' },
+        { id: 'm_fauche_3', reqType: 'custom', check: () => (state.pokedex || []).filter(p => (p.types || []).includes('ghost') && p.level >= 60).length >= 5, progress: () => (state.pokedex || []).filter(p => (p.types || []).includes('ghost') && p.level >= 60).length, target: 5, item: 'reaper-cloth', label: 'Maître Spectral', desc: '5 Pokémon Spectre Nv.60' },
+
+        // Électriseur / Magmariseur (Élektek / Magmar)
+        { id: 'm_elec_3', reqType: 'custom', check: () => (state.pokedex || []).reduce((s, p) => s + p.level, 0) >= 5000, progress: () => (state.pokedex || []).reduce((s, p) => s + p.level, 0), target: 5000, item: 'electirizer', label: 'Centrale Vivante', desc: '5000 niveaux cumulés' },
+        { id: 'm_mag_2', reqType: 'type', type: 'fire', target: 20, item: 'magmarizer', label: 'Magma II', desc: '20 Pokémon Feu' },
+        { id: 'm_mag_3', reqType: 'custom', check: () => (state.pokedex || []).filter(p => (p.types || []).includes('fire') && p.level >= 50).length >= 10, progress: () => (state.pokedex || []).filter(p => (p.types || []).includes('fire') && p.level >= 50).length, target: 10, item: 'magmarizer', label: 'Volcan Actif', desc: '10 Pokémon Feu Nv.50' },
+
+        // Griffe / Croc Rasoir (Farfuret / Scorplane)
+        { id: 'm_claw_3', reqType: 'custom', check: () => (state.missions.typeProgress['water'] || 0) >= 50 && (state.missions.typeProgress['fire'] || 0) >= 50, progress: () => Math.min(50, state.missions.typeProgress['water'] || 0) + Math.min(50, state.missions.typeProgress['fire'] || 0), target: 100, item: 'razor-claw', label: 'Équilibre de l\'Archipel', desc: '50 Pokémon Eau ET 50 Pokémon Feu' },
+        { id: 'm_fang_1', reqType: 'type', type: 'ground', target: 10, item: 'razor-fang', label: 'Terrier I', desc: '10 Pokémon Sol' },
+        { id: 'm_fang_2', reqType: 'type', type: 'ground', target: 50, item: 'razor-fang', label: 'Terrier II', desc: '50 Pokémon Sol' },
+
+        // Pot / Théières / Bols (Polthégeist / Poltchageist)
+        { id: 'm_pot_2', reqType: 'stat', statKey: 'liberated', target: 100, item: 'cracked-pot', label: 'Grand Ménage', desc: 'Vendre 100 Pokémon' },
+        { id: 'm_pot_3', reqType: 'custom', check: () => state.soldLevel50, progress: () => state.soldLevel50 ? 1 : 0, target: 1, item: 'cracked-pot', label: 'Fortune de Collectionneur', desc: 'Vendre un Pokémon Nv.50' },
+        { id: 'm_mordu_1', reqType: 'stat', statKey: 'totalClicks', target: 500, item: 'gimmighoul-coin', label: 'Clic Régulier', desc: 'Cliquer 500 fois' },
+        { id: 'm_mordu_3', reqType: 'stat', statKey: 'totalClicks', target: 5000, item: 'gimmighoul-coin', label: 'Obsession du Clic II', desc: 'Cliquer 5000 fois' },
+        { id: 'm_teacup_1', reqType: 'type', type: 'grass', target: 50, item: 'unremarkable-teacup', label: 'Herboriste I', desc: '50 Pokémon Plante' },
+        { id: 'm_teacup_2', reqType: 'custom', check: () => (state.missions.typeProgress['grass'] || 0) >= 50 && (state.missions.typeProgress['ghost'] || 0) >= 50, progress: () => Math.min(50, state.missions.typeProgress['grass'] || 0) + Math.min(50, state.missions.typeProgress['ghost'] || 0), target: 100, item: 'unremarkable-teacup', label: 'Infusion Spectrale', desc: '50 Pokémon Plante ET 50 Spectre' },
+        { id: 'm_teacup_3', reqType: 'custom', check: () => (state.missions.typeProgress['steel'] || 0) >= 50 && (state.missions.typeProgress['electric'] || 0) >= 50, progress: () => Math.min(50, state.missions.typeProgress['steel'] || 0) + Math.min(50, state.missions.typeProgress['electric'] || 0), target: 100, item: 'unremarkable-teacup', label: 'Pôle Magnétique', desc: '50 Pokémon Acier ET 50 Électric' },
+        { id: 'm_master_1', reqType: 'stat', statKey: 'uniques', target: 100, item: 'masterpiece-teacup', label: 'Expert I', desc: '100 Pokémon uniques' },
+        {
+            id: 'm_master_2', reqType: 'custom', check: () => {
+                const species = {};
+                (state.pokedex || []).forEach(p => {
+                    if (!species[p.name]) species[p.name] = [];
+                    species[p.name].push(p.level);
+                });
+                return Object.values(species).some(lvls => {
+                    for (let i = 0; i < lvls.length; i++) {
+                        for (let j = i + 1; j < lvls.length; j++) {
+                            if (Math.abs(lvls[i] - lvls[j]) === 50) return true;
+                        }
+                    }
+                    return false;
+                });
+            }, progress: () => 0, target: 1, item: 'masterpiece-teacup', label: 'L\'Écho des Âges', desc: '2 Pokémon même espèce, 50 lvls d\'écart'
+        },
+
+        // Armures / Sables / Blocs (Charbambin / Ursaring)
+        { id: 'm_arm_ranc1', reqType: 'type', type: 'dark', target: 20, item: 'malicious-armor', label: 'Ombre I', desc: '20 Pokémon Ténèbres' },
+        { id: 'm_arm_ranc2', reqType: 'custom', check: () => (state.pokedex || []).some(p => (p.name || '').includes('Escargaume')) && (state.pokedex || []).some(p => (p.name || '').includes('Carabing')), progress: () => ((state.pokedex || []).some(p => (p.name || '').includes('Escargaume')) ? 1 : 0) + ((state.pokedex || []).some(p => (p.name || '').includes('Carabing')) ? 1 : 0), target: 2, item: 'malicious-armor', label: 'Duel d\'Armures', desc: 'Avoir Escargaume et Carabing' },
+        { id: 'm_sand_1', reqType: 'type', type: 'ground', target: 5, item: 'alora-sand', label: 'Sable I', desc: '5 Pokémon Sol' },
+        { id: 'm_sand_2', reqType: 'type', type: 'ground', target: 30, item: 'alora-sand', label: 'Sable II', desc: '30 Pokémon Sol' },
+        { id: 'm_sand_3', reqType: 'custom', check: () => (state.missions.typeProgress['water'] || 0) >= 50 && (state.missions.typeProgress['fire'] || 0) >= 50, progress: () => Math.min(50, state.missions.typeProgress['water'] || 0) + Math.min(50, state.missions.typeProgress['fire'] || 0), target: 100, item: 'alora-sand', label: 'Sable d\'Alola', desc: '50 Pokémon Eau ET 50 Pokémon Feu' },
+        { id: 'm_peat_1', reqType: 'type', type: 'normal', target: 20, item: 'peat-block', label: 'Boue I', desc: '20 Pokémon Normal' },
+        { id: 'm_peat_2', reqType: 'type', type: 'normal', target: 50, item: 'peat-block', label: 'Boue II', desc: '50 Pokémon Normal' },
+        { id: 'm_peat_3', reqType: 'custom', check: () => (state.pokedex || []).some(p => (p.name || '').includes('Ursaring') && p.level >= 30), progress: () => (state.pokedex || []).find(p => (p.name || '').includes('Ursaring'))?.level || 0, target: 30, item: 'peat-block', label: 'Fidélité', desc: 'Ursaring Niveau 30' },
+
+        // Galarica (Ramoloss de Galar)
+        { id: 'm_gal_1', reqType: 'custom', check: () => (state.missions.typeProgress['poison'] || 0) >= 30 || (state.missions.typeProgress['psychic'] || 0) >= 30, progress: () => Math.max(state.missions.typeProgress['poison'] || 0, state.missions.typeProgress['psychic'] || 0), target: 30, item: 'galarica-cuff', label: 'Étude Toxique', desc: '30 Pokémon Poison ou Psy' },
+        { id: 'm_gal_2', reqType: 'stat', statKey: 'shinies', target: 1, item: 'galarica-cuff', label: 'Éclat Rare', desc: 'Un Pokémon Shiny' },
+        { id: 'm_gal_3', reqType: 'custom', check: () => state.boughtAbove10000, progress: () => state.boughtAbove10000 ? 1 : 0, target: 1, item: 'galarica-wreath', label: 'Surplus Industriel', desc: 'Reach 10000 pieces & Buy' },
+        { id: 'm_galw_1', reqType: 'type', type: 'psychic', target: 50, item: 'galarica-wreath', label: 'Couronne I', desc: '50 Pokémon Psy' },
+        { id: 'm_galw_2', reqType: 'type', type: 'poison', target: 50, item: 'galarica-wreath', label: 'Couronne II', desc: '50 Pokémon Poison' },
+
+        // Manuscrits (Wushours)
+        { id: 'm_scroll_dark1', reqType: 'type', type: 'dark', target: 50, item: 'scroll-of-darkness', label: 'Ténèbres Profondes', desc: '50 Pokémon Ténèbres' },
+        { id: 'm_scroll_dark2', reqType: 'custom', check: () => (state.pokedex || []).some(p => (p.name || '').includes('Wushours') && p.level >= 70), progress: () => (state.pokedex || []).find(p => (p.name || '').includes('Wushours'))?.level || 0, target: 70, item: 'scroll-of-darkness', label: 'Entraînement Intensif', desc: 'Wushours Nv.70' },
+        { id: 'm_scroll_dark3', reqType: 'custom', check: () => (state.pokedex || []).some(p => p.level >= 100), progress: () => (state.pokedex || []).reduce((max, p) => Math.max(max, p.level), 0), target: 100, item: 'scroll-of-darkness', label: 'Sommet', desc: 'Un Pokémon Nv.100' },
+        { id: 'm_scroll_water1', reqType: 'type', type: 'water', target: 50, item: 'scroll-of-waters', label: 'Eaux Calmes', desc: '50 Pokémon Eau' },
+        { id: 'm_scroll_water2', reqType: 'custom', check: () => (state.pokedex || []).some(p => (p.name || '').includes('Wushours') && p.level >= 70), progress: () => (state.pokedex || []).find(p => (p.name || '').includes('Wushours'))?.level || 0, target: 70, item: 'scroll-of-waters', label: 'Sérénité Active', desc: 'Wushours Nv.70' },
+        { id: 'm_scroll_water3', reqType: 'custom', check: () => (state.missions.typeProgress['water'] || 0) >= 200, progress: () => state.missions.typeProgress['water'] || 0, target: 200, item: 'scroll-of-waters', label: 'Maître des Eaux', desc: '200 Pokémon Eau' },
+
+        // Objets thématiques (Bols, Sachets, Sucres)
+        { id: 'm_sachet_1', reqType: 'type', type: 'fairy', target: 20, item: 'sachet', label: 'Parfum I', desc: '20 Pokémon Fée' },
+        { id: 'm_sachet_2', reqType: 'stat', statKey: 'liberated', target: 50, item: 'sachet', label: 'Parfum II', desc: '50 Pokémon libérés' },
+        { id: 'm_sachet_3', reqType: 'type', type: 'fairy', target: 100, item: 'sachet', label: 'Parfum III', desc: '100 Pokémon Fée' },
+        { id: 'm_whip_1', reqType: 'type', type: 'fairy', target: 25, item: 'whipped-dream', label: 'Sucrerie I', desc: '25 Pokémon Fée' },
+        { id: 'm_whip_2', reqType: 'stat', statKey: 'evolved', target: 50, item: 'whipped-dream', label: 'Sucrerie II', desc: '50 évolutions' },
+        { id: 'm_whip_3', reqType: 'type', type: 'fairy', target: 150, item: 'whipped-dream', label: 'Sucrerie III', desc: '150 Pokémon Fée' },
+        { id: 'm_tooth_1', reqType: 'type', type: 'water', target: 20, item: 'deep-sea-tooth', label: 'Abysse I', desc: '20 Pokémon Eau' },
+        { id: 'm_tooth_2', reqType: 'custom', check: () => (Date.now() - (state.lastPurchaseTimestamp || 0)) >= 18000000, progress: () => Math.floor((Date.now() - (state.lastPurchaseTimestamp || 0)) / 3600000), target: 5, item: 'deep-sea-tooth', label: 'Ascétisme', desc: '5h sans achat' },
+        { id: 'm_scale_1', reqType: 'type', type: 'water', target: 20, item: 'deep-sea-scale', label: 'Corail I', desc: '20 Pokémon Eau' },
+        { id: 'm_scale_2', reqType: 'custom', check: () => (state.pokedex || []).some(p => p.isShiny), progress: () => (state.pokedex || []).some(p => p.isShiny) ? 1 : 0, target: 1, item: 'deep-sea-scale', label: 'Perle Rare', desc: 'Avoir un Pokémon Shiny' },
+        { id: 'm_scale_3', reqType: 'type', type: 'water', target: 150, item: 'deep-sea-scale', label: 'Océan III', desc: '150 Pokémon Eau' },
+        { id: 'm_crest_1', reqType: 'type', type: 'dark', target: 100, item: 'leaders-crest', label: 'Emblème I', desc: '100 Pokémon Ténèbres' },
+        { id: 'm_crest_2', reqType: 'custom', check: () => (state.pokedex || []).filter(p => (p.types || []).includes('dark') && p.level >= 50).length >= 5, progress: () => (state.pokedex || []).filter(p => (p.types || []).includes('dark') && p.level >= 50).length, target: 5, item: 'leaders-crest', label: 'Emblème II', desc: '5 Pokémon Ténèbres Nv.50' },
+        { id: 'm_crest_3', reqType: 'stat', statKey: 'totalItemsBought', target: 10000, item: 'leaders-crest', label: 'Emblème III', desc: '10,000 objets achetés' },
+
+        // Sucres d'Alcremie
+        { id: 'm_strawberry_1', reqType: 'custom', check: () => state.recentEvoCount >= 3, progress: () => state.recentEvoCount || 0, target: 3, item: 'strawberry-sweet', label: 'Frénésie I', desc: '3 évolutions en 2 min' },
+        { id: 'm_strawberry_2', reqType: 'stat', statKey: 'evolved', target: 50, item: 'strawberry-sweet', label: 'Frénésie II', desc: '50 évolutions totales' },
+        { id: 'm_love_1', reqType: 'stat', statKey: 'uniques', target: 150, item: 'love-sweet', label: 'Amour I', desc: '150 Pokémon uniques' },
+        { id: 'm_love_2', reqType: 'stat', statKey: 'uniques', target: 300, item: 'love-sweet', label: 'Amour II', desc: '300 Pokémon uniques' },
+        { id: 'm_love_3', reqType: 'custom', check: () => (state.pokedex || []).some(p => p.isShiny), progress: () => (state.pokedex || []).some(p => p.isShiny) ? 1 : 0, target: 1, item: 'love-sweet', label: 'Coup de Cœur', desc: 'Un Pokémon Shiny' },
+        { id: 'm_berry_1', reqType: 'type', type: 'grass', target: 50, item: 'berry-sweet', label: 'Baie I', desc: '50 Pokémon Plante' },
+        { id: 'm_berry_2', reqType: 'type', type: 'grass', target: 150, item: 'berry-sweet', label: 'Baie II', desc: '150 Pokémon Plante' },
+        { id: 'm_berry_3', reqType: 'stat', statKey: 'captures', target: 500, item: 'berry-sweet', label: 'Baie III', desc: '500 Pokémon capturés' },
+        { id: 'm_clover_1', reqType: 'stat', statKey: 'coins', target: 50000, item: 'clover-sweet', label: 'Trèfle I', desc: '50,000 pièces en stock' },
+        { id: 'm_clover_2', reqType: 'stat', statKey: 'coins', target: 200000, item: 'clover-sweet', label: 'Trèfle II', desc: '200,000 pièces en stock' },
+        { id: 'm_clover_3', reqType: 'stat', statKey: 'totalCoins', target: 1000000, item: 'clover-sweet', label: 'Trèfle III', desc: '1,000,000 pièces cumulées' },
+        { id: 'm_flower_1', reqType: 'type', type: 'grass', target: 200, item: 'flower-sweet', label: 'Fleur I', desc: '200 Pokémon Plante' },
+        { id: 'm_flower_2', reqType: 'type', type: 'fairy', target: 200, item: 'flower-sweet', label: 'Fleur II', desc: '200 Pokémon Fée' },
+        { id: 'm_star_1', reqType: 'stat', statKey: 'level', target: 100, item: 'star-sweet', label: 'Étoile I', desc: 'Atteindre le Niveau 100' },
+        { id: 'm_star_2', reqType: 'custom', check: () => (state.pokedex || []).some(p => p.level >= 100), progress: () => (state.pokedex || []).reduce((max, p) => Math.max(max, p.level), 0), target: 100, item: 'star-sweet', label: 'Étoile II', desc: 'Un Pokémon Niveau 100' },
+        { id: 'm_ribbon_1', reqType: 'stat', statKey: 'liberated', target: 500, item: 'ribbon-sweet', label: 'Ruban I', desc: '500 Pokémon libérés' }
     ];
 
 
