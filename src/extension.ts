@@ -503,6 +503,7 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
                                 <option value="level-asc">Niveau (- -> +)</option>
                                 <option value="can-evolve">Peut Evoluer</option>
                                 <option value="final-stage">Stade Final</option>
+                                <option value="duplicates">Doublons</option>
                             </select>
                         </div>
                         <div id="pokedex-list" class="pokedex-list">

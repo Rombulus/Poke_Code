@@ -1044,9 +1044,18 @@
         if (!Array.isArray(state.pokedex)) state.pokedex = [];
 
         let filtered = state.pokedex.filter(p => p && p.name && p.name.toLowerCase().includes(search));
+        const sortMode = UI.pokeSort ? UI.pokeSort.value : 'id';
+
+        // Filtrer les doublons si demandé
+        if (sortMode === 'duplicates') {
+            const counts = {};
+            state.pokedex.forEach(p => {
+                if (p) counts[p.id] = (counts[p.id] || 0) + 1;
+            });
+            filtered = filtered.filter(p => counts[p.id] > 1);
+        }
 
         // --- Système de Tri ---
-        const sortMode = UI.pokeSort ? UI.pokeSort.value : 'id';
         const sorted = filtered.sort((a, b) => {
             if (sortMode === 'name-asc') return a.name.localeCompare(b.name);
             if (sortMode === 'name-desc') return b.name.localeCompare(a.name);
