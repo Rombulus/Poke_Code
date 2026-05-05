@@ -1,36 +1,47 @@
 @echo off
 setlocal
 echo ===========================================
-echo   RESET ET MISE A JOUR POKEIDLE
+echo   MISE A JOUR POKEIDLE (VS CODE + ANTIGRAVITY)
 echo ===========================================
 echo.
 
 cd /d "%~dp0"
 
-echo [1/3] Compilation...
+echo [1/4] Compilation...
 call npm run compile
 
-echo [2/3] Nettoyage et recuperation de la version...
-:: Recuperation de la version depuis package.json
+echo [2/4] Recuperation de la version...
 for /f "usebackq delims=" %%v in (`powershell -NoProfile -Command "(Get-Content package.json | ConvertFrom-Json).version"`) do set VERSION=%%v
 
-:: On supprime les vieux dossiers pour eviter les conflits
-if exist "%USERPROFILE%\.vscode\extensions\.obsolete" del /q "%USERPROFILE%\.vscode\extensions\.obsolete"
+echo [3/4] Nettoyage des anciennes extensions...
+
+:: 1. VS Code
 if exist "%USERPROFILE%\.vscode\extensions\hugo.poke-idle-game-*" for /d %%d in ("%USERPROFILE%\.vscode\extensions\hugo.poke-idle-game-*") do rd /s /q "%%d"
+set VSCODE_DIR=%USERPROFILE%\.vscode\extensions\hugo.poke-idle-game-%VERSION%
 
-set TARGET_DIR=%USERPROFILE%\.vscode\extensions\hugo.poke-idle-game-%VERSION%
-mkdir "%TARGET_DIR%"
+:: 2. Antigravity
+if exist "%USERPROFILE%\.antigravity\extensions\hugo.poke-idle-game-*" for /d %%d in ("%USERPROFILE%\.antigravity\extensions\hugo.poke-idle-game-*") do rd /s /q "%%d"
+set ANTIGRAVITY_DIR=%USERPROFILE%\.antigravity\extensions\hugo.poke-idle-game-%VERSION%
 
-echo [3/3] Installation de la nouvelle version...
-xcopy /s /e /y "out" "%TARGET_DIR%\out\"
-xcopy /s /e /y "media" "%TARGET_DIR%\media\"
-copy "package.json" "%TARGET_DIR%\"
+mkdir "%VSCODE_DIR%"
+mkdir "%ANTIGRAVITY_DIR%"
+
+echo [4/4] Déploiement des fichiers...
+
+:: Copie vers VS Code
+xcopy /s /e /y "out" "%VSCODE_DIR%\out\"
+xcopy /s /e /y "media" "%VSCODE_DIR%\media\"
+copy "package.json" "%VSCODE_DIR%\"
+
+:: Copie vers Antigravity
+xcopy /s /e /y "out" "%ANTIGRAVITY_DIR%\out\"
+xcopy /s /e /y "media" "%ANTIGRAVITY_DIR%\media\"
+copy "package.json" "%ANTIGRAVITY_DIR%\"
 
 echo.
 echo ===========================================
 echo   TERMINE ! 
-echo   1. FERME et RELANCE VS Code completement.
-echo   2. Verifie si l'icone Pokeball apparait.
+echo   Relancez VS Code ou Antigravity.
 echo ===========================================
 echo.
 pause

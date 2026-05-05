@@ -277,11 +277,21 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 			if (!state.inventory) state.inventory = { stones: {}, balls: {} };
 			if (!state.inventory.stones) state.inventory.stones = {};
 			const allStones = [
-				'fire-stone', 'water-stone', 'leaf-stone', 'thunder-stone', 'ice-stone', 'moon-stone', 'sun-stone', 'dusk-stone', 'shiny-stone', 'dawn-stone',
-				'kings-rock', 'metal-coat', 'protector', 'electirizer', 'magmarizer', 'reaper-cloth', 'dragon-scale', 'prism-scale', 'upgrade', 'dubious-disc',
-				'linking-cord', 'soothe-bell', 'razor-fang', 'razor-claw', 'black-augurite', 'peat-block', 'galarica-cuff', 'galarica-wreath',
-				'sweet-apple', 'tart-apple', 'syrupy-apple', 'chipped-pot', 'cracked-pot', 'auspicious-armor', 'malicious-armor', 'scroll-of-darkness', 'scroll-of-waters',
-				'gimmighoul-coin', 'unremarkable-teacup', 'masterpiece-teacup', 'leaders-crest', 'sachet', 'whipped-dream', 'deep-sea-tooth', 'deep-sea-scale', 'alora-sand'
+				'fire-stone', 'water-stone', 'thunder-stone', 'leaf-stone',
+				'moon-stone', 'sun-stone', 'ice-stone', 'shiny-stone',
+				'dusk-stone', 'dawn-stone', 'linking-cord', 'metal-coat',
+				'kings-rock', 'dragon-scale', 'upgrade', 'dubious-disc',
+				'protector', 'reaper-cloth', 'electirizer', 'magmarizer',
+				'prism-scale', 'razor-claw', 'razor-fang',
+				'sweet-apple', 'tart-apple', 'syrupy-apple',
+				'cracked-pot', 'chipped-pot', 'malicious-armor', 'auspicious-armor',
+				'black-augurite', 'peat-block', 'galarica-cuff', 'galarica-wreath',
+				'unremarkable-teacup', 'masterpiece-teacup', 'metal-alloy',
+				'sachet', 'whipped-dream', 'deep-sea-tooth', 'deep-sea-scale',
+				'leaders-crest', 'strawberry-sweet', 'gimmighoul-coin',
+				'alora-sand', 'rock-peak', 'galar-vapor', 'ancient-manuscript',
+				'boussole-magnetique', 'cable-croise', 'masque-maudit', 'carte-de-voyage',
+				'pokego-candy'
 			];
 			allStones.forEach(s => {
 				state.inventory.stones[s] = (state.inventory.stones[s] || 0) + 10;
@@ -442,7 +452,7 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 				<div id="app">
                     <header>
                         <div class="user-profile">
-                            <div class="lvl-badge">Nv.<span id="player-level">1</span> <span class="v-tag">v0.8.0</span></div>
+                            <div class="lvl-badge">Nv.<span id="player-level">1</span> <span class="v-tag">v0.9.0</span></div>
                             <div class="xp-bar-container">
                                 <div id="xp-progress" class="xp-progress" style="width: 0%"></div>
                             </div>
