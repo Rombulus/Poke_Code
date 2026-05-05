@@ -465,7 +465,7 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
                             </div>
                         </div>
                         <div class="stats">
-                            <span><span id="coin-count">0</span> <img src="${pokedollarUri}" class="mini-icon"></span>
+                            <span><span id="coin-count">0</span> <img src="${pokedollarUri}" class="pokedollar-icon" style="width:14px;height:14px;vertical-align:middle;margin-left:4px;"></span>
                             <span><span id="pokedex-count">0</span> 🐾</span>
                         </div>
                     </header>

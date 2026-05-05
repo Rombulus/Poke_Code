@@ -102,10 +102,21 @@ header {
 }
 
 .mini-icon {
-    width: 18px;
-    height: 18px;
+    width: 12px;
+    height: 12px;
     vertical-align: middle;
     margin-top: -2px;
+    opacity: 0.9;
+}
+
+.pokedollar-icon {
+    width: 14px !important;
+    height: 14px !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    position: static !important;
+    margin: 0 0 0 2px !important;
+    filter: brightness(1);
 }
 
 /* Tabs */
@@ -440,10 +451,10 @@ header {
 }
 
 .price {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    justify-content: center;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    justify-content: center !important;
 }
 
 .shop-item img,

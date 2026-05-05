@@ -411,7 +411,28 @@
         'cable-croise': 'up-grade',
         'masque-maudit': 'spell-tag',
         'carte-de-voyage': 'town-map',
-        'pokego-candy': 'rare-candy'
+        'pokego-candy': 'rare-candy',
+        'linking-cord': 'link-cord',
+        'link-cable': 'link-cord',
+        'cable-link': 'link-cord',
+        'link-cord': 'link-cord',
+        'syrupy-apple': 'sweet-apple',
+        'sweet-apple': 'sweet-apple',
+        'tart-apple': 'tart-apple',
+        'unremarkable-teacup': 'unremarkable-teacup',
+        'masterpiece-teacup': 'masterpiece-teacup',
+        'metal-alloy': 'metal-alloy',
+        'leaders-crest': 'leaders-crest',
+        'gimmighoul-coin': 'gimmighoul-coin',
+        'scroll-of-darkness': 'enigma-stone',
+        'scroll-of-waters': 'enigma-stone',
+        'strawberry-sweet': 'strawberry-sweet',
+        'love-sweet': 'love-sweet',
+        'berry-sweet': 'berry-sweet',
+        'clover-sweet': 'clover-sweet',
+        'flower-sweet': 'flower-sweet',
+        'star-sweet': 'star-sweet',
+        'ribbon-sweet': 'ribbon-sweet'
     };
 
     function getItemIcon(id) {
@@ -815,7 +836,7 @@
                 <div class="item-info">
                     <span>${item.name}</span>
                     <span class="owned">Possédé : ${owned}</span>
-                    <span class="price">${item.price} <img src="${getPokeDollarIcon()}" class="mini-icon"></span>
+                    <span class="price">${item.price} <img src="${getPokeDollarIcon()}" class="pokedollar-icon" style="width:14px;height:14px;vertical-align:middle;margin-left:4px;"></span>
                 </div>
                 <button onclick="buyItem('${item.id}', ${item.price})">Acheter</button>
             `;
@@ -953,7 +974,7 @@
                     <div class="item-info">
                         <span>${item.name}</span>
                         <span class="owned">Possédé : ${owned}</span>
-                        <span class="price">${item.finalPrice} <img src="${getPokeDollarIcon()}" class="mini-icon"></span>
+                        <span class="price">${item.finalPrice} <img src="${getPokeDollarIcon()}" class="pokedollar-icon" style="width:14px;height:14px;vertical-align:middle;margin-left:4px;"></span>
                     </div>
                     <button onclick="buyStone('${item.id}', ${item.finalPrice})">Acheter</button>
                 `;
