@@ -363,76 +363,79 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 
 		const s1Time = s1.lastUpdate || 0;
 		const s2Time = s2.lastUpdate || 0;
+		// On identifie qui est le plus récent (Last-Write-Wins de base)
 		const newer = s2Time >= s1Time ? s2 : s1;
+		const older = newer === s2 ? s1 : s2;
 
 		const merged = { ...newer };
 
-		// Toujours prendre le max pour les ressources
-		merged.coins = Math.max(s1.coins || 0, s2.coins || 0);
-		merged.xp = Math.max(s1.xp || 0, s2.xp || 0);
-		merged.level = Math.max(s1.level || 0, s2.level || 0);
+		// --- Ressources Snapshot (Last-Write-Wins) ---
+		// On fait confiance au plus récent pour ce qui peut diminuer (dépenses, utilisation d'objets)
+		merged.coins = newer.coins || 0;
+		merged.inventory = {
+			balls: { ...(newer.inventory?.balls || {}) },
+			stones: { ...(newer.inventory?.stones || {}) }
+		};
 
-		// Inventaire (Union et Max)
-		merged.inventory = { balls: { ...(s1.inventory?.balls || {}) }, stones: { ...(s1.inventory?.stones || {}) } };
-		if (s2.inventory?.balls) {
-			Object.entries(s2.inventory.balls).forEach(([k, v]) => {
-				merged.inventory.balls[k] = Math.max(merged.inventory.balls[k] || 0, v as number);
-			});
+		// --- Progression de Niveau (Max robuste) ---
+		// L'XP descend quand on monte de niveau, donc on fusionne par Niveau d'abord
+		if ((older.level || 1) > (newer.level || 1)) {
+			merged.level = older.level;
+			merged.xp = older.xp;
+		} else if ((older.level || 1) === (newer.level || 1)) {
+			merged.xp = Math.max(newer.xp || 0, older.xp || 0);
 		}
-		if (s2.inventory?.stones) {
-			Object.entries(s2.inventory.stones).forEach(([k, v]) => {
-				merged.inventory.stones[k] = Math.max(merged.inventory.stones[k] || 0, v as number);
-			});
-		}
+		// Si newer.level > older.level, on garde les valeurs de newer déjà présentes dans merged
 
-		// Pokédex (Union et Max niveau)
+		// --- Pokédex & Découvertes (Union cumulative) ---
 		merged.released = Array.from(new Set([...(s1.released || []), ...(s2.released || [])]));
 		const pokedexMap = new Map();
 		[...(s1.pokedex || []), ...(s2.pokedex || [])].forEach(p => {
 			if (!p || merged.released.includes(p.instanceId)) return;
 			const existing = pokedexMap.get(p.instanceId);
+			// On garde le Pokémon s'il est unique, ou on garde la version la plus haut niveau
 			if (!existing || (p.level || 0) > (existing.level || 0)) {
 				pokedexMap.set(p.instanceId, p);
 			}
 		});
 		merged.pokedex = Array.from(pokedexMap.values());
+		merged.discovery = { ...(s1.discovery || {}), ...(s2.discovery || {}) };
 
-		// Missions
+		// --- Missions (Union des succès) ---
 		merged.missions = {
 			...newer.missions,
 			claimed: Array.from(new Set([...(s1.missions?.claimed || []), ...(s2.missions?.claimed || [])]))
 		};
 		merged.missions.typeProgress = { ...(s1.missions?.typeProgress || {}) };
-		if (s2.missions?.typeProgress) {
-			Object.keys(s2.missions.typeProgress).forEach(k => {
-				merged.missions.typeProgress[k] = Math.max(merged.missions.typeProgress[k] || 0, s2.missions.typeProgress[k]);
+		if (older.missions?.typeProgress) {
+			Object.keys(older.missions.typeProgress).forEach(k => {
+				merged.missions.typeProgress[k] = Math.max(merged.missions.typeProgress[k] || 0, older.missions.typeProgress[k]);
 			});
 		}
 
-		// Stats
-		merged.stats = { ...(s1.stats || {}) };
-		if (s2.stats) {
-			Object.keys(s2.stats).forEach(k => {
-				merged.stats[k] = Math.max(merged.stats[k] || 0, s2.stats[k]);
+		// --- Statistiques & Flags (Max/OR) ---
+		merged.stats = { ...(newer.stats || {}) };
+		if (older.stats) {
+			Object.keys(older.stats).forEach(k => {
+				merged.stats[k] = Math.max(merged.stats[k] || 0, older.stats[k]);
 			});
 		}
 
-		// Discovery (Pokédex des espèces vues) — union des deux sources
-		merged.discovery = { ...(s1.discovery || {}), ...(s2.discovery || {}) };
-
-		// Quest trackers
+		// Flags de quêtes (Union des complétions)
 		merged.middayCaptures = Math.max(s1.middayCaptures || 0, s2.middayCaptures || 0);
 		merged.dawnCaptureAchieved = s1.dawnCaptureAchieved || s2.dawnCaptureAchieved || false;
 		merged.soldLevel50 = s1.soldLevel50 || s2.soldLevel50 || false;
 		merged.ningaleEvolvedWithBalls = s1.ningaleEvolvedWithBalls || s2.ningaleEvolvedWithBalls || false;
 		merged.boughtAbove10000 = s1.boughtAbove10000 || s2.boughtAbove10000 || false;
 
-		// Timestamps (pick most recent)
+		// Timestamps (Prendre le plus récent pour chaque action)
 		merged.lastCaptureTimestamp = Math.max(s1.lastCaptureTimestamp || 0, s2.lastCaptureTimestamp || 0);
 		merged.lastEvoTimestamp = Math.max(s1.lastEvoTimestamp || 0, s2.lastEvoTimestamp || 0);
 		merged.lastPurchaseTimestamp = Math.max(s1.lastPurchaseTimestamp || 0, s2.lastPurchaseTimestamp || 0);
 
-		merged.lastUpdate = Date.now();
+		// /!\ IMPORTANT : On ne génère pas de nouveau Date.now() ici
+		// On garde le timestamp de la version la plus récente pour éviter de dériver du webview
+		merged.lastUpdate = Math.max(s1Time, s2Time);
 		return merged;
 	}
 
