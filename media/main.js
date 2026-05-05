@@ -398,6 +398,27 @@
         { id: 'amourball', name: 'Love Ball', rate: 0.5, price: 250, img: 'love-ball' }
     ];
 
+    function getPokeDollarIcon() {
+        return window.POKEDOLLAR_URI || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/nugget.png';
+    }
+
+    const itemIconMapping = {
+        'alora-sand': 'soft-sand',
+        'rock-peak': 'hard-stone',
+        'galar-vapor': 'smoke-ball',
+        'ancient-manuscript': 'enigma-stone',
+        'boussole-magnetique': 'magnet',
+        'cable-croise': 'up-grade',
+        'masque-maudit': 'spell-tag',
+        'carte-de-voyage': 'town-map',
+        'pokego-candy': 'rare-candy'
+    };
+
+    function getItemIcon(id) {
+        const mappedId = itemIconMapping[id] || id;
+        return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${mappedId}.png`;
+    }
+
     function renderBallInventory() {
         const container = document.getElementById('ball-inventory');
         container.innerHTML = '';
@@ -406,7 +427,7 @@
             const slot = document.createElement('div');
             slot.className = `item-slot ${selectedBall === ball.id ? 'active' : ''}`;
             slot.innerHTML = `
-                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${ball.img}.png">
+                <img src="${getItemIcon(ball.img)}">
                 <span>${count}</span>
             `;
             slot.onclick = () => {
@@ -428,7 +449,7 @@
                 slot.className = 'item-slot';
                 slot.title = stoneTranslations[stone] || stone;
                 const img = document.createElement('img');
-                img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${stone}.png`;
+                img.src = getItemIcon(stone);
                 img.onerror = () => { img.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'; };
                 const span = document.createElement('span');
                 span.textContent = count;
@@ -652,7 +673,7 @@
 
         // --- Animation de Lancer ---
         const ballImg = document.createElement('img');
-        ballImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${ball.img}.png`;
+        ballImg.src = getItemIcon(ball.img);
         ballImg.className = 'thrown-ball throw-arc';
 
         // Positionner la ball par rapport au Pokémon
@@ -794,7 +815,7 @@
                 <div class="item-info">
                     <span>${item.name}</span>
                     <span class="owned">Possédé : ${owned}</span>
-                    <span class="price">${item.price} <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/nugget.png" class="mini-icon"></span>
+                    <span class="price">${item.price} <img src="${getPokeDollarIcon()}" class="mini-icon"></span>
                 </div>
                 <button onclick="buyItem('${item.id}', ${item.price})">Acheter</button>
             `;
@@ -926,13 +947,13 @@
 
                 card.innerHTML = `
                     <div style="position:relative">
-                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.id}.png" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                        <img src="${getItemIcon(item.id)}" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
                         ${discountBadge}
                     </div>
                     <div class="item-info">
                         <span>${item.name}</span>
                         <span class="owned">Possédé : ${owned}</span>
-                        <span class="price">${item.finalPrice} <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/nugget.png" class="mini-icon"></span>
+                        <span class="price">${item.finalPrice} <img src="${getPokeDollarIcon()}" class="mini-icon"></span>
                     </div>
                     <button onclick="buyStone('${item.id}', ${item.finalPrice})">Acheter</button>
                 `;

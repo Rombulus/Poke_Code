@@ -442,6 +442,7 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 	private _getHtmlForWebview(webview: vscode.Webview) {
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'main.js'));
 		const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'style.css'));
+		const pokedollarUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'pokedollar.png'));
 
 		return `<!DOCTYPE html>
 			<html lang="fr">
@@ -450,6 +451,9 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<link href="${styleUri}" rel="stylesheet">
 				<title>PokeIdle</title>
+                <script>
+                    window.POKEDOLLAR_URI = "${pokedollarUri}";
+                </script>
 			</head>
 			<body>
 				<div id="app">
@@ -461,7 +465,7 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
                             </div>
                         </div>
                         <div class="stats">
-                            <span><span id="coin-count">0</span> <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/nugget.png" class="mini-icon"></span>
+                            <span><span id="coin-count">0</span> <img src="${pokedollarUri}" class="mini-icon"></span>
                             <span><span id="pokedex-count">0</span> 🐾</span>
                         </div>
                     </header>
