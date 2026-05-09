@@ -22,6 +22,10 @@
         lastCaptureTimestamp: Date.now(),
         lastEvoTimestamp: Date.now(),
         lastPurchaseTimestamp: Date.now(),
+        totalPlaytime: 0,
+        playtimeAtLastCapture: 0,
+        playtimeAtLastEvo: 0,
+        playtimeAtLastPurchase: 0,
         clickProgress: 0
     };
 
@@ -91,6 +95,11 @@
             if (!state.recentEvoTimestamps) state.recentEvoTimestamps = [];
             if (state.ningaleEvolvedWithBalls === undefined) state.ningaleEvolvedWithBalls = false;
             if (state.boughtAbove10000 === undefined) state.boughtAbove10000 = false;
+            if (state.totalPlaytime === undefined) state.totalPlaytime = 0;
+            if (state.playtimeAtLastCapture === undefined) state.playtimeAtLastCapture = 0;
+            if (state.playtimeAtLastEvo === undefined) state.playtimeAtLastEvo = 0;
+            if (state.playtimeAtLastPurchase === undefined) state.playtimeAtLastPurchase = 0;
+            if (state.playtimeAtLastBallPurchase === undefined) state.playtimeAtLastBallPurchase = 0;
 
             if (!state.released) state.released = [];
             if (!state.recentSpawns) state.recentSpawns = [];
@@ -117,6 +126,7 @@
                         if (!p.speciesId && p.id <= 10000) p.speciesId = p.id;
                         if (p.nextEvoLevel === "Erreur") p.nextEvoLevel = null;
                         if (!p.captureTimestamp) p.captureTimestamp = Date.now();
+                        if (p.playtimeAtCapture === undefined) p.playtimeAtCapture = state.totalPlaytime;
 
                         // Migration de genre robuste
                         if (p.gender === 'mâle') p.gender = 'male';
@@ -497,6 +507,7 @@
 
     function startGameLoop() {
         setInterval(() => {
+            state.totalPlaytime = (state.totalPlaytime || 0) + 1;
             if (!currentPokemon) {
                 state.spawnTimer--;
                 if (state.spawnTimer <= 0) {
@@ -769,7 +780,8 @@
             xp: 0,
             gender: gender,
             date: new Date().toLocaleDateString(),
-            captureTimestamp: Date.now()
+            captureTimestamp: Date.now(),
+            playtimeAtCapture: state.totalPlaytime
         };
 
         state.pokedex.push(newPoke);
@@ -782,6 +794,7 @@
         const mins = new Date().getMinutes();
 
         state.lastCaptureTimestamp = Date.now();
+        state.playtimeAtLastCapture = state.totalPlaytime;
         if (!state.stats) state.stats = {};
         state.stats.captures = (state.stats.captures || 0) + 1;
 
@@ -991,6 +1004,8 @@
             state.stats.totalItemsBought = (state.stats.totalItemsBought || 0) + 1;
             state.stats.totalBallsBought = (state.stats.totalBallsBought || 0) + 1;
             state.lastPurchaseTimestamp = Date.now();
+            state.playtimeAtLastPurchase = state.totalPlaytime;
+            if (id.includes('ball')) state.playtimeAtLastBallPurchase = state.totalPlaytime;
             updateUI();
             saveState();
             renderShop();
@@ -1007,6 +1022,7 @@
             state.inventory.stones[id] = (state.inventory.stones[id] || 0) + 1;
             state.stats.totalItemsBought = (state.stats.totalItemsBought || 0) + 1;
             state.lastPurchaseTimestamp = Date.now();
+            state.playtimeAtLastPurchase = state.totalPlaytime;
             updateUI();
             saveState();
             renderShop();
@@ -1205,7 +1221,7 @@
             }
             if (p.nextEvoLevel.startsWith("loyalty:")) {
                 const targetSecs = parseInt(p.nextEvoLevel.split(":")[1]);
-                const currentSecs = (Date.now() - (p.captureTimestamp || Date.now())) / 1000;
+                const currentSecs = state.totalPlaytime - (p.playtimeAtCapture || state.totalPlaytime);
                 if (currentSecs >= targetSecs) {
                     return "Évolution prête !";
                 } else {
@@ -1284,7 +1300,7 @@
                 const detail = evoDetails[0];
                 if (detail.trigger.name === "level-up" && !detail.item && !detail.held_item) {
                     if (detail.min_happiness) {
-                        p.nextEvoLevel = "loyalty:1800"; // 30 mins
+                        p.nextEvoLevel = "loyalty:86400"; // 24 hours
                     } else {
                         p.nextEvoLevel = detail.min_level || 1;
                     }
@@ -1336,8 +1352,8 @@
                     const levelMet = pokemon.level >= (detail.min_level || 1);
                     let happinessMet = true;
                     if (detail.min_happiness) {
-                        const loyaltySecs = (Date.now() - (pokemon.captureTimestamp || Date.now())) / 1000;
-                        happinessMet = loyaltySecs >= 1800; // 30 minutes
+                        const loyaltySecs = state.totalPlaytime - (pokemon.playtimeAtCapture || state.totalPlaytime);
+                        happinessMet = loyaltySecs >= 86400; // 24 hours
                     }
                     if (levelMet && happinessMet) isReady = true;
                 } else if (detail.item || detail.held_item || detail.trigger.name === "trade" || detail.trigger.name === "use-item") {
@@ -1440,6 +1456,7 @@
                 state.missions.evolutions++;
                 state.stats.evolved++;
                 state.lastEvoTimestamp = Date.now();
+                state.playtimeAtLastEvo = state.totalPlaytime;
                 saveState();
                 renderPokedex();
                 updateUI();
@@ -1463,10 +1480,10 @@
 
     const MISSIONS = [
         { id: 'm_fire', reqType: 'type', type: 'fire', target: 100, item: 'fire-stone', label: 'Chasse Incendiaire', desc: 'Capturer 100 Pokémon Feu' },
-        { id: 'm_water', reqType: 'custom', check: () => (Date.now() - (state.lastCaptureTimestamp || 0)) >= 3600000, progress: () => Math.floor((Date.now() - (state.lastCaptureTimestamp || 0)) / 60000), target: 60, item: 'water-stone', label: 'Calme Plat', desc: '1h sans capture' },
+        { id: 'm_water', reqType: 'custom', check: () => (state.totalPlaytime - (state.playtimeAtLastCapture || 0)) >= 3600, progress: () => Math.floor((state.totalPlaytime - (state.playtimeAtLastCapture || 0)) / 60), target: 60, item: 'water-stone', label: 'Calme Plat', desc: '1h sans capture' },
         { id: 'm_bolt', reqType: 'stat', statKey: 'totalItemsBought', target: 5000, item: 'thunder-stone', label: 'Client Fidèle', desc: 'Acheter 5000 objets' },
         { id: 'm_leaf', reqType: 'custom', check: () => (state.pokedex || []).filter(p => p && (p.types || []).includes('grass') && (p.level || 1) >= 15).length >= 50, progress: () => (state.pokedex || []).filter(p => p && (p.types || []).includes('grass') && (p.level || 1) >= 15).length, target: 50, item: 'leaf-stone', label: 'Croissance Lente', desc: '50 Pokémon Plante Nv.15' },
-        { id: 'm_ice', reqType: 'custom', check: () => (Date.now() - (state.lastEvoTimestamp || 0)) >= 86400000, progress: () => Math.floor((Date.now() - (state.lastEvoTimestamp || 0)) / 3600000), target: 24, item: 'ice-stone', label: 'Hibernation', desc: '24h sans évolution' },
+        { id: 'm_ice', reqType: 'custom', check: () => (state.totalPlaytime - (state.playtimeAtLastEvo || 0)) >= 86400, progress: () => Math.floor((state.totalPlaytime - (state.playtimeAtLastEvo || 0)) / 3600), target: 24, item: 'ice-stone', label: 'Hibernation', desc: '24h sans évolution' },
         { id: 'm_moon', reqType: 'custom', check: () => (state.coins || 0) >= 14400, progress: () => state.coins || 0, target: 14400, item: 'moon-stone', label: 'Épargne Nocturne', desc: 'Accumuler 14 400 pièces' },
         { id: 'm_sun', reqType: 'custom', check: () => (state.middayCaptures || 0) >= 50, progress: () => state.middayCaptures || 0, target: 50, item: 'sun-stone', label: 'Plein Midi', desc: '50 Pokémon entre 10h et 14h' },
         { id: 'm_shiny', reqType: 'custom', check: () => (state.pokedex || []).some(p => p && (p.level || 1) >= 60), progress: () => (state.pokedex || []).reduce((max, p) => Math.max(max, p ? (p.level || 1) : 0), 0), target: 60, item: 'shiny-stone', label: 'Mentor Passif', desc: 'Un Pokémon au Niveau 60' },
@@ -1496,13 +1513,13 @@
         // Pommes (Verpom)
         { id: 'm_apple_1', reqType: 'stat', statKey: 'liberated', target: 5, item: 'sweet-apple', label: 'Petit Ménage', desc: 'Libérer 5 Pokémon' },
         { id: 'm_draco', reqType: 'type', type: 'dragon', target: 1, item: 'dragon-scale', label: 'Chasseur de Légendes', desc: 'Capturer un Dragon' },
-        { id: 'm_session', reqType: 'custom', check: () => (Date.now() - (state.sessionStartTime || Date.now())) >= 18000000, progress: () => Math.floor((Date.now() - (state.sessionStartTime || Date.now())) / 60000), target: 300, item: 'upgrade', label: 'Session Marathon', desc: 'Maintenir le jeu ouvert 5h' },
+        { id: 'm_session', reqType: 'custom', check: () => (state.totalPlaytime || 0) >= 18000, progress: () => Math.floor((state.totalPlaytime || 0) / 60), target: 300, item: 'upgrade', label: 'Session Marathon', desc: 'Maintenir le jeu ouvert 5h' },
         { id: 'm_balls_bought', reqType: 'stat', statKey: 'totalBallsBought', target: 1000, item: 'protector', label: 'Stock de Munitions', desc: 'Acheter 1000 Poké Balls' },
         { id: 'm_levels', reqType: 'custom', check: () => (state.pokedex || []).reduce((s, p) => s + (p.level || 1), 0) >= 1000, progress: () => (state.pokedex || []).reduce((s, p) => s + (p.level || 1), 0), target: 1000, item: 'electirizer', label: 'Énergie Cumulée', desc: '1000 niveaux cumulés' },
         { id: 'm_reaper', reqType: 'custom', check: () => (state.pokedex || []).some(p => (p.level || 1) >= 80), progress: () => (state.pokedex || []).reduce((max, p) => Math.max(max, p ? (p.level || 1) : 0), 0), target: 80, item: 'reaper-cloth', label: 'Sagesse Éternelle', desc: 'Un Pokémon au Niveau 80' },
         { id: 'm_water_50', reqType: 'type', type: 'water', target: 50, item: 'prism-scale', label: 'Grand Large', desc: '50 Pokémon Eau' },
         { id: 'm_fairy_15', reqType: 'type', type: 'fairy', target: 15, item: 'sachet', label: 'Charmeur', desc: '15 Pokémon Fée' },
-        { id: 'm_ascetisme', reqType: 'custom', check: () => (Date.now() - (state.lastPurchaseTimestamp || 0)) >= 18000000, progress: () => Math.floor((Date.now() - (state.lastPurchaseTimestamp || 0)) / 60000), target: 300, item: 'deep-sea-tooth', label: 'Ascétisme', desc: '5h sans rien acheter' },
+        { id: 'm_ascetisme', reqType: 'custom', check: () => (state.totalPlaytime - (state.playtimeAtLastPurchase || 0)) >= 18000, progress: () => Math.floor((state.totalPlaytime - (state.playtimeAtLastPurchase || 0)) / 60), target: 300, item: 'deep-sea-tooth', label: 'Ascétisme', desc: '5h sans rien acheter' },
         { id: 'm_click_999', reqType: 'stat', statKey: 'totalClicks', target: 999, item: 'gimmighoul-coin', label: 'Obsession du Clic', desc: '999 clics sur l\'interface' },
         { id: 'm_frenzy', reqType: 'custom', check: () => (state.recentEvoCount || 0) >= 3, progress: () => state.recentEvoCount || 0, target: 3, item: 'strawberry-sweet', label: 'Frénésie', desc: '3 évolutions en 2 minutes' },
         { id: 'm_kubfu', reqType: 'custom', check: () => (state.pokedex || []).some(p => (p.name || '').includes('Wushours') && (p.level || 1) >= 70), progress: () => (state.pokedex || []).find(p => (p.name || '').includes('Wushours'))?.level || 0, target: 70, item: 'ancient-manuscript', label: 'Entraînement Intensif', desc: 'Wushours Niveau 70' },
@@ -1510,11 +1527,11 @@
         { id: 'm_galanoa_cuff', reqType: 'type', type: 'poison', target: 15, item: 'galarica-cuff', label: 'Bracelet Galanoa', desc: '15 Pokémon Poison' },
         { id: 'm_galanoa_wreath', reqType: 'type', type: 'psychic', target: 15, item: 'galarica-wreath', label: 'Couronne Galanoa', desc: '15 Pokémon Psy' },
         { id: 'm_pom_alloy', reqType: 'custom', check: () => (state.pokedex || []).some(p => (p.name || '').includes('Pomdramour') && (p.level || 1) >= 40), progress: () => (state.pokedex || []).find(p => (p.name || '').includes('Pomdramour'))?.level || 0, target: 40, item: 'syrupy-apple', label: 'Pomme en Alliage', desc: 'Pomdramour Niveau 40' },
-        { id: 'm_no_catch_2h', reqType: 'custom', check: () => (Date.now() - (state.lastCaptureTimestamp || 0)) >= 7200000, progress: () => Math.floor((Date.now() - (state.lastCaptureTimestamp || 0)) / 60000), target: 120, item: 'tart-apple', label: 'Cueillete', desc: '2h sans capture' },
+        { id: 'm_no_catch_2h', reqType: 'custom', check: () => (state.totalPlaytime - (state.playtimeAtLastCapture || 0)) >= 7200, progress: () => Math.floor((state.totalPlaytime - (state.playtimeAtLastCapture || 0)) / 60), target: 120, item: 'tart-apple', label: 'Cueillete', desc: '2h sans capture' },
         { id: 'm_coins_50k', reqType: 'custom', check: () => (state.coins || 0) >= 50000, progress: () => state.coins || 0, target: 50000, item: 'chipped-pot', label: 'Fortune de Collectionneur', desc: 'Posséder 50 000 pièces' },
         { id: 'm_memory_past', reqType: 'custom', check: () => (state.pokedex || []).some(p => ['Cochignon', 'Yanma'].some(n => (p.name || '').includes(n)) && (p.level || 1) >= 50), progress: () => (state.pokedex || []).filter(p => ['Cochignon', 'Yanma'].some(n => (p.name || '').includes(n))).reduce((max, p) => Math.max(max, p.level), 0), target: 50, item: 'ancient-manuscript', label: 'Mémoire du Passé', desc: 'Cochignon ou Yanma Nv. 50' },
         { id: 'm_mag_pole', reqType: 'custom', check: () => (state.missions.typeProgress['steel'] || 0) + (state.missions.typeProgress['electric'] || 0) >= 50, progress: () => (state.missions.typeProgress['steel'] || 0) + (state.missions.typeProgress['electric'] || 0), target: 50, item: 'boussole-magnetique', label: 'Pôle Magnétique', desc: '50 Pokémon Acier ou Électrik' },
-        { id: 'm_time_erosion', reqType: 'custom', check: () => (Date.now() - (state.lastBallPurchaseTimestamp || 0)) >= 7200000, progress: () => Math.floor((Date.now() - (state.lastBallPurchaseTimestamp || 0)) / 60000), target: 120, item: 'rock-peak', label: 'Érosion Temporelle', desc: '120 min sans acheter de Balls' },
+        { id: 'm_time_erosion', reqType: 'custom', check: () => (state.totalPlaytime - (state.playtimeAtLastBallPurchase || 0)) >= 7200, progress: () => Math.floor((state.totalPlaytime - (state.playtimeAtLastBallPurchase || 0)) / 60), target: 120, item: 'rock-peak', label: 'Érosion Temporelle', desc: '120 min sans acheter de Balls' },
         { id: 'm_armor_duel', reqType: 'custom', check: () => (state.pokedex || []).some(p => (p.name || '').includes('Escargaume')) && (state.pokedex || []).some(p => (p.name || '').includes('Carabing')), progress: () => ((state.pokedex || []).some(p => (p.name || '').includes('Escargaume')) ? 1 : 0) + ((state.pokedex || []).some(p => (p.name || '').includes('Carabing')) ? 1 : 0), target: 2, item: 'cable-croise', label: 'Duel d\'Armures', desc: 'Posséder Escargaume et Carabing' },
         { id: 'm_endurance', reqType: 'custom', check: () => (state.pokedex || []).some(p => ((p.types || []).includes('ghost') || (p.types || []).includes('fighting')) && (p.level || 1) >= 60), progress: () => (state.pokedex || []).filter(p => (p.types || []).includes('ghost') || (p.types || []).includes('fighting')).reduce((max, p) => Math.max(max, p.level), 0), target: 60, item: 'masque-maudit', label: 'Endurance', desc: 'Spectre ou Combat Niveau 60' },
         { id: 'm_empty_shell', reqType: 'custom', check: () => state.ningaleEvolvedWithBalls, progress: () => state.ningaleEvolvedWithBalls ? 1 : 0, target: 1, item: 'sweet-apple', label: 'Coquille Vide', desc: 'Evolve Ningale level 20 with 100 Balls' },

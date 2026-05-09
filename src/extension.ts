@@ -428,10 +428,16 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 		merged.ningaleEvolvedWithBalls = s1.ningaleEvolvedWithBalls || s2.ningaleEvolvedWithBalls || false;
 		merged.boughtAbove10000 = s1.boughtAbove10000 || s2.boughtAbove10000 || false;
 
-		// Timestamps (Prendre le plus récent pour chaque action)
+		// Timestamps & Playtime (Prendre le plus récent pour chaque action)
 		merged.lastCaptureTimestamp = Math.max(s1.lastCaptureTimestamp || 0, s2.lastCaptureTimestamp || 0);
 		merged.lastEvoTimestamp = Math.max(s1.lastEvoTimestamp || 0, s2.lastEvoTimestamp || 0);
 		merged.lastPurchaseTimestamp = Math.max(s1.lastPurchaseTimestamp || 0, s2.lastPurchaseTimestamp || 0);
+
+		merged.totalPlaytime = Math.max(s1.totalPlaytime || 0, s2.totalPlaytime || 0);
+		merged.playtimeAtLastCapture = Math.max(s1.playtimeAtLastCapture || 0, s2.playtimeAtLastCapture || 0);
+		merged.playtimeAtLastEvo = Math.max(s1.playtimeAtLastEvo || 0, s2.playtimeAtLastEvo || 0);
+		merged.playtimeAtLastPurchase = Math.max(s1.playtimeAtLastPurchase || 0, s2.playtimeAtLastPurchase || 0);
+		merged.playtimeAtLastBallPurchase = Math.max(s1.playtimeAtLastBallPurchase || 0, s2.playtimeAtLastBallPurchase || 0);
 
 		// /!\ IMPORTANT : On ne génère pas de nouveau Date.now() ici
 		// On garde le timestamp de la version la plus récente pour éviter de dériver du webview
