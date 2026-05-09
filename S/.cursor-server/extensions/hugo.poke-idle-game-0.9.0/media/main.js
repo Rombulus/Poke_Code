@@ -146,6 +146,9 @@
 
                         // On marque pour une future synchronization API preçise
                         if (p.synced === undefined) p.synced = false;
+
+                        // Migration système temporel : 30 min -> 24h
+                        if (p.nextEvoLevel === "loyalty:1800") p.nextEvoLevel = "loyalty:86400";
                     }
                 });
             } else {

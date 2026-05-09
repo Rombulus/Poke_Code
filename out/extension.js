@@ -384,12 +384,13 @@ class PokeIdleProvider {
         // --- Pokédex & Découvertes (Union cumulative) ---
         merged.released = Array.from(new Set([...(s1.released || []), ...(s2.released || [])]));
         const pokedexMap = new Map();
-        [...(s1.pokedex || []), ...(s2.pokedex || [])].forEach(p => {
+        [...(older.pokedex || []), ...(newer.pokedex || [])].forEach(p => {
             if (!p || merged.released.includes(p.instanceId))
                 return;
             const existing = pokedexMap.get(p.instanceId);
             // On garde le Pokémon s'il est unique, ou on garde la version la plus haut niveau
-            if (!existing || (p.level || 0) > (existing.level || 0)) {
+            // En cas d'égalité, newer gagne car il écrase existing (itéré après older)
+            if (!existing || (p.level || 0) >= (existing.level || 0)) {
                 pokedexMap.set(p.instanceId, p);
             }
         });
