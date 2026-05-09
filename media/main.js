@@ -730,12 +730,13 @@
             catchSuccess = true;
         } else {
             // currentPokemon.captureRate varie de 3 (Légendaire) à 255 (très commun)
-            let chance = currentPokemon.captureRate / 255.0;
+            let chance = (currentPokemon.captureRate / 280.0);
 
             // On ajoute un bonus fixe selon la puissance de la Pokéball
-            // ball.rate est de 0.4 pour la Pokéball standard, donc (0.4 - 0.4) = +0%
-            // Hyperball a 0.85, donc (0.85 - 0.4) = +45% de chance de capture
             chance += (ball.rate - 0.4);
+
+            // Malus de niveau : plus il est haut, plus c'est dur
+            chance -= (currentPokemon.level / 500.0);
 
             // On s'assure que la chance est entre 5% et 100%
             chance = Math.max(0.05, Math.min(1.0, chance));
