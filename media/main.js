@@ -55,6 +55,7 @@
     let selectedBall = 'pokeball';
     let speciesCache = {}; // Cache pour limiter les appels API
     let dayNightInterval = null;
+    let gameLoopInterval = null; // Suivi du game loop pour éviter les doublons
 
     // Initialisation
     vscode.postMessage({ type: 'getState' });
@@ -509,7 +510,12 @@
     }
 
     function startGameLoop() {
-        setInterval(() => {
+        // Annuler le game loop précédent pour éviter les doublons (causés par les reloads auto-sync)
+        if (gameLoopInterval) {
+            clearInterval(gameLoopInterval);
+            gameLoopInterval = null;
+        }
+        gameLoopInterval = setInterval(() => {
             state.totalPlaytime = (state.totalPlaytime || 0) + 1;
             if (!currentPokemon) {
                 state.spawnTimer--;
@@ -521,8 +527,8 @@
             if (new Date().getSeconds() % 3 === 0) {
                 gainPassiveXP();
             }
-            // 20$ par minute
-            if (new Date().getTime() % 60000 < 1000) {
+            // 20$ par minute (une seule fois par minute grâce au modulo)
+            if (state.totalPlaytime % 60 === 0) {
                 state.coins += 20;
                 updateUI();
                 saveState();
