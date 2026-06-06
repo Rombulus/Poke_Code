@@ -160,6 +160,8 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 				const currentState = this._context.globalState.get('pokeState');
 				const merged = this._mergeStates(currentState, newState);
 				this._context.globalState.update('pokeState', merged);
+				// Écrire dans le fichier JSON partagé pour que tous les IDEs voient l'import
+				try { fs.writeFileSync(this._getSavePath(), JSON.stringify(merged, null, 2)); } catch { }
 				this._view?.webview.postMessage({ type: 'loadState', value: merged });
 				vscode.window.showInformationMessage("Sauvegarde importée et fusionnée avec succès !");
 			} catch (e) {
@@ -185,6 +187,8 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 				// 2. Fusionner
 				const merged = this._mergeStates(localState, remoteState);
 				this._context.globalState.update('pokeState', merged);
+				// Écrire dans le fichier JSON partagé pour synchroniser tous les IDEs sur cette machine
+				try { fs.writeFileSync(this._getSavePath(), JSON.stringify(merged, null, 2)); } catch { }
 				// 3. Pousser vers GitHub
 				await sync.updateGist(merged);
 				this._view?.webview.postMessage({ type: 'loadState', value: merged });
@@ -193,6 +197,7 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 			} else {
 				// Créer un nouveau Gist avec l'état local
 				await sync.createGist(localState);
+				try { fs.writeFileSync(this._getSavePath(), JSON.stringify(localState, null, 2)); } catch { }
 				this._view?.webview.postMessage({ type: 'syncStatus', value: 'success', date: new Date().toLocaleString() });
 				vscode.window.showInformationMessage("PokéCode : Premier Gist de sauvegarde créé sur GitHub !");
 			}
@@ -363,7 +368,7 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 
 		const s1Time = s1.lastUpdate || 0;
 		const s2Time = s2.lastUpdate || 0;
-		// On identifie qui est le plus récent (Last-Write-Wins de base)
+		// On identifie qui est le plus récent (Last-Write-Wins pour les ressources consommables)
 		const newer = s2Time >= s1Time ? s2 : s1;
 		const older = newer === s2 ? s1 : s2;
 
@@ -388,31 +393,59 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 		// Si newer.level > older.level, on garde les valeurs de newer déjà présentes dans merged
 
 		// --- Pokédex & Découvertes (Union cumulative) ---
+		// Union des released (libérés) des deux sauvegardes
 		merged.released = Array.from(new Set([...(s1.released || []), ...(s2.released || [])]));
 		const pokedexMap = new Map();
+		// On itère older puis newer pour que newer écrase en cas d'égalité de niveau
 		[...(older.pokedex || []), ...(newer.pokedex || [])].forEach(p => {
 			if (!p || merged.released.includes(p.instanceId)) return;
 			const existing = pokedexMap.get(p.instanceId);
-			// On garde le Pokémon s'il est unique, ou on garde la version la plus haut niveau
-			// En cas d'égalité, newer gagne car il écrase existing (itéré après older)
+			// On garde la version la plus haute en niveau ; si égalité, newer gagne
 			if (!existing || (p.level || 0) >= (existing.level || 0)) {
 				pokedexMap.set(p.instanceId, p);
 			}
 		});
 		merged.pokedex = Array.from(pokedexMap.values());
-		merged.discovery = { ...(s1.discovery || {}), ...(s2.discovery || {}) };
 
-		// --- Missions (Union des succès) ---
+		// Pokédex discovery : union des deux, avec priorité au statut le plus avancé (caught > seen)
+		merged.discovery = {};
+		const allDiscoveryIds = new Set([
+			...Object.keys(s1.discovery || {}),
+			...Object.keys(s2.discovery || {})
+		]);
+		allDiscoveryIds.forEach(id => {
+			const d1 = (s1.discovery || {})[id];
+			const d2 = (s2.discovery || {})[id];
+			if (!d1) { merged.discovery[id] = d2; return; }
+			if (!d2) { merged.discovery[id] = d1; return; }
+			// Les deux ont vu ce pokémon : on garde le plus avancé (caught > seen)
+			merged.discovery[id] = (d1.caught || d2.caught)
+				? { ...d1, ...d2, caught: true }
+				: (d2.name ? d2 : d1);
+		});
+
+		// --- Missions (Union des succès + compteurs cumulatifs) ---
+		// BUGFIX: captures et evolutions doivent utiliser Math.max, pas Last-Write-Wins
 		merged.missions = {
 			...newer.missions,
+			captures: Math.max(s1.missions?.captures || 0, s2.missions?.captures || 0),
+			evolutions: Math.max(s1.missions?.evolutions || 0, s2.missions?.evolutions || 0),
 			claimed: Array.from(new Set([...(s1.missions?.claimed || []), ...(s2.missions?.claimed || [])]))
 		};
-		merged.missions.typeProgress = { ...(s1.missions?.typeProgress || {}) };
-		if (older.missions?.typeProgress) {
-			Object.keys(older.missions.typeProgress).forEach(k => {
-				merged.missions.typeProgress[k] = Math.max(merged.missions.typeProgress[k] || 0, older.missions.typeProgress[k]);
-			});
-		}
+
+		// BUGFIX: typeProgress utilisait s1 comme base (bug si newer === s2)
+		// On prend le max de CHAQUE type des deux sauvegardes
+		merged.missions.typeProgress = {};
+		const allTypeKeys = new Set([
+			...Object.keys(s1.missions?.typeProgress || {}),
+			...Object.keys(s2.missions?.typeProgress || {})
+		]);
+		allTypeKeys.forEach(k => {
+			merged.missions.typeProgress[k] = Math.max(
+				s1.missions?.typeProgress?.[k] || 0,
+				s2.missions?.typeProgress?.[k] || 0
+			);
+		});
 
 		// --- Statistiques & Flags (Max/OR) ---
 		merged.stats = { ...(newer.stats || {}) };
@@ -422,26 +455,31 @@ class PokeIdleProvider implements vscode.WebviewViewProvider {
 			});
 		}
 
-		// Flags de quêtes (Union des complétions)
+		// Flags de quêtes (union des complétions - ne jamais perdre un accomplissement)
 		merged.middayCaptures = Math.max(s1.middayCaptures || 0, s2.middayCaptures || 0);
 		merged.dawnCaptureAchieved = s1.dawnCaptureAchieved || s2.dawnCaptureAchieved || false;
 		merged.soldLevel50 = s1.soldLevel50 || s2.soldLevel50 || false;
 		merged.ningaleEvolvedWithBalls = s1.ningaleEvolvedWithBalls || s2.ningaleEvolvedWithBalls || false;
 		merged.boughtAbove10000 = s1.boughtAbove10000 || s2.boughtAbove10000 || false;
+		merged.recentEvoCount = Math.max(s1.recentEvoCount || 0, s2.recentEvoCount || 0);
 
-		// Timestamps & Playtime (Prendre le plus récent pour chaque action)
+		// Timestamps & Playtime (prendre le plus récent pour chaque action)
 		merged.lastCaptureTimestamp = Math.max(s1.lastCaptureTimestamp || 0, s2.lastCaptureTimestamp || 0);
 		merged.lastEvoTimestamp = Math.max(s1.lastEvoTimestamp || 0, s2.lastEvoTimestamp || 0);
 		merged.lastPurchaseTimestamp = Math.max(s1.lastPurchaseTimestamp || 0, s2.lastPurchaseTimestamp || 0);
 
+		// totalPlaytime : on prend le max (temps de jeu cumulé)
 		merged.totalPlaytime = Math.max(s1.totalPlaytime || 0, s2.totalPlaytime || 0);
-		merged.playtimeAtLastCapture = Math.max(s1.playtimeAtLastCapture || 0, s2.playtimeAtLastCapture || 0);
-		merged.playtimeAtLastEvo = Math.max(s1.playtimeAtLastEvo || 0, s2.playtimeAtLastEvo || 0);
-		merged.playtimeAtLastPurchase = Math.max(s1.playtimeAtLastPurchase || 0, s2.playtimeAtLastPurchase || 0);
-		merged.playtimeAtLastBallPurchase = Math.max(s1.playtimeAtLastBallPurchase || 0, s2.playtimeAtLastBallPurchase || 0);
 
-		// /!\ IMPORTANT : On ne génère pas de nouveau Date.now() ici
-		// On garde le timestamp de la version la plus récente pour éviter de dériver du webview
+		// playtimeAt* : prendre la valeur cohérente avec le totalPlaytime le plus grand
+		// Si une machine a plus de temps de jeu, ses playtimeAt* sont plus récents
+		const maxPtSrc = (s1.totalPlaytime || 0) >= (s2.totalPlaytime || 0) ? s1 : s2;
+		merged.playtimeAtLastCapture = maxPtSrc.playtimeAtLastCapture || 0;
+		merged.playtimeAtLastEvo = maxPtSrc.playtimeAtLastEvo || 0;
+		merged.playtimeAtLastPurchase = maxPtSrc.playtimeAtLastPurchase || 0;
+		merged.playtimeAtLastBallPurchase = maxPtSrc.playtimeAtLastBallPurchase || 0;
+
+		// /!\ IMPORTANT : On garde le timestamp de la version la plus récente
 		merged.lastUpdate = Math.max(s1Time, s2Time);
 		return merged;
 	}
