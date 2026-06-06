@@ -482,11 +482,19 @@ class PokeIdleProvider {
                                 <div class="loader">Zone de Safari calme...</div>
                             </div>
                         </div>
-                        <div class="inventory-bar" id="ball-inventory">
-                            <!-- Balls generees dynamiquement -->
+                        <div class="inventory-row">
+                            <button class="inventory-scroll-btn" data-scroll-target="ball-inventory" data-scroll-direction="-1" title="Faire défiler à gauche" aria-label="Faire défiler les Poké Balls à gauche">&lsaquo;</button>
+                            <div class="inventory-bar" id="ball-inventory">
+                                <!-- Balls generees dynamiquement -->
+                            </div>
+                            <button class="inventory-scroll-btn" data-scroll-target="ball-inventory" data-scroll-direction="1" title="Faire défiler à droite" aria-label="Faire défiler les Poké Balls à droite">&rsaquo;</button>
                         </div>
-                        <div class="inventory-bar" id="stone-inventory" style="margin-top: 10px;">
-                            <!-- Pierres generees dynamiquement -->
+                        <div class="inventory-row inventory-row-spaced">
+                            <button class="inventory-scroll-btn" data-scroll-target="stone-inventory" data-scroll-direction="-1" title="Faire défiler à gauche" aria-label="Faire défiler les objets à gauche">&lsaquo;</button>
+                            <div class="inventory-bar" id="stone-inventory">
+                                <!-- Pierres generees dynamiquement -->
+                            </div>
+                            <button class="inventory-scroll-btn" data-scroll-target="stone-inventory" data-scroll-direction="1" title="Faire défiler à droite" aria-label="Faire défiler les objets à droite">&rsaquo;</button>
                         </div>
                     </div>
 

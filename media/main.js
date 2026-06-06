@@ -248,6 +248,8 @@
 
     function init() {
         try {
+            setupInventoryScrollControls();
+
             // Gestion des Onglets
             if (UI.tabs) {
                 UI.tabs.forEach(btn => {
@@ -425,32 +427,89 @@
         'masque-maudit': 'spell-tag',
         'carte-de-voyage': 'town-map',
         'pokego-candy': 'rare-candy',
-        'linking-cord': 'link-cord',
-        'link-cable': 'link-cord',
-        'cable-link': 'link-cord',
-        'link-cord': 'link-cord',
-        'syrupy-apple': 'sweet-apple',
-        'sweet-apple': 'sweet-apple',
-        'tart-apple': 'tart-apple',
-        'unremarkable-teacup': 'unremarkable-teacup',
-        'masterpiece-teacup': 'masterpiece-teacup',
-        'metal-alloy': 'metal-alloy',
-        'leaders-crest': 'leaders-crest',
-        'gimmighoul-coin': 'gimmighoul-coin',
+        'linking-cord': 'destiny-knot',
+        'link-cable': 'destiny-knot',
+        'cable-link': 'destiny-knot',
+        'link-cord': 'destiny-knot',
+        'upgrade': 'up-grade',
+        'syrupy-apple': 'sitrus-berry',
+        'sweet-apple': 'pomeg-berry',
+        'tart-apple': 'apicot-berry',
+        'cracked-pot': 'tea',
+        'chipped-pot': 'old-gateau',
+        'auspicious-armor': 'armor-fossil',
+        'malicious-armor': 'spell-tag',
+        'black-augurite': 'black-belt',
+        'peat-block': 'hard-stone',
+        'galarica-cuff': 'big-mushroom',
+        'galarica-wreath': 'balm-mushroom',
+        'unremarkable-teacup': 'tea',
+        'masterpiece-teacup': 'tea',
+        'metal-alloy': 'metal-powder',
+        'metal-coat': 'metal-coat',
+        'leaders-crest': 'kings-rock',
+        'protector': 'protector',
+        'electirizer': 'electirizer',
+        'magmarizer': 'magmarizer',
+        'reaper-cloth': 'reaper-cloth',
+        'dragon-scale': 'dragon-scale',
+        'prism-scale': 'prism-scale',
+        'razor-claw': 'razor-claw',
+        'razor-fang': 'razor-fang',
+        'dubious-disc': 'dubious-disc',
+        'deep-sea-tooth': 'deep-sea-tooth',
+        'deep-sea-scale': 'deep-sea-scale',
+        'sachet': 'sachet',
+        'whipped-dream': 'whipped-dream',
+        'soothe-bell': 'soothe-bell',
+        'gimmighoul-coin': 'amulet-coin',
         'scroll-of-darkness': 'enigma-stone',
         'scroll-of-waters': 'enigma-stone',
-        'strawberry-sweet': 'strawberry-sweet',
-        'love-sweet': 'love-sweet',
-        'berry-sweet': 'berry-sweet',
-        'clover-sweet': 'clover-sweet',
-        'flower-sweet': 'flower-sweet',
-        'star-sweet': 'star-sweet',
-        'ribbon-sweet': 'ribbon-sweet'
+        'strawberry-sweet': 'razz-berry',
+        'love-sweet': 'sweet-heart',
+        'berry-sweet': 'berry-juice',
+        'clover-sweet': 'miracle-seed',
+        'flower-sweet': 'rainbow-flower',
+        'star-sweet': 'star-piece',
+        'ribbon-sweet': 'silk-scarf'
     };
 
     function getItemIcon(id) {
         const mappedId = itemIconMapping[id] || id;
         return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${mappedId}.png`;
+    }
+
+    function addIconFallback(img, fallbackId = 'rare-candy') {
+        img.onerror = () => {
+            if (img.dataset.fallbackApplied === 'true') return;
+            img.dataset.fallbackApplied = 'true';
+            img.src = getItemIcon(fallbackId);
+        };
+    }
+
+    function setupInventoryScrollControls() {
+        document.querySelectorAll('.inventory-scroll-btn').forEach(btn => {
+            if (btn.dataset.bound === 'true') return;
+            btn.dataset.bound = 'true';
+            btn.addEventListener('click', event => {
+                event.stopPropagation();
+                const target = document.getElementById(btn.dataset.scrollTarget);
+                if (!target) return;
+                const direction = Number(btn.dataset.scrollDirection) || 1;
+                const amount = Math.max(120, target.clientWidth * 0.8);
+                target.scrollBy({ left: direction * amount, behavior: 'smooth' });
+            });
+        });
+
+        document.querySelectorAll('.inventory-bar').forEach(bar => {
+            if (bar.dataset.wheelBound === 'true') return;
+            bar.dataset.wheelBound = 'true';
+            bar.addEventListener('wheel', event => {
+                if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+                event.preventDefault();
+                bar.scrollBy({ left: event.deltaY, behavior: 'smooth' });
+            }, { passive: false });
+        });
     }
 
     function renderBallInventory() {
@@ -460,10 +519,14 @@
             const count = state.inventory.balls[ball.id] || 0;
             const slot = document.createElement('div');
             slot.className = `item-slot ${selectedBall === ball.id ? 'active' : ''}`;
-            slot.innerHTML = `
-                <img src="${getItemIcon(ball.img)}">
-                <span>${count}</span>
-            `;
+            slot.title = ball.name;
+            const img = document.createElement('img');
+            img.src = getItemIcon(ball.img);
+            addIconFallback(img, 'poke-ball');
+            const span = document.createElement('span');
+            span.textContent = count;
+            slot.appendChild(img);
+            slot.appendChild(span);
             slot.onclick = () => {
                 selectedBall = ball.id;
                 updateUI();
@@ -484,7 +547,7 @@
                 slot.title = stoneTranslations[stone] || stone;
                 const img = document.createElement('img');
                 img.src = getItemIcon(stone);
-                img.onerror = () => { img.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'; };
+                addIconFallback(img);
                 const span = document.createElement('span');
                 span.textContent = count;
                 slot.appendChild(img);

@@ -373,6 +373,41 @@ header {
     margin-top: 5px;
 }
 
+.inventory-row {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) 28px;
+    gap: 6px;
+    align-items: stretch;
+}
+
+.inventory-row-spaced {
+    margin-top: 10px;
+}
+
+.inventory-scroll-btn {
+    width: 28px;
+    min-width: 28px;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    background: var(--glass-bg);
+    color: var(--text-main);
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.inventory-scroll-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--accent-light);
+    transform: translateY(-1px);
+}
+
+.inventory-scroll-btn:active {
+    transform: translateY(0);
+}
+
 .inventory-bar {
     display: flex;
     gap: 10px;
@@ -380,6 +415,9 @@ header {
     background: var(--glass-bg);
     border-radius: 12px;
     overflow-x: auto;
+    min-width: 0;
+    scroll-behavior: smooth;
+    scroll-snap-type: x proximity;
     scrollbar-width: none;
     /* Firefox */
 }
@@ -402,11 +440,14 @@ header {
     transition: all 0.2s;
     border: 1px solid transparent;
     position: relative;
+    scroll-snap-align: start;
 }
 
 .item-slot img {
     width: 24px;
     height: 24px;
+    object-fit: contain;
+    image-rendering: pixelated;
 }
 
 .item-slot span {

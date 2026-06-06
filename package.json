@@ -10,7 +10,13 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:poke-idle-view",
+    "onCommand:pokeidle.giveCoins",
+    "onCommand:pokeidle.giveStones",
+    "onCommand:pokeidle.giveBalls",
+    "onCommand:pokeidle.giveItem"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [

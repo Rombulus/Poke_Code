@@ -87,6 +87,9 @@ if defined WSL_ANTIGRAVITY_DIR (
     copy "package.json" "%WSL_ANTIGRAVITY_DIR%\"
 )
 
+echo [4/4] Mise a jour du registre VS Code...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0fix-vscode-extension-registry.ps1" "%VERSION%"
+
 echo.
 echo ===========================================
 echo   TERMINE ! 
