@@ -1,21 +1,52 @@
 {
-  "pokedex": [],
+  "pokedex": [
+    {
+      "id": 519,
+      "speciesId": 519,
+      "formId": 519,
+      "name": "Poichigeon",
+      "rarity": "Commun",
+      "captureRate": 255,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/519.png",
+      "types": [
+        "normal",
+        "flying"
+      ],
+      "isShiny": false,
+      "baseExperience": 53,
+      "level": 1,
+      "instanceId": 1792420434087.7441,
+      "xp": 4,
+      "gender": "male",
+      "date": "19/10/2026",
+      "captureTimestamp": 1792420434115,
+      "capturedAtActiveMs": 448201,
+      "captureBall": "pokeball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "Choix d’évolution"
+    }
+  ],
   "inventory": {
     "balls": {
-      "pokeball": 20
+      "pokeball": 19
     },
     "stones": {}
   },
-  "coins": 320,
-  "xp": 0,
+  "coins": 345,
+  "xp": 10,
   "level": 1,
   "missions": {
-    "captures": 0,
+    "captures": 1,
     "evolutions": 0,
-    "typeProgress": {},
+    "typeProgress": {
+      "normal": 1,
+      "flying": 1
+    },
     "claimed": []
   },
-  "spawnTimer": 67,
+  "spawnTimer": 169,
   "discovery": {
     "276": {
       "speciesId": 276,
@@ -37,7 +68,7 @@
       "speciesId": 519,
       "name": "Poichigeon",
       "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/519.png",
-      "caught": false,
+      "caught": true,
       "variants": [
         {
           "formId": 519,
@@ -45,25 +76,26 @@
           "name": "Poichigeon",
           "label": "",
           "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/519.png",
-          "caught": false
+          "caught": true
         }
       ]
     }
   },
-  "lastUpdate": 1792420384120,
+  "lastUpdate": 1792420444110,
   "stats": {
-    "totalCoins": 0,
+    "totalCoins": 5,
     "shinies": 0,
     "epics": 0,
-    "uniques": 0,
+    "uniques": 1,
     "evolved": 0,
     "liberated": 0,
     "totalItemsBought": 0,
     "totalBallsBought": 0,
-    "totalClicks": 1
+    "totalClicks": 4,
+    "captures": 1
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792419495158,
+  "lastCaptureTimestamp": 1792420434115,
   "lastEvoTimestamp": 1792419495158,
   "lastPurchaseTimestamp": 1792419495158,
   "clickProgress": 0,
@@ -79,12 +111,12 @@
     519
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 401231,
-  "activeTickRemainderMs": 231,
-  "passiveXpElapsedMs": 2231,
-  "passiveCoinsElapsedMs": 41231,
+  "activeTimeMs": 459191,
+  "activeTickRemainderMs": 191,
+  "passiveXpElapsedMs": 191,
+  "passiveCoinsElapsedMs": 39191,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 0,
+  "lastCaptureAtActiveMs": 448201,
   "lastEvolutionAtActiveMs": 0,
   "lastPurchaseAtActiveMs": 0,
   "lastBallPurchaseAtActiveMs": 0,
@@ -93,8 +125,25 @@
     "version": 1,
     "claimed": [],
     "unlocked": {},
-    "records": {},
-    "balls": [],
+    "records": {
+      "519": {
+        "types": [
+          "flying",
+          "normal"
+        ],
+        "forms": [
+          519
+        ],
+        "genders": [
+          "male"
+        ],
+        "maxLevel": 1,
+        "evolved": false
+      }
+    },
+    "balls": [
+      "pokeball"
+    ],
     "compatibleLevels": {},
     "duplicateReleases": 0
   }
