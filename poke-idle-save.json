@@ -15,9 +15,9 @@
       ],
       "isShiny": false,
       "baseExperience": 53,
-      "level": 2,
+      "level": 3,
       "instanceId": 1792420434087.7441,
-      "xp": 42,
+      "xp": 5,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -26,27 +26,54 @@
       "synced": true,
       "fetchingEvo": false,
       "nextEvoLevel": "Choix d’évolution"
+    },
+    {
+      "id": 684,
+      "speciesId": 684,
+      "formId": 684,
+      "name": "Sucroquin",
+      "rarity": "Commun",
+      "captureRate": 200,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/684.png",
+      "types": [
+        "fairy"
+      ],
+      "isShiny": false,
+      "baseExperience": 68,
+      "level": 1,
+      "instanceId": 1792420633523.8599,
+      "xp": 17,
+      "gender": "female",
+      "date": "19/10/2026",
+      "captureTimestamp": 1792420633523,
+      "capturedAtActiveMs": 639103,
+      "captureBall": "pokeball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "Choix d’évolution"
     }
   ],
   "inventory": {
     "balls": {
-      "pokeball": 18
+      "pokeball": 17
     },
     "stones": {}
   },
-  "coins": 405,
-  "xp": 10,
+  "coins": 430,
+  "xp": 23,
   "level": 1,
   "missions": {
-    "captures": 1,
+    "captures": 2,
     "evolutions": 0,
     "typeProgress": {
       "normal": 1,
-      "flying": 1
+      "flying": 1,
+      "fairy": 1
     },
     "claimed": []
   },
-  "spawnTimer": 168,
+  "spawnTimer": 129,
   "discovery": {
     "276": {
       "speciesId": 276,
@@ -84,7 +111,7 @@
       "speciesId": 684,
       "name": "Sucroquin",
       "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/684.png",
-      "caught": false,
+      "caught": true,
       "variants": [
         {
           "formId": 684,
@@ -92,26 +119,26 @@
           "name": "Sucroquin",
           "label": "",
           "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/684.png",
-          "caught": false
+          "caught": true
         }
       ]
     }
   },
-  "lastUpdate": 1792420624112,
+  "lastUpdate": 1792420684109,
   "stats": {
-    "totalCoins": 5,
+    "totalCoins": 10,
     "shinies": 0,
     "epics": 0,
-    "uniques": 1,
+    "uniques": 2,
     "evolved": 0,
     "liberated": 0,
     "totalItemsBought": 0,
     "totalBallsBought": 0,
-    "totalClicks": 13,
-    "captures": 1
+    "totalClicks": 21,
+    "captures": 2
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792420434115,
+  "lastCaptureTimestamp": 1792420633523,
   "lastEvoTimestamp": 1792419495158,
   "lastPurchaseTimestamp": 1792419495158,
   "clickProgress": 0,
@@ -128,12 +155,12 @@
     684
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 635105,
-  "activeTickRemainderMs": 105,
-  "passiveXpElapsedMs": 2105,
-  "passiveCoinsElapsedMs": 35105,
+  "activeTimeMs": 690081,
+  "activeTickRemainderMs": 81,
+  "passiveXpElapsedMs": 81,
+  "passiveCoinsElapsedMs": 30081,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 448201,
+  "lastCaptureAtActiveMs": 639103,
   "lastEvolutionAtActiveMs": 0,
   "lastPurchaseAtActiveMs": 0,
   "lastBallPurchaseAtActiveMs": 0,
@@ -154,14 +181,29 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 2,
+        "maxLevel": 3,
+        "evolved": false
+      },
+      "684": {
+        "types": [
+          "fairy"
+        ],
+        "forms": [
+          684
+        ],
+        "genders": [
+          "female"
+        ],
+        "maxLevel": 1,
         "evolved": false
       }
     },
     "balls": [
       "pokeball"
     ],
-    "compatibleLevels": {},
+    "compatibleLevels": {
+      "fairy": 1
+    },
     "duplicateReleases": 0
   }
 }
