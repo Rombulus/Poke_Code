@@ -13,9 +13,9 @@
       ],
       "isShiny": false,
       "baseExperience": 56,
-      "level": 7,
+      "level": 8,
       "instanceId": 1791899089782.681,
-      "xp": 343,
+      "xp": 67,
       "gender": "male",
       "date": "13/10/2026",
       "captureTimestamp": 1791899089795,
@@ -39,7 +39,7 @@
       "baseExperience": 64,
       "level": 7,
       "instanceId": 1791899186798.652,
-      "xp": 100,
+      "xp": 194,
       "gender": "female",
       "date": "13/10/2026",
       "captureTimestamp": 1791899186798,
@@ -63,7 +63,7 @@
       "baseExperience": 50,
       "level": 7,
       "instanceId": 1791899282210.3542,
-      "xp": 34,
+      "xp": 128,
       "gender": "female",
       "date": "13/10/2026",
       "captureTimestamp": 1791899282211,
@@ -84,9 +84,9 @@
       ],
       "isShiny": false,
       "baseExperience": 40,
-      "level": 6,
+      "level": 7,
       "instanceId": 1791899377782.7866,
-      "xp": 283,
+      "xp": 84,
       "gender": "male",
       "date": "13/10/2026",
       "captureTimestamp": 1791899377782,
@@ -107,9 +107,9 @@
       ],
       "isShiny": false,
       "baseExperience": 63,
-      "level": 6,
+      "level": 7,
       "instanceId": 1791899474598.536,
-      "xp": 199,
+      "xp": 0,
       "gender": "male",
       "date": "13/10/2026",
       "captureTimestamp": 1791899474598,
@@ -132,7 +132,7 @@
       "baseExperience": 166,
       "level": 6,
       "instanceId": 1791899601779.0251,
-      "xp": 113,
+      "xp": 207,
       "gender": "male",
       "date": "13/10/2026",
       "captureTimestamp": 1791899601779,
@@ -155,7 +155,7 @@
       "baseExperience": 142,
       "level": 6,
       "instanceId": 1791899701704.1284,
-      "xp": 69,
+      "xp": 163,
       "gender": "male",
       "date": "13/10/2026",
       "captureTimestamp": 1791899701704,
@@ -178,7 +178,7 @@
       "baseExperience": 66,
       "level": 6,
       "instanceId": 1791984543268.6453,
-      "xp": 166,
+      "xp": 260,
       "gender": "male",
       "date": "14/10/2026",
       "captureTimestamp": 1791984543270,
@@ -194,7 +194,7 @@
     },
     "stones": {}
   },
-  "coins": 640,
+  "coins": 720,
   "xp": 127,
   "level": 1,
   "missions": {
@@ -211,8 +211,13 @@
     },
     "claimed": []
   },
-  "spawnTimer": 171,
+  "spawnTimer": 90,
   "discovery": {
+    "17": {
+      "name": "Roucoups",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/17.png",
+      "caught": false
+    },
     "129": {
       "name": "Magicarpe",
       "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/129.png",
@@ -274,7 +279,7 @@
       "caught": false
     }
   },
-  "lastUpdate": 1792409406634,
+  "lastUpdate": 1792413538230,
   "stats": {
     "totalCoins": 40,
     "shinies": 0,
@@ -284,7 +289,7 @@
     "liberated": 0,
     "totalItemsBought": 15,
     "totalBallsBought": 15,
-    "totalClicks": 47,
+    "totalClicks": 51,
     "captures": 8
   },
   "sessionStartTime": 1791898887152,
@@ -300,10 +305,10 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    216,
     915,
     177,
     342,
-    178
+    178,
+    17
   ]
 }
