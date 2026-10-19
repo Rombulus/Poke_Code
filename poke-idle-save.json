@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 4,
       "instanceId": 1792420434087.7441,
-      "xp": 89,
+      "xp": 108,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 68,
       "level": 4,
       "instanceId": 1792420633523.8599,
-      "xp": 25,
+      "xp": 44,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -70,7 +70,7 @@
       "baseExperience": 58,
       "level": 3,
       "instanceId": 1792421422423.5054,
-      "xp": 21,
+      "xp": 40,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -94,9 +94,9 @@
       ],
       "isShiny": false,
       "baseExperience": 66,
-      "level": 1,
+      "level": 2,
       "instanceId": 1792421648158.8218,
-      "xp": 7,
+      "xp": 6,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -113,7 +113,7 @@
     },
     "stones": {}
   },
-  "coins": 620,
+  "coins": 640,
   "xp": 47,
   "level": 1,
   "missions": {
@@ -128,7 +128,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 158,
+  "spawnTimer": 102,
   "discovery": {
     "276": {
       "speciesId": 276,
@@ -227,7 +227,7 @@
       ]
     }
   },
-  "lastUpdate": 1792421669326,
+  "lastUpdate": 1792421729328,
   "stats": {
     "totalCoins": 20,
     "shinies": 0,
@@ -260,10 +260,10 @@
     325
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 1253843,
-  "activeTickRemainderMs": 843,
-  "passiveXpElapsedMs": 2843,
-  "passiveCoinsElapsedMs": 53843,
+  "activeTimeMs": 1309818,
+  "activeTickRemainderMs": 818,
+  "passiveXpElapsedMs": 1818,
+  "passiveCoinsElapsedMs": 49818,
   "recentEvolutionActiveTimes": [],
   "lastCaptureAtActiveMs": 1231852,
   "lastEvolutionAtActiveMs": 0,
@@ -285,7 +285,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 1,
+        "maxLevel": 2,
         "evolved": false
       },
       "519": {
