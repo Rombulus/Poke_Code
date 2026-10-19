@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 5,
       "instanceId": 1792420434087.7441,
-      "xp": 60,
+      "xp": 79,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -41,9 +41,9 @@
       ],
       "isShiny": false,
       "baseExperience": 68,
-      "level": 4,
+      "level": 5,
       "instanceId": 1792420633523.8599,
-      "xp": 156,
+      "xp": 15,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -70,7 +70,7 @@
       "baseExperience": 58,
       "level": 4,
       "instanceId": 1792421422423.5054,
-      "xp": 49,
+      "xp": 68,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -96,7 +96,7 @@
       "baseExperience": 66,
       "level": 3,
       "instanceId": 1792421648158.8218,
-      "xp": 62,
+      "xp": 81,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -123,7 +123,7 @@
       "baseExperience": 66,
       "level": 3,
       "instanceId": 1792421845061.071,
-      "xp": 1,
+      "xp": 20,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -150,7 +150,7 @@
       "baseExperience": 152,
       "level": 2,
       "instanceId": 1792422059857.3225,
-      "xp": 10,
+      "xp": 29,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -167,7 +167,7 @@
     },
     "stones": {}
   },
-  "coins": 770,
+  "coins": 790,
   "xp": 90,
   "level": 1,
   "missions": {
@@ -184,7 +184,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 150,
+  "spawnTimer": 93,
   "discovery": {
     "170": {
       "speciesId": 170,
@@ -315,7 +315,7 @@
       ]
     }
   },
-  "lastUpdate": 1792422089332,
+  "lastUpdate": 1792422149334,
   "stats": {
     "totalCoins": 30,
     "shinies": 0,
@@ -348,10 +348,10 @@
     777
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 1646662,
-  "activeTickRemainderMs": 662,
-  "passiveXpElapsedMs": 2662,
-  "passiveCoinsElapsedMs": 26662,
+  "activeTimeMs": 1703635,
+  "activeTickRemainderMs": 635,
+  "passiveXpElapsedMs": 2635,
+  "passiveCoinsElapsedMs": 23635,
   "recentEvolutionActiveTimes": [],
   "lastCaptureAtActiveMs": 1616673,
   "lastEvolutionAtActiveMs": 0,
@@ -414,7 +414,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 4,
+        "maxLevel": 5,
         "evolved": false
       },
       "694": {
@@ -450,7 +450,7 @@
       "pokeball"
     ],
     "compatibleLevels": {
-      "fairy": 4,
+      "fairy": 5,
       "celestial": 4
     },
     "duplicateReleases": 0
