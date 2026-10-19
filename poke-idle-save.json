@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 5,
       "instanceId": 1792420434087.7441,
-      "xp": 41,
+      "xp": 60,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 68,
       "level": 4,
       "instanceId": 1792420633523.8599,
-      "xp": 137,
+      "xp": 156,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -70,7 +70,7 @@
       "baseExperience": 58,
       "level": 4,
       "instanceId": 1792421422423.5054,
-      "xp": 30,
+      "xp": 49,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -96,7 +96,7 @@
       "baseExperience": 66,
       "level": 3,
       "instanceId": 1792421648158.8218,
-      "xp": 43,
+      "xp": 62,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -121,9 +121,9 @@
       ],
       "isShiny": false,
       "baseExperience": 66,
-      "level": 2,
+      "level": 3,
       "instanceId": 1792421845061.071,
-      "xp": 38,
+      "xp": 1,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -132,31 +132,59 @@
       "synced": true,
       "fetchingEvo": false,
       "nextEvoLevel": "Choix d’évolution"
+    },
+    {
+      "id": 10154,
+      "speciesId": 777,
+      "formId": 10313,
+      "name": "Togedemaru Dominant",
+      "rarity": "Commun",
+      "captureRate": 180,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10154.png",
+      "types": [
+        "electric",
+        "steel"
+      ],
+      "isShiny": false,
+      "baseExperience": 152,
+      "level": 2,
+      "instanceId": 1792422059857.3225,
+      "xp": 10,
+      "gender": "female",
+      "date": "19/10/2026",
+      "captureTimestamp": 1792422059857,
+      "capturedAtActiveMs": 1616673,
+      "captureBall": "pokeball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "MAX"
     }
   ],
   "inventory": {
     "balls": {
-      "pokeball": 13
+      "pokeball": 11
     },
     "stones": {}
   },
-  "coins": 745,
-  "xp": 60,
+  "coins": 770,
+  "xp": 90,
   "level": 1,
   "missions": {
-    "captures": 5,
+    "captures": 6,
     "evolutions": 0,
     "typeProgress": {
       "normal": 2,
       "flying": 1,
       "fairy": 1,
-      "electric": 2,
+      "electric": 3,
       "psychic": 1,
-      "water": 1
+      "water": 1,
+      "steel": 1
     },
     "claimed": []
   },
-  "spawnTimer": 6,
+  "spawnTimer": 150,
   "discovery": {
     "170": {
       "speciesId": 170,
@@ -269,23 +297,39 @@
           "caught": true
         }
       ]
+    },
+    "777": {
+      "speciesId": 777,
+      "name": "Togedemaru",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10154.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 10313,
+          "id": 10154,
+          "name": "Togedemaru Dominant",
+          "label": "Dominant",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10154.png",
+          "caught": true
+        }
+      ]
     }
   },
-  "lastUpdate": 1792422029330,
+  "lastUpdate": 1792422089332,
   "stats": {
-    "totalCoins": 25,
+    "totalCoins": 30,
     "shinies": 0,
     "epics": 0,
-    "uniques": 5,
+    "uniques": 6,
     "evolved": 0,
     "liberated": 0,
     "totalItemsBought": 0,
     "totalBallsBought": 0,
-    "totalClicks": 29,
-    "captures": 5
+    "totalClicks": 31,
+    "captures": 6
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792421845061,
+  "lastCaptureTimestamp": 1792422059857,
   "lastEvoTimestamp": 1792419495158,
   "lastPurchaseTimestamp": 1792419495158,
   "clickProgress": 0,
@@ -297,19 +341,19 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    684,
     587,
     694,
     325,
-    170
+    170,
+    777
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 1589686,
-  "activeTickRemainderMs": 686,
-  "passiveXpElapsedMs": 2686,
-  "passiveCoinsElapsedMs": 29686,
+  "activeTimeMs": 1646662,
+  "activeTickRemainderMs": 662,
+  "passiveXpElapsedMs": 2662,
+  "passiveCoinsElapsedMs": 26662,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 1415768,
+  "lastCaptureAtActiveMs": 1616673,
   "lastEvolutionAtActiveMs": 0,
   "lastPurchaseAtActiveMs": 0,
   "lastBallPurchaseAtActiveMs": 0,
@@ -330,7 +374,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 2,
+        "maxLevel": 3,
         "evolved": false
       },
       "325": {
@@ -385,6 +429,20 @@
           "female"
         ],
         "maxLevel": 4,
+        "evolved": false
+      },
+      "777": {
+        "types": [
+          "electric",
+          "steel"
+        ],
+        "forms": [
+          10313
+        ],
+        "genders": [
+          "female"
+        ],
+        "maxLevel": 2,
         "evolved": false
       }
     },
