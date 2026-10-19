@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 2,
       "instanceId": 1792420434087.7441,
-      "xp": 3,
+      "xp": 42,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -30,11 +30,11 @@
   ],
   "inventory": {
     "balls": {
-      "pokeball": 19
+      "pokeball": 18
     },
     "stones": {}
   },
-  "coins": 365,
+  "coins": 405,
   "xp": 10,
   "level": 1,
   "missions": {
@@ -46,7 +46,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 111,
+  "spawnTimer": 168,
   "discovery": {
     "276": {
       "speciesId": 276,
@@ -79,9 +79,25 @@
           "caught": true
         }
       ]
+    },
+    "684": {
+      "speciesId": 684,
+      "name": "Sucroquin",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/684.png",
+      "caught": false,
+      "variants": [
+        {
+          "formId": 684,
+          "id": 684,
+          "name": "Sucroquin",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/684.png",
+          "caught": false
+        }
+      ]
     }
   },
-  "lastUpdate": 1792420504122,
+  "lastUpdate": 1792420624112,
   "stats": {
     "totalCoins": 5,
     "shinies": 0,
@@ -91,7 +107,7 @@
     "liberated": 0,
     "totalItemsBought": 0,
     "totalBallsBought": 0,
-    "totalClicks": 12,
+    "totalClicks": 13,
     "captures": 1
   },
   "sessionStartTime": 1792419495158,
@@ -108,13 +124,14 @@
   "released": [],
   "recentSpawns": [
     276,
-    519
+    519,
+    684
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 517164,
-  "activeTickRemainderMs": 164,
-  "passiveXpElapsedMs": 1164,
-  "passiveCoinsElapsedMs": 37164,
+  "activeTimeMs": 635105,
+  "activeTickRemainderMs": 105,
+  "passiveXpElapsedMs": 2105,
+  "passiveCoinsElapsedMs": 35105,
   "recentEvolutionActiveTimes": [],
   "lastCaptureAtActiveMs": 448201,
   "lastEvolutionAtActiveMs": 0,
