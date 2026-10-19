@@ -15,9 +15,9 @@
       ],
       "isShiny": false,
       "baseExperience": 53,
-      "level": 3,
+      "level": 4,
       "instanceId": 1792420434087.7441,
-      "xp": 98,
+      "xp": 14,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 68,
       "level": 3,
       "instanceId": 1792420633523.8599,
-      "xp": 34,
+      "xp": 53,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -52,28 +52,56 @@
       "synced": true,
       "fetchingEvo": false,
       "nextEvoLevel": "Choix d’évolution"
+    },
+    {
+      "id": 694,
+      "speciesId": 694,
+      "formId": 694,
+      "name": "Galvaran",
+      "rarity": "Commun",
+      "captureRate": 190,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/694.png",
+      "types": [
+        "electric",
+        "normal"
+      ],
+      "isShiny": false,
+      "baseExperience": 58,
+      "level": 2,
+      "instanceId": 1792421422423.5054,
+      "xp": 2,
+      "gender": "female",
+      "date": "19/10/2026",
+      "captureTimestamp": 1792421422433,
+      "capturedAtActiveMs": 1020957,
+      "captureBall": "pokeball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "Choix d’évolution"
     }
   ],
   "inventory": {
     "balls": {
-      "pokeball": 17
+      "pokeball": 16
     },
     "stones": {}
   },
-  "coins": 530,
-  "xp": 23,
+  "coins": 555,
+  "xp": 34,
   "level": 1,
   "missions": {
-    "captures": 2,
+    "captures": 3,
     "evolutions": 0,
     "typeProgress": {
-      "normal": 1,
+      "normal": 2,
       "flying": 1,
-      "fairy": 1
+      "fairy": 1,
+      "electric": 1
     },
     "claimed": []
   },
-  "spawnTimer": 45,
+  "spawnTimer": 173,
   "discovery": {
     "276": {
       "speciesId": 276,
@@ -138,23 +166,39 @@
           "caught": true
         }
       ]
+    },
+    "694": {
+      "speciesId": 694,
+      "name": "Galvaran",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/694.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 694,
+          "id": 694,
+          "name": "Galvaran",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/694.png",
+          "caught": true
+        }
+      ]
     }
   },
-  "lastUpdate": 1792420972114,
+  "lastUpdate": 1792421429338,
   "stats": {
-    "totalCoins": 10,
+    "totalCoins": 15,
     "shinies": 0,
     "epics": 0,
-    "uniques": 2,
+    "uniques": 3,
     "evolved": 0,
     "liberated": 0,
     "totalItemsBought": 0,
     "totalBallsBought": 0,
-    "totalClicks": 22,
-    "captures": 2
+    "totalClicks": 26,
+    "captures": 3
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792420633523,
+  "lastCaptureTimestamp": 1792421422433,
   "lastEvoTimestamp": 1792419495158,
   "lastPurchaseTimestamp": 1792419495158,
   "clickProgress": 0,
@@ -169,15 +213,16 @@
     276,
     519,
     684,
-    587
+    587,
+    694
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 971969,
-  "activeTickRemainderMs": 969,
-  "passiveXpElapsedMs": 2969,
-  "passiveCoinsElapsedMs": 11969,
+  "activeTimeMs": 1027960,
+  "activeTickRemainderMs": 960,
+  "passiveXpElapsedMs": 1960,
+  "passiveCoinsElapsedMs": 7960,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 639103,
+  "lastCaptureAtActiveMs": 1020957,
   "lastEvolutionAtActiveMs": 0,
   "lastPurchaseAtActiveMs": 0,
   "lastBallPurchaseAtActiveMs": 0,
@@ -198,7 +243,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 3,
+        "maxLevel": 4,
         "evolved": false
       },
       "684": {
@@ -213,13 +258,28 @@
         ],
         "maxLevel": 3,
         "evolved": false
+      },
+      "694": {
+        "types": [
+          "electric",
+          "normal"
+        ],
+        "forms": [
+          694
+        ],
+        "genders": [
+          "female"
+        ],
+        "maxLevel": 2,
+        "evolved": false
       }
     },
     "balls": [
       "pokeball"
     ],
     "compatibleLevels": {
-      "fairy": 3
+      "fairy": 3,
+      "celestial": 2
     },
     "duplicateReleases": 0
   }
