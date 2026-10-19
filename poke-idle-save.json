@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 4,
       "instanceId": 1792420434087.7441,
-      "xp": 126,
+      "xp": 145,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 68,
       "level": 4,
       "instanceId": 1792420633523.8599,
-      "xp": 62,
+      "xp": 81,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -70,7 +70,7 @@
       "baseExperience": 58,
       "level": 3,
       "instanceId": 1792421422423.5054,
-      "xp": 58,
+      "xp": 77,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -96,7 +96,7 @@
       "baseExperience": 66,
       "level": 2,
       "instanceId": 1792421648158.8218,
-      "xp": 24,
+      "xp": 43,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -105,31 +105,75 @@
       "synced": true,
       "fetchingEvo": false,
       "nextEvoLevel": "Choix d’évolution"
+    },
+    {
+      "id": 170,
+      "speciesId": 170,
+      "formId": 170,
+      "name": "Loupio",
+      "rarity": "Commun",
+      "captureRate": 190,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/170.png",
+      "types": [
+        "water",
+        "electric"
+      ],
+      "isShiny": false,
+      "baseExperience": 66,
+      "level": 1,
+      "instanceId": 1792421845061.071,
+      "xp": 2,
+      "gender": "male",
+      "date": "19/10/2026",
+      "captureTimestamp": 1792421845061,
+      "capturedAtActiveMs": 1415768,
+      "captureBall": "pokeball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "Choix d’évolution"
     }
   ],
   "inventory": {
     "balls": {
-      "pokeball": 15
+      "pokeball": 13
     },
     "stones": {}
   },
-  "coins": 660,
-  "xp": 47,
+  "coins": 685,
+  "xp": 60,
   "level": 1,
   "missions": {
-    "captures": 4,
+    "captures": 5,
     "evolutions": 0,
     "typeProgress": {
       "normal": 2,
       "flying": 1,
       "fairy": 1,
-      "electric": 1,
-      "psychic": 1
+      "electric": 2,
+      "psychic": 1,
+      "water": 1
     },
     "claimed": []
   },
-  "spawnTimer": 47,
+  "spawnTimer": 175,
   "discovery": {
+    "170": {
+      "speciesId": 170,
+      "name": "Loupio",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/170.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 170,
+          "id": 170,
+          "name": "Loupio",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/170.png",
+          "caught": true
+        }
+      ]
+    },
     "276": {
       "speciesId": 276,
       "name": "Nirondelle",
@@ -227,21 +271,21 @@
       ]
     }
   },
-  "lastUpdate": 1792421789329,
+  "lastUpdate": 1792421849329,
   "stats": {
-    "totalCoins": 20,
+    "totalCoins": 25,
     "shinies": 0,
     "epics": 0,
-    "uniques": 4,
+    "uniques": 5,
     "evolved": 0,
     "liberated": 0,
     "totalItemsBought": 0,
     "totalBallsBought": 0,
-    "totalClicks": 27,
-    "captures": 4
+    "totalClicks": 29,
+    "captures": 5
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792421648158,
+  "lastCaptureTimestamp": 1792421845061,
   "lastEvoTimestamp": 1792419495158,
   "lastPurchaseTimestamp": 1792419495158,
   "clickProgress": 0,
@@ -253,19 +297,19 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    519,
     684,
     587,
     694,
-    325
+    325,
+    170
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 1364793,
-  "activeTickRemainderMs": 793,
-  "passiveXpElapsedMs": 2793,
-  "passiveCoinsElapsedMs": 44793,
+  "activeTimeMs": 1420767,
+  "activeTickRemainderMs": 767,
+  "passiveXpElapsedMs": 1767,
+  "passiveCoinsElapsedMs": 40767,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 1231852,
+  "lastCaptureAtActiveMs": 1415768,
   "lastEvolutionAtActiveMs": 0,
   "lastPurchaseAtActiveMs": 0,
   "lastBallPurchaseAtActiveMs": 0,
@@ -275,6 +319,20 @@
     "claimed": [],
     "unlocked": {},
     "records": {
+      "170": {
+        "types": [
+          "electric",
+          "water"
+        ],
+        "forms": [
+          170
+        ],
+        "genders": [
+          "male"
+        ],
+        "maxLevel": 1,
+        "evolved": false
+      },
       "325": {
         "types": [
           "psychic"
