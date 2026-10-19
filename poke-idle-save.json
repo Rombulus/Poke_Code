@@ -6,7 +6,7 @@
     },
     "stones": {}
   },
-  "coins": 300,
+  "coins": 320,
   "xp": 0,
   "level": 1,
   "missions": {
@@ -15,7 +15,7 @@
     "typeProgress": {},
     "claimed": []
   },
-  "spawnTimer": 50,
+  "spawnTimer": 67,
   "discovery": {
     "276": {
       "speciesId": 276,
@@ -32,9 +32,25 @@
           "caught": false
         }
       ]
+    },
+    "519": {
+      "speciesId": 519,
+      "name": "Poichigeon",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/519.png",
+      "caught": false,
+      "variants": [
+        {
+          "formId": 519,
+          "id": 519,
+          "name": "Poichigeon",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/519.png",
+          "caught": false
+        }
+      ]
     }
   },
-  "lastUpdate": 1792419839558,
+  "lastUpdate": 1792420384120,
   "stats": {
     "totalCoins": 0,
     "shinies": 0,
@@ -59,13 +75,14 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    276
+    276,
+    519
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 344248,
-  "activeTickRemainderMs": 248,
-  "passiveXpElapsedMs": 2248,
-  "passiveCoinsElapsedMs": 44248,
+  "activeTimeMs": 401231,
+  "activeTickRemainderMs": 231,
+  "passiveXpElapsedMs": 2231,
+  "passiveCoinsElapsedMs": 41231,
   "recentEvolutionActiveTimes": [],
   "lastCaptureAtActiveMs": 0,
   "lastEvolutionAtActiveMs": 0,
