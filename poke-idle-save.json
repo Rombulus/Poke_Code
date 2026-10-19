@@ -15,9 +15,9 @@
       ],
       "isShiny": false,
       "baseExperience": 53,
-      "level": 4,
+      "level": 5,
       "instanceId": 1792420434087.7441,
-      "xp": 145,
+      "xp": 3,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 68,
       "level": 4,
       "instanceId": 1792420633523.8599,
-      "xp": 81,
+      "xp": 99,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -70,7 +70,7 @@
       "baseExperience": 58,
       "level": 3,
       "instanceId": 1792421422423.5054,
-      "xp": 77,
+      "xp": 95,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -94,9 +94,9 @@
       ],
       "isShiny": false,
       "baseExperience": 66,
-      "level": 2,
+      "level": 3,
       "instanceId": 1792421648158.8218,
-      "xp": 43,
+      "xp": 5,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -121,9 +121,9 @@
       ],
       "isShiny": false,
       "baseExperience": 66,
-      "level": 1,
+      "level": 2,
       "instanceId": 1792421845061.071,
-      "xp": 2,
+      "xp": 0,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -140,7 +140,7 @@
     },
     "stones": {}
   },
-  "coins": 685,
+  "coins": 705,
   "xp": 60,
   "level": 1,
   "missions": {
@@ -156,7 +156,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 175,
+  "spawnTimer": 120,
   "discovery": {
     "170": {
       "speciesId": 170,
@@ -271,7 +271,7 @@
       ]
     }
   },
-  "lastUpdate": 1792421849329,
+  "lastUpdate": 1792421909327,
   "stats": {
     "totalCoins": 25,
     "shinies": 0,
@@ -304,10 +304,10 @@
     170
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 1420767,
-  "activeTickRemainderMs": 767,
-  "passiveXpElapsedMs": 1767,
-  "passiveCoinsElapsedMs": 40767,
+  "activeTimeMs": 1475737,
+  "activeTickRemainderMs": 737,
+  "passiveXpElapsedMs": 2737,
+  "passiveCoinsElapsedMs": 35737,
   "recentEvolutionActiveTimes": [],
   "lastCaptureAtActiveMs": 1415768,
   "lastEvolutionAtActiveMs": 0,
@@ -330,7 +330,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 1,
+        "maxLevel": 2,
         "evolved": false
       },
       "325": {
@@ -343,7 +343,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 2,
+        "maxLevel": 3,
         "evolved": false
       },
       "519": {
@@ -357,7 +357,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 4,
+        "maxLevel": 5,
         "evolved": false
       },
       "684": {
