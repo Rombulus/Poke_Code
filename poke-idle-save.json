@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 3,
       "instanceId": 1792420434087.7441,
-      "xp": 24,
+      "xp": 43,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 68,
       "level": 2,
       "instanceId": 1792420633523.8599,
-      "xp": 16,
+      "xp": 35,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -60,7 +60,7 @@
     },
     "stones": {}
   },
-  "coins": 450,
+  "coins": 470,
   "xp": 23,
   "level": 1,
   "missions": {
@@ -73,7 +73,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 71,
+  "spawnTimer": 13,
   "discovery": {
     "276": {
       "speciesId": 276,
@@ -124,7 +124,7 @@
       ]
     }
   },
-  "lastUpdate": 1792420744110,
+  "lastUpdate": 1792420804111,
   "stats": {
     "totalCoins": 10,
     "shinies": 0,
@@ -134,7 +134,7 @@
     "liberated": 0,
     "totalItemsBought": 0,
     "totalBallsBought": 0,
-    "totalClicks": 21,
+    "totalClicks": 22,
     "captures": 2
   },
   "sessionStartTime": 1792419495158,
@@ -155,10 +155,10 @@
     684
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 748061,
-  "activeTickRemainderMs": 61,
-  "passiveXpElapsedMs": 1061,
-  "passiveCoinsElapsedMs": 28061,
+  "activeTimeMs": 806036,
+  "activeTickRemainderMs": 36,
+  "passiveXpElapsedMs": 2036,
+  "passiveCoinsElapsedMs": 26036,
   "recentEvolutionActiveTimes": [],
   "lastCaptureAtActiveMs": 639103,
   "lastEvolutionAtActiveMs": 0,
