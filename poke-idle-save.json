@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 5,
       "instanceId": 1792420434087.7441,
-      "xp": 98,
+      "xp": 117,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 68,
       "level": 5,
       "instanceId": 1792420633523.8599,
-      "xp": 34,
+      "xp": 53,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -70,7 +70,7 @@
       "baseExperience": 58,
       "level": 4,
       "instanceId": 1792421422423.5054,
-      "xp": 87,
+      "xp": 106,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -94,9 +94,9 @@
       ],
       "isShiny": false,
       "baseExperience": 66,
-      "level": 3,
+      "level": 4,
       "instanceId": 1792421648158.8218,
-      "xp": 100,
+      "xp": 16,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -123,7 +123,7 @@
       "baseExperience": 66,
       "level": 3,
       "instanceId": 1792421845061.071,
-      "xp": 39,
+      "xp": 58,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -148,9 +148,9 @@
       ],
       "isShiny": false,
       "baseExperience": 152,
-      "level": 2,
+      "level": 3,
       "instanceId": 1792422059857.3225,
-      "xp": 48,
+      "xp": 11,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -159,19 +159,45 @@
       "synced": true,
       "fetchingEvo": false,
       "nextEvoLevel": "MAX"
+    },
+    {
+      "id": 971,
+      "speciesId": 971,
+      "formId": 971,
+      "name": "Toutombe",
+      "rarity": "Commun",
+      "captureRate": 120,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/971.png",
+      "types": [
+        "ghost"
+      ],
+      "isShiny": false,
+      "baseExperience": 58,
+      "level": 1,
+      "instanceId": 1792422262902.9136,
+      "xp": 2,
+      "gender": "male",
+      "date": "19/10/2026",
+      "captureTimestamp": 1792422262902,
+      "capturedAtActiveMs": 1809591,
+      "captureBall": "pokeball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "Choix d’évolution"
     }
   ],
   "inventory": {
     "balls": {
-      "pokeball": 11
+      "pokeball": 9
     },
     "stones": {}
   },
-  "coins": 810,
-  "xp": 90,
+  "coins": 835,
+  "xp": 101,
   "level": 1,
   "missions": {
-    "captures": 6,
+    "captures": 7,
     "evolutions": 0,
     "typeProgress": {
       "normal": 2,
@@ -180,11 +206,12 @@
       "electric": 3,
       "psychic": 1,
       "water": 1,
-      "steel": 1
+      "steel": 1,
+      "ghost": 1
     },
     "claimed": []
   },
-  "spawnTimer": 36,
+  "spawnTimer": 173,
   "discovery": {
     "170": {
       "speciesId": 170,
@@ -313,23 +340,39 @@
           "caught": true
         }
       ]
+    },
+    "971": {
+      "speciesId": 971,
+      "name": "Toutombe",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/971.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 971,
+          "id": 971,
+          "name": "Toutombe",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/971.png",
+          "caught": true
+        }
+      ]
     }
   },
-  "lastUpdate": 1792422209335,
+  "lastUpdate": 1792422269336,
   "stats": {
-    "totalCoins": 30,
+    "totalCoins": 35,
     "shinies": 0,
     "epics": 0,
-    "uniques": 6,
+    "uniques": 7,
     "evolved": 0,
     "liberated": 0,
     "totalItemsBought": 0,
     "totalBallsBought": 0,
-    "totalClicks": 31,
-    "captures": 6
+    "totalClicks": 33,
+    "captures": 7
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792422059857,
+  "lastCaptureTimestamp": 1792422262902,
   "lastEvoTimestamp": 1792419495158,
   "lastPurchaseTimestamp": 1792419495158,
   "clickProgress": 0,
@@ -341,19 +384,19 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    587,
     694,
     325,
     170,
-    777
+    777,
+    971
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 1760614,
-  "activeTickRemainderMs": 614,
-  "passiveXpElapsedMs": 2614,
-  "passiveCoinsElapsedMs": 20614,
+  "activeTimeMs": 1816594,
+  "activeTickRemainderMs": 594,
+  "passiveXpElapsedMs": 1594,
+  "passiveCoinsElapsedMs": 16594,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 1616673,
+  "lastCaptureAtActiveMs": 1809591,
   "lastEvolutionAtActiveMs": 0,
   "lastPurchaseAtActiveMs": 0,
   "lastBallPurchaseAtActiveMs": 0,
@@ -387,7 +430,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 3,
+        "maxLevel": 4,
         "evolved": false
       },
       "519": {
@@ -442,7 +485,20 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 2,
+        "maxLevel": 3,
+        "evolved": false
+      },
+      "971": {
+        "types": [
+          "ghost"
+        ],
+        "forms": [
+          971
+        ],
+        "genders": [
+          "male"
+        ],
+        "maxLevel": 1,
         "evolved": false
       }
     },
