@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 4,
       "instanceId": 1792420434087.7441,
-      "xp": 70,
+      "xp": 89,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 68,
       "level": 4,
       "instanceId": 1792420633523.8599,
-      "xp": 6,
+      "xp": 25,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -70,7 +70,7 @@
       "baseExperience": 58,
       "level": 3,
       "instanceId": 1792421422423.5054,
-      "xp": 2,
+      "xp": 21,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -79,29 +79,56 @@
       "synced": true,
       "fetchingEvo": false,
       "nextEvoLevel": "Choix d’évolution"
+    },
+    {
+      "id": 325,
+      "speciesId": 325,
+      "formId": 325,
+      "name": "Spoink",
+      "rarity": "Commun",
+      "captureRate": 255,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/325.png",
+      "types": [
+        "psychic"
+      ],
+      "isShiny": false,
+      "baseExperience": 66,
+      "level": 1,
+      "instanceId": 1792421648158.8218,
+      "xp": 7,
+      "gender": "male",
+      "date": "19/10/2026",
+      "captureTimestamp": 1792421648158,
+      "capturedAtActiveMs": 1231852,
+      "captureBall": "pokeball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "Choix d’évolution"
     }
   ],
   "inventory": {
     "balls": {
-      "pokeball": 16
+      "pokeball": 15
     },
     "stones": {}
   },
-  "coins": 595,
-  "xp": 34,
+  "coins": 620,
+  "xp": 47,
   "level": 1,
   "missions": {
-    "captures": 3,
+    "captures": 4,
     "evolutions": 0,
     "typeProgress": {
       "normal": 2,
       "flying": 1,
       "fairy": 1,
-      "electric": 1
+      "electric": 1,
+      "psychic": 1
     },
     "claimed": []
   },
-  "spawnTimer": 4,
+  "spawnTimer": 158,
   "discovery": {
     "276": {
       "speciesId": 276,
@@ -116,6 +143,22 @@
           "label": "",
           "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/276.png",
           "caught": false
+        }
+      ]
+    },
+    "325": {
+      "speciesId": 325,
+      "name": "Spoink",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/325.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 325,
+          "id": 325,
+          "name": "Spoink",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/325.png",
+          "caught": true
         }
       ]
     },
@@ -184,21 +227,21 @@
       ]
     }
   },
-  "lastUpdate": 1792421609325,
+  "lastUpdate": 1792421669326,
   "stats": {
-    "totalCoins": 15,
+    "totalCoins": 20,
     "shinies": 0,
     "epics": 0,
-    "uniques": 3,
+    "uniques": 4,
     "evolved": 0,
     "liberated": 0,
     "totalItemsBought": 0,
     "totalBallsBought": 0,
-    "totalClicks": 26,
-    "captures": 3
+    "totalClicks": 27,
+    "captures": 4
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792421422433,
+  "lastCaptureTimestamp": 1792421648158,
   "lastEvoTimestamp": 1792419495158,
   "lastPurchaseTimestamp": 1792419495158,
   "clickProgress": 0,
@@ -210,19 +253,19 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    276,
     519,
     684,
     587,
-    694
+    694,
+    325
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 1196866,
-  "activeTickRemainderMs": 866,
-  "passiveXpElapsedMs": 2866,
-  "passiveCoinsElapsedMs": 56866,
+  "activeTimeMs": 1253843,
+  "activeTickRemainderMs": 843,
+  "passiveXpElapsedMs": 2843,
+  "passiveCoinsElapsedMs": 53843,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 1020957,
+  "lastCaptureAtActiveMs": 1231852,
   "lastEvolutionAtActiveMs": 0,
   "lastPurchaseAtActiveMs": 0,
   "lastBallPurchaseAtActiveMs": 0,
@@ -232,6 +275,19 @@
     "claimed": [],
     "unlocked": {},
     "records": {
+      "325": {
+        "types": [
+          "psychic"
+        ],
+        "forms": [
+          325
+        ],
+        "genders": [
+          "male"
+        ],
+        "maxLevel": 1,
+        "evolved": false
+      },
       "519": {
         "types": [
           "flying",
