@@ -342,6 +342,7 @@
 
     function init() {
         try {
+            setupInventoryScrollControls();
             // Gestion des Onglets
             if (UI.tabs) {
                 UI.tabs.forEach(btn => {
@@ -525,6 +526,30 @@
         const mappedId = itemIconMapping[id] || id;
         return window.POKEIDLE_ITEM_ICONS?.[mappedId]
             || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${mappedId}.png`;
+    }
+
+    function setupInventoryScrollControls() {
+        document.querySelectorAll('.inventory-scroll-btn').forEach(btn => {
+            if (btn.dataset.bound === 'true') return;
+            btn.dataset.bound = 'true';
+            btn.addEventListener('click', event => {
+                event.stopPropagation();
+                const target = document.getElementById(btn.dataset.scrollTarget);
+                if (!target) return;
+                const direction = Number(btn.dataset.scrollDirection) || 1;
+                const amount = Math.max(120, target.clientWidth * 0.8);
+                target.scrollBy({ left: direction * amount, behavior: 'smooth' });
+            });
+        });
+        document.querySelectorAll('.inventory-bar').forEach(bar => {
+            if (bar.dataset.wheelBound === 'true') return;
+            bar.dataset.wheelBound = 'true';
+            bar.addEventListener('wheel', event => {
+                if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+                event.preventDefault();
+                bar.scrollBy({ left: event.deltaY, behavior: 'smooth' });
+            }, { passive: false });
+        });
     }
 
     document.addEventListener('error', event => {

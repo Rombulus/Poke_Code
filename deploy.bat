@@ -104,6 +104,9 @@ if defined WSL_ANTIGRAVITY_DIR (
     copy "codex.html" "%WSL_ANTIGRAVITY_DIR%\" >nul
 )
 
+echo [4/4] Mise a jour du registre VS Code...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0fix-vscode-extension-registry.ps1" "%VERSION%"
+
 echo.
 echo ===========================================
 echo   TERMINE !

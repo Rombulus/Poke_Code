@@ -1,0 +1,69 @@
+{
+  "name": "poke-idle-game",
+  "displayName": "PokeIdle VS Code",
+  "publisher": "hugo",
+  "description": "Un idle game Pokémon dans votre barre latérale VS Code.",
+  "version": "0.9.0",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "pokeidle.giveCoins",
+        "title": "PokeIdle: Cheat - 100000 Pièces"
+      },
+      {
+        "command": "pokeidle.giveStones",
+        "title": "PokeIdle: Cheat - Toutes les pierres"
+      },
+      {
+        "command": "pokeidle.giveBalls",
+        "title": "PokeIdle: Cheat - 100 de chaque Pokéball"
+      },
+      {
+        "command": "pokeidle.giveItem",
+        "title": "PokeIdle: Cheat - Obtenir un objet spécifique..."
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "poke-idle-explorer",
+          "title": "PokeIdle",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "poke-idle-explorer": [
+        {
+          "type": "webview",
+          "id": "poke-idle-view",
+          "name": "Pokémon Safari"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.75.0",
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "jimp": "^1.6.1"
+  }
+}
