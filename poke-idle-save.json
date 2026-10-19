@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 5,
       "instanceId": 1792420434087.7441,
-      "xp": 79,
+      "xp": 98,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 68,
       "level": 5,
       "instanceId": 1792420633523.8599,
-      "xp": 15,
+      "xp": 34,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -70,7 +70,7 @@
       "baseExperience": 58,
       "level": 4,
       "instanceId": 1792421422423.5054,
-      "xp": 68,
+      "xp": 87,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -96,7 +96,7 @@
       "baseExperience": 66,
       "level": 3,
       "instanceId": 1792421648158.8218,
-      "xp": 81,
+      "xp": 100,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -123,7 +123,7 @@
       "baseExperience": 66,
       "level": 3,
       "instanceId": 1792421845061.071,
-      "xp": 20,
+      "xp": 39,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -150,7 +150,7 @@
       "baseExperience": 152,
       "level": 2,
       "instanceId": 1792422059857.3225,
-      "xp": 29,
+      "xp": 48,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -167,7 +167,7 @@
     },
     "stones": {}
   },
-  "coins": 790,
+  "coins": 810,
   "xp": 90,
   "level": 1,
   "missions": {
@@ -184,7 +184,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 93,
+  "spawnTimer": 36,
   "discovery": {
     "170": {
       "speciesId": 170,
@@ -315,7 +315,7 @@
       ]
     }
   },
-  "lastUpdate": 1792422149334,
+  "lastUpdate": 1792422209335,
   "stats": {
     "totalCoins": 30,
     "shinies": 0,
@@ -348,10 +348,10 @@
     777
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 1703635,
-  "activeTickRemainderMs": 635,
-  "passiveXpElapsedMs": 2635,
-  "passiveCoinsElapsedMs": 23635,
+  "activeTimeMs": 1760614,
+  "activeTickRemainderMs": 614,
+  "passiveXpElapsedMs": 2614,
+  "passiveCoinsElapsedMs": 20614,
   "recentEvolutionActiveTimes": [],
   "lastCaptureAtActiveMs": 1616673,
   "lastEvolutionAtActiveMs": 0,
