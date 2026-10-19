@@ -1,0 +1,20 @@
+{
+  "name": "pokeidle-local",
+  "interface": {
+    "displayName": "PokeIdle"
+  },
+  "plugins": [
+    {
+      "name": "pokeidle-codex",
+      "source": {
+        "source": "local",
+        "path": "./.codex/plugins/pokeidle-codex"
+      },
+      "policy": {
+        "installation": "INSTALLED_BY_DEFAULT",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Entertainment"
+    }
+  ]
+}

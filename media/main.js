@@ -1,5 +1,6 @@
 (function () {
     const vscode = acquireVsCodeApi();
+    let stateGeneration = 0;
 
     let state = {
         pokedex: [],
@@ -49,8 +50,63 @@
 
     let currentPokemon = null;
     let selectedBall = 'pokeball';
-    let speciesCache = {}; // Cache pour limiter les appels API
     let dayNightInterval = null;
+    let gameLoopInterval = null;
+    let spawnPending = false;
+    let gameClockLoaded = false;
+    let gamePageActive = true;
+    let lastClockPerformance = 0;
+    let lastClockWall = 0;
+    const evolutions = window.POKEIDLE_EVOLUTIONS;
+    const challenges = window.POKEIDLE_CHALLENGES;
+    let challengeFilter = 'recommended';
+    let challengeNotice = '';
+    let challengeRenderSignature = '';
+    const evolutionLocks = new Set();
+    const evolutionPayloads = new Map();
+    let evolutionDialog = null;
+    const expandedSpecies = new Set();
+    const rarityEntries = Object.entries(evolutions.data.species).map(([id, species]) => ({ id: Number(id), ...species }));
+    const legendaryIds = new Set(rarityEntries.filter(s => s.isLegendary || s.isMythical).map(s => s.id));
+    const semiLegendaryIds = new Set(rarityEntries.filter(s => s.isSemiLegendary).map(s => s.id));
+    const rareWildIds = new Set(rarityEntries.filter(s => s.captureRate <= 45 &&
+        !legendaryIds.has(s.id) && !semiLegendaryIds.has(s.id)).map(s => s.id));
+    const uncommonWildIds = new Set(rarityEntries.filter(s => s.captureRate > 45 && s.captureRate <= 100 &&
+        !legendaryIds.has(s.id) && !semiLegendaryIds.has(s.id)).map(s => s.id));
+    const commonSpeciesIds = rarityEntries.map(s => s.id)
+        .filter(id => !legendaryIds.has(id) && !semiLegendaryIds.has(id) && !rareWildIds.has(id) && !uncommonWildIds.has(id));
+
+    function chooseEncounter(level, recentIds = []) {
+        const levelScale = Math.max(0, Math.min(1, ((Number(level) || 1) - 1) / 49));
+        const recent = new Set(recentIds);
+        const available = ids => ids.filter(id => !recent.has(id));
+        const buckets = [
+            { ids: available([...legendaryIds]), rate: 0.01 * levelScale, rarity: 'Légendaire' },
+            { ids: available([...semiLegendaryIds]), rate: 0.02 * levelScale, rarity: 'Semi-légendaire' },
+            { ids: available([...rareWildIds]), rate: 0.04 * levelScale, rarity: 'Rare' },
+            { ids: available([...uncommonWildIds]), rate: 0.03 * levelScale, rarity: 'Peu commun' }
+        ].filter(bucket => bucket.ids.length && bucket.rate > 0);
+        const roll = Math.random();
+        let cumulative = 0;
+        for (const bucket of buckets) {
+            cumulative += bucket.rate;
+            if (roll < cumulative) return { id: bucket.ids[Math.floor(Math.random() * bucket.ids.length)], rarity: bucket.rarity };
+        }
+        const ordinary = available(commonSpeciesIds);
+        return { id: ordinary[Math.floor(Math.random() * ordinary.length)], rarity: 'Commun' };
+    }
+
+    if (!window.POKEIDLE_MCP_HOST) {
+        for (const [id, action] of Object.entries({
+            'github-configure': 'configure', 'github-push': 'push', 'github-pull': 'pull',
+            'github-keep-local': 'keep-local', 'github-keep-remote': 'keep-github',
+            'btn-new-game': 'newGame', 'btn-restore-game': 'restoreGame'
+        })) document.getElementById(id)?.addEventListener('click', () => {
+            if (action === 'newGame' || action === 'restoreGame') vscode.postMessage({ type: action });
+            else vscode.postMessage({ type: 'githubAction', action, repository: document.getElementById('github-repository')?.value.trim(),
+                branch: document.getElementById('github-branch')?.value.trim(), allowPublic: document.getElementById('github-allow-public')?.checked });
+        });
+    }
 
     // Initialisation
     vscode.postMessage({ type: 'getState' });
@@ -59,7 +115,12 @@
         const message = event.data;
         if (message.type === 'loadState') {
             if (!message.value) return;
+            stateGeneration = message.generation ?? stateGeneration;
+            evolutionDialog?.close();
+            gameClockLoaded = false;
             state = message.value;
+            challengeRenderSignature = '';
+            challengeNotice = '';
 
             // Initialisation des modes UI
             UI.pokedexMode = UI.pokedexMode || 'collection';
@@ -94,6 +155,7 @@
 
             if (!state.released) state.released = [];
             if (!state.recentSpawns) state.recentSpawns = [];
+            state.recentSpawns = [...new Set(state.recentSpawns.map(id => evolutions.speciesIdOf({ id })).filter(Boolean))].slice(-5);
 
             if (!state.discovery) {
                 state.discovery = {};
@@ -135,15 +197,18 @@
                         }
 
                         // On marque pour une future synchronization API preçise
-                        if (p.synced === undefined) p.synced = false;
+                        window.POKEIDLE_EVOLUTIONS.syncPokemon(p);
                     }
                 });
             } else {
                 state.pokedex = [];
             }
 
+            initializeActiveClock();
             translateExistingPokedex();
             syncDiscovery();
+            challenges.update(state);
+            saveState();
             updateUI();
             renderMissions();
 
@@ -152,6 +217,19 @@
             dayNightInterval = setInterval(updateDayNight, 60000);
 
             startGameLoop();
+        } else if (message.type === 'syncPause') {
+            window.POKEIDLE_SYNC_BUSY = Boolean(message.value);
+            resetClockSample();
+            const app = document.getElementById('app'); if (app) app.inert = Boolean(message.value);
+        } else if (message.type === 'githubStatus') {
+            const cloud = document.getElementById('github-sync-status');
+            if (cloud) cloud.textContent = message.value.message || (message.value.configured ? 'GitHub prêt' : 'GitHub non configuré');
+            const repository = document.getElementById('github-repository');
+            if (repository && message.value.repository) repository.value = message.value.repository;
+            const branch = document.getElementById('github-branch'); if (branch && message.value.branch) branch.value = message.value.branch;
+            const publicSave = document.getElementById('github-allow-public'); if (publicSave) publicSave.checked = message.value.publicSaveApproved === true;
+            const conflict = document.getElementById('github-conflict');
+            if (conflict) conflict.hidden = message.value.state !== 'conflict';
         } else if (message.type === 'syncStatus') {
             updateSyncStatus(message.value, message.date);
         } else if (message.type === 'copyToClipboard') {
@@ -167,6 +245,9 @@
         } else if (status === 'success') {
             UI.syncStatus.innerText = `Dernière synchro : ${date}`;
             UI.syncStatus.className = "sync-status success";
+        } else if (status === 'local') {
+            UI.syncStatus.innerText = 'Partie enregistrée sur ce PC';
+            UI.syncStatus.className = 'sync-status';
         } else if (status === 'error') {
             UI.syncStatus.innerText = "Erreur de synchronisation";
             UI.syncStatus.className = "sync-status error";
@@ -180,35 +261,61 @@
         document.body.classList.toggle('night-mode', isNight);
     }
 
+    function mergeDiscovery(discoveries, pokemon, caught) {
+        const p = { ...pokemon };
+        evolutions.syncPokemon(p);
+        const speciesId = evolutions.speciesIdOf(p);
+        if (!speciesId) return;
+        const form = evolutions.formOf(p);
+        const entry = discoveries[speciesId] ||= {
+            speciesId, name: evolutions.speciesLabel(p), sprite: p.sprite, caught: false, variants: []
+        };
+        if (!entry.sprite || (!entry.caught && caught)) entry.sprite = p.sprite;
+        entry.caught = Boolean(entry.caught || caught);
+        entry.name = evolutions.speciesLabel(p);
+        entry.speciesId = speciesId;
+        entry.variants ||= [];
+        const formId = form?.id || p.formId || p.id;
+        const variant = entry.variants.find(v => v.formId === formId);
+        if (variant) {
+            variant.caught = Boolean(variant.caught || caught);
+            if (!variant.sprite) variant.sprite = p.sprite;
+        } else {
+            entry.variants.push({ formId, id: p.id, name: p.name,
+                label: evolutions.variantLabel(p), sprite: p.sprite, caught: Boolean(caught) });
+        }
+        entry.variants.sort((a, b) => a.formId - b.formId);
+    }
+
+    function discoveryCount(caughtOnly = false) {
+        return Object.entries(state.discovery || {}).filter(([id, d]) =>
+            evolutions.data.species[id] && (!caughtOnly || d.caught)).length;
+    }
+
+    function recordDiscovery(p, caught) {
+        mergeDiscovery(state.discovery, p, caught);
+        if (state.stats) state.stats.uniques = discoveryCount(true);
+    }
+
     function syncDiscovery() {
-        let changed = false;
-        if (!state.discovery) state.discovery = {};
-
-        // S'assurer que tout ce qui est dans le pokedex (collection) est marque comme capture
-        if (Array.isArray(state.pokedex)) {
-            state.pokedex.forEach(p => {
-                if (p && p.id) {
-                    if (!state.discovery[p.id] || !state.discovery[p.id].caught) {
-                        state.discovery[p.id] = {
-                            name: p.name,
-                            sprite: p.sprite,
-                            caught: true
-                        };
-                        changed = true;
-                    }
+        const previous = JSON.stringify(state.discovery || {});
+        const normalized = {};
+        for (const [id, discovery] of Object.entries(state.discovery || {})) {
+            if (discovery.variants?.length) {
+                for (const variant of discovery.variants) {
+                    mergeDiscovery(normalized, { ...variant, speciesId: Number(id) }, variant.caught);
                 }
-            });
+                if (normalized[id]) normalized[id].caught ||= Boolean(discovery.caught);
+            } else {
+                const legacy = { ...discovery, id: Number(id) };
+                if (evolutions.speciesIdOf(legacy)) mergeDiscovery(normalized, legacy, discovery.caught);
+                else normalized[id] = discovery; // Keep unmapped historical records for compatibility.
+            }
         }
-
-        let count = 0;
-        Object.keys(state.discovery).forEach(k => {
-            if (state.discovery[k].caught) count++;
-        });
-        state.stats.uniques = count;
-
-        if (changed) {
-            saveState();
-        }
+        for (const p of state.pokedex || []) if (p) mergeDiscovery(normalized, p, true);
+        state.discovery = normalized;
+        state.stats.uniques = discoveryCount(true);
+        if (JSON.stringify(normalized) !== previous) saveState();
     }
 
     async function translateExistingPokedex() {
@@ -309,31 +416,15 @@
     // Lancer l'init au chargement
     init();
 
-    const stoneTranslations = {
-        'fire-stone': 'Pierre Feu', 'water-stone': 'Pierre Eau', 'leaf-stone': 'Pierre Plante',
-        'thunder-stone': 'Pierre Foudre', 'ice-stone': 'Pierre Glace', 'moon-stone': 'Pierre Lune',
-        'sun-stone': 'Pierre Soleil', 'dusk-stone': 'Pierre Nuit', 'shiny-stone': 'Pierre Éclat',
-        'dawn-stone': 'Pierre Aube', 'kings-rock': 'Roche Royale', 'metal-coat': 'Peau Métal',
-        'protector': 'Protecteur', 'reaper-cloth': 'Tissu Fauche', 'dragon-scale': 'Écaille Draco',
-        'prism-scale': "Bel'Écaille", 'razor-claw': 'Griffe Rasoir', 'razor-fang': 'Croc Rasoir',
-        'black-augurite': 'Obsidienne', 'linking-cord': 'Câble Link', 'soothe-bell': 'Grelot Zen',
-        'upgrade': 'Améliorator', 'dubious-disc': 'CD Douteux', 'electirizer': 'Électriseur',
-        'magmarizer': 'Magmariseur', 'peat-block': 'Bloc de Tourbe', 'galarica-cuff': 'Bracelet Galanoa',
-        'galarica-wreath': 'Couronne Galanoa', 'sweet-apple': 'Pomme Sucrée', 'tart-apple': 'Pomme Acide',
-        'chipped-pot': 'Théière Ébréchée', 'cracked-pot': 'Théière Fêlée', 'auspicious-armor': 'Armure Fortune',
-        'malicious-armor': 'Armure Rancune', 'scroll-of-darkness': 'Rouleau Ténèbres',
-        'scroll-of-waters': 'Rouleau Eau', 'gimmighoul-coin': 'Pièce de Mordudor',
-        'syrupy-apple': 'Pomme en Alliage', 'unremarkable-teacup': 'Bol Médiocre',
-        'masterpiece-teacup': 'Bol Exceptionnel', 'metal-alloy': 'Métal Composite',
-        'sachet': 'Sachet Senteur', 'whipped-dream': 'Chantibonbon',
-        'deep-sea-tooth': 'Dent Océan', 'deep-sea-scale': 'Écaille Océan',
-        'leaders-crest': 'Emblème du Général', 'strawberry-sweet': 'Objet en Sucre'
-    };
-
     function updateUI() {
         try {
+            const playStatus = document.getElementById('active-play-status');
+            if (playStatus) {
+                const seconds = Math.floor(activeNow() / 1000);
+                playStatus.textContent = `Temps de jeu actif : ${Math.floor(seconds / 3600)} h ${Math.floor(seconds / 60) % 60} min ${seconds % 60} s. Les compteurs sont en pause quand le jeu est fermé ou suspendu.`;
+            }
             if (UI.coinCount) UI.coinCount.innerText = state.coins || 0;
-            if (UI.pokedexCount) UI.pokedexCount.innerText = state.pokedex ? state.pokedex.length : 0;
+            if (UI.pokedexCount) UI.pokedexCount.innerText = new Set((state.pokedex || []).filter(Boolean).map(p => evolutions.speciesIdOf(p))).size;
             if (UI.playerLevel) UI.playerLevel.innerText = state.level || 1;
 
             const lvl = state.level || 1;
@@ -352,14 +443,8 @@
             }
 
             const badgeMissions = document.getElementById('badge-missions');
-            if (badgeMissions && typeof MISSIONS !== 'undefined') {
-                const hasClaimable = MISSIONS.some(m => {
-                    if (state.missions.claimed.includes(m.id)) return false;
-                    let curr = 0;
-                    if (m.reqType === 'type') curr = state.missions.typeProgress[m.type] || 0;
-                    if (m.reqType === 'stat') curr = state.stats[m.statKey] || 0;
-                    return curr >= m.target;
-                });
+            if (badgeMissions) {
+                const hasClaimable = challenges.models(state).some(m => !m.complete && m.progress.ready);
                 badgeMissions.classList.toggle('active', hasClaimable);
             }
 
@@ -412,11 +497,12 @@
         'masque-maudit': 'spell-tag',
         'carte-de-voyage': 'town-map',
         'pokego-candy': 'rare-candy',
-        'linking-cord': 'link-cord',
-        'link-cable': 'link-cord',
-        'cable-link': 'link-cord',
-        'link-cord': 'link-cord',
-        'syrupy-apple': 'sweet-apple',
+        'linking-cord': 'linking-cord',
+        'link-cable': 'linking-cord',
+        'cable-link': 'linking-cord',
+        'link-cord': 'linking-cord',
+        'upgrade': 'up-grade',
+        'syrupy-apple': 'syrupy-apple',
         'sweet-apple': 'sweet-apple',
         'tart-apple': 'tart-apple',
         'unremarkable-teacup': 'unremarkable-teacup',
@@ -437,8 +523,16 @@
 
     function getItemIcon(id) {
         const mappedId = itemIconMapping[id] || id;
-        return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${mappedId}.png`;
+        return window.POKEIDLE_ITEM_ICONS?.[mappedId]
+            || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${mappedId}.png`;
     }
+
+    document.addEventListener('error', event => {
+        const image = event.target;
+        if (!(image instanceof HTMLImageElement) || !image.hasAttribute('data-pokeidle-item') || image.dataset.fallbackApplied) return;
+        image.dataset.fallbackApplied = 'true';
+        image.src = window.POKEIDLE_ITEM_ICONS?.__fallback || getPokeDollarIcon();
+    }, true);
 
     function renderBallInventory() {
         const container = document.getElementById('ball-inventory');
@@ -448,7 +542,7 @@
             const slot = document.createElement('div');
             slot.className = `item-slot ${selectedBall === ball.id ? 'active' : ''}`;
             slot.innerHTML = `
-                <img src="${getItemIcon(ball.img)}">
+                <img src="${getItemIcon(ball.img)}" alt="${ball.name}" data-pokeidle-item>
                 <span>${count}</span>
             `;
             slot.onclick = () => {
@@ -468,10 +562,11 @@
             if (count > 0) {
                 const slot = document.createElement('div');
                 slot.className = 'item-slot';
-                slot.title = stoneTranslations[stone] || stone;
+                slot.title = challenges.itemName(stone);
                 const img = document.createElement('img');
                 img.src = getItemIcon(stone);
-                img.onerror = () => { img.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'; };
+                img.alt = challenges.itemName(stone);
+                img.setAttribute('data-pokeidle-item', '');
                 const span = document.createElement('span');
                 span.textContent = count;
                 slot.appendChild(img);
@@ -489,30 +584,108 @@
         ppSpan.style.marginLeft = '10px';
         stats.appendChild(ppSpan);
         const ppIcon = document.createElement('img');
-        ppIcon.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/rare-candy.png';
+        ppIcon.src = getItemIcon('rare-candy');
+        ppIcon.alt = 'Bonbon';
+        ppIcon.setAttribute('data-pokeidle-item', '');
         ppIcon.className = 'mini-icon';
         stats.appendChild(ppIcon);
         return ppSpan;
     }
 
+    function activeNow() {
+        return Number.isFinite(state.activeTimeMs) ? state.activeTimeMs : 0;
+    }
+
+    function activeElapsed(marker) {
+        return Math.max(0, activeNow() - (Number.isFinite(state[marker]) ? state[marker] : activeNow()));
+    }
+
+    function initializeActiveClock() {
+        // Legacy wall timestamps contain unknown offline time. Never convert them
+        // into earned play time, nor revoke items/rewards already obtained.
+        const migrated = state.activeTimeVersion !== 1;
+        if (migrated) {
+            state.activeTimeVersion = 1;
+            state.activeTimeMs = 0;
+            state.activeTickRemainderMs = 0;
+            state.passiveXpElapsedMs = 0;
+            state.passiveCoinsElapsedMs = 0;
+            state.recentEvolutionActiveTimes = [];
+            for (const marker of ['lastCaptureAtActiveMs', 'lastEvolutionAtActiveMs',
+                'lastPurchaseAtActiveMs', 'lastBallPurchaseAtActiveMs']) state[marker] = 0;
+        }
+        if (!Number.isFinite(state.activeTimeMs) || state.activeTimeMs < 0) state.activeTimeMs = 0;
+        for (const marker of ['lastCaptureAtActiveMs', 'lastEvolutionAtActiveMs',
+            'lastPurchaseAtActiveMs', 'lastBallPurchaseAtActiveMs']) {
+            if (!Number.isFinite(state[marker]) || state[marker] > activeNow() || state[marker] < 0) state[marker] = activeNow();
+        }
+        for (const [key, period] of [['activeTickRemainderMs', 1000], ['passiveXpElapsedMs', 3000], ['passiveCoinsElapsedMs', 60000]]) {
+            if (!Number.isFinite(state[key]) || state[key] < 0 || state[key] >= period) state[key] = 0;
+        }
+        state.recentEvolutionActiveTimes = (Array.isArray(state.recentEvolutionActiveTimes) ? state.recentEvolutionActiveTimes : []).filter(t =>
+            Number.isFinite(t) && t <= activeNow() && activeNow() - t < 120000);
+        state.recentEvoCount = state.recentEvolutionActiveTimes.length;
+        for (const p of state.pokedex) {
+            if (!p) continue;
+            if (migrated || !Number.isFinite(p.capturedAtActiveMs) || p.capturedAtActiveMs > activeNow() || p.capturedAtActiveMs < 0) {
+                p.capturedAtActiveMs = activeNow();
+            }
+        }
+        gameClockLoaded = true;
+        if (migrated) saveState();
+    }
+
+    function resetClockSample() {
+        lastClockPerformance = performance.now();
+        lastClockWall = Date.now();
+    }
+
+    window.addEventListener('pagehide', () => {
+        gamePageActive = false;
+        if (gameClockLoaded && !window.POKEIDLE_SYNC_BUSY) saveState();
+        resetClockSample();
+    });
+    window.addEventListener('pageshow', () => { gamePageActive = true; resetClockSample(); });
+
     function startGameLoop() {
-        setInterval(() => {
-            if (!currentPokemon) {
-                state.spawnTimer--;
+        if (gameLoopInterval) clearInterval(gameLoopInterval);
+        resetClockSample();
+        gameLoopInterval = setInterval(() => {
+            const monotonic = performance.now();
+            const wall = Date.now();
+            const elapsed = monotonic - lastClockPerformance;
+            const wallElapsed = wall - lastClockWall;
+            lastClockPerformance = monotonic;
+            lastClockWall = wall;
+            // Only live ticks count. Never catch up after closing, suspension,
+            // sleep, clock changes, host synchronization or a frozen webview.
+            if (!gameClockLoaded || !gamePageActive || window.POKEIDLE_SYNC_BUSY ||
+                elapsed <= 0 || elapsed > 5000 || wallElapsed < 0 || wallElapsed > 5000) return;
+            const creditedMs = Math.floor(elapsed);
+            state.activeTimeMs += creditedMs;
+            state.activeTickRemainderMs += creditedMs;
+            const seconds = Math.floor(state.activeTickRemainderMs / 1000);
+            state.activeTickRemainderMs %= 1000;
+            if (!currentPokemon && !spawnPending) {
+                state.spawnTimer = Math.max(0, state.spawnTimer - seconds);
                 if (state.spawnTimer <= 0) {
-                    spawnPokemon();
                     state.spawnTimer = Math.floor(Math.random() * (180 - 30 + 1)) + 30;
+                    spawnPokemon();
                 }
             }
-            if (new Date().getSeconds() % 3 === 0) {
-                gainPassiveXP();
-            }
-            // 20$ par minute
-            if (new Date().getTime() % 60000 < 1000) {
-                state.coins += 20;
-                updateUI();
-                saveState();
-            }
+            state.passiveXpElapsedMs += creditedMs;
+            const xpTicks = Math.floor(state.passiveXpElapsedMs / 3000);
+            state.passiveXpElapsedMs %= 3000;
+            for (let tick = 0; tick < xpTicks; tick++) gainPassiveXP();
+            state.passiveCoinsElapsedMs += creditedMs;
+            const coinTicks = Math.floor(state.passiveCoinsElapsedMs / 60000);
+            state.passiveCoinsElapsedMs %= 60000;
+            if (coinTicks) state.coins += 20 * coinTicks;
+            state.recentEvolutionActiveTimes = state.recentEvolutionActiveTimes.filter(t => activeNow() - t < 120000);
+            state.recentEvoCount = state.recentEvolutionActiveTimes.length;
+            updateSpawnTimerUI();
+            if (seconds || coinTicks) updateUI();
+            saveState();
         }, 1000);
     }
 
@@ -538,7 +711,7 @@
                 p.level = (p.level || 1) + 1;
                 p.xp = 0;
                 leveledUp = true;
-                // checkAutoEvolution(p, false); // Désactivé pour évolution manuelle
+                // Evolutions remain manual so the player can choose a branch.
             }
         });
 
@@ -557,6 +730,9 @@
     }
 
     async function spawnPokemon() {
+        if (spawnPending || !gamePageActive || window.POKEIDLE_SYNC_BUSY) return;
+        spawnPending = true;
+        const spawnState = state;
         UI.spawnArea.innerHTML = `
             <div class="hunting-container">
                 <div class="shaking-grass">🌾</div>
@@ -571,94 +747,62 @@
             let found = false;
 
             while (!found) {
-                const id = Math.floor(Math.random() * 1025) + 1;
+                const encounter = chooseEncounter(state.level, state.recentSpawns);
+                const id = encounter.id;
                 const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`);
                 speciesData = await speciesRes.json();
 
-                // 1. Choisir une variété (Normal, Alola, Galar, etc.)
-                // On exclut les Megas/Gmax pour l'instant pour garder les évolutions classiques
-                const validVarieties = speciesData.varieties.filter(v => !v.pokemon.name.includes('-mega') && !v.pokemon.name.includes('-gmax'));
-                const variety = validVarieties[Math.floor(Math.random() * validVarieties.length)];
-
-                const response = await fetch(variety.pokemon.url);
+                // One species draw, followed by one appearance draw. Species with
+                // many forms do not receive extra encounter probability.
+                const forms = evolutions.formsForSpecies(speciesData.id);
+                if (!forms.length) continue;
+                const form = forms[Math.floor(Math.random() * forms.length)];
+                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${form.pokemonId}/`);
+                if (!response.ok) throw new Error('HTTP ' + response.status);
                 data = await response.json();
-
-                // 2. Choisir une forme esthétique (Vivaldaim, Meteno, etc.)
-                let sprite = data.sprites.other['official-artwork'].front_default || data.sprites.front_default;
-                let formName = "";
-
+                let sprite = data.sprites.other?.['official-artwork']?.front_default || data.sprites.front_default;
+                const formId = form.id;
                 if (data.forms.length > 1) {
-                    const formIndex = Math.floor(Math.random() * data.forms.length);
-                    const formRes = await fetch(data.forms[formIndex].url);
+                    const formRes = await fetch(`https://pokeapi.co/api/v2/pokemon-form/${formId}/`);
+                    if (!formRes.ok) throw new Error('HTTP ' + formRes.status);
                     const formData = await formRes.json();
-                    sprite = formData.sprites.front_default; // Les formes n'ont pas toujours d'official-artwork
-                    if (formData.form_name) formName = ` (${formData.form_name})`;
+                    sprite = formData.sprites.front_default || sprite;
                 }
 
-                // Logique de rareté
                 const capRate = speciesData.capture_rate;
-                let rarity = "Commun";
-                let chance = 1;
 
-                if (capRate <= 3) { rarity = "Légendaire"; chance = 0.01; }
-                else if (capRate <= 45) { rarity = "Épique"; chance = 0.1; }
-                else if (capRate <= 100) { rarity = "Rare"; chance = 0.3; }
-                else if (capRate <= 150) { rarity = "Peu Commun"; chance = 0.6; }
+                if (state !== spawnState || !gamePageActive || window.POKEIDLE_SYNC_BUSY) return;
+                found = true;
 
-                const minLevelRequired = rarity === "Légendaire" ? 50 : (rarity === "Épique" ? 20 : 1);
+                // Mise a jour des doublons
+                state.recentSpawns.push(speciesData.id);
+                if (state.recentSpawns.length > 5) state.recentSpawns.shift();
 
-                // Anti-doublon (recentSpawns)
-                const isRecent = state.recentSpawns.includes(data.id);
+                currentPokemon = {
+                    id: data.id,
+                    speciesId: speciesData.id,
+                    formId,
+                    name: evolutions.targetLabel(form),
+                    rarity: encounter.rarity,
+                    captureRate: capRate,
+                    genderRate: speciesData.gender_rate, // On stocke pour la capture
+                    sprite: sprite,
+                    types: data.types.map(t => t.type.name),
+                    isShiny: Math.random() < (1 / 512),
+                    baseExperience: data.base_experience || 50,
+                    level: Math.max(1, Math.floor(state.level * 0.8) + Math.floor(Math.random() * 5))
+                };
 
-                if (state.level >= minLevelRequired && Math.random() < chance && !isRecent) {
-                    found = true;
-
-                    // Mise a jour des doublons
-                    state.recentSpawns.push(data.id);
-                    if (state.recentSpawns.length > 5) state.recentSpawns.shift();
-
-                    let frenchName = speciesData.names.find(n => n.language.name === 'fr')?.name || speciesData.name;
-
-                    // Gérer le nom des formes régionales
-                    if (variety.pokemon.name.includes('-alola')) frenchName += " d'Alola";
-                    if (variety.pokemon.name.includes('-galar')) frenchName += " de Galar";
-                    if (variety.pokemon.name.includes('-hisui')) frenchName += " de Hisui";
-                    if (variety.pokemon.name.includes('-paldea')) frenchName += " de Paldea";
-
-                    currentPokemon = {
-                        id: data.id,
-                        speciesId: speciesData.id,
-                        name: frenchName + formName,
-                        rarity: rarity,
-                        captureRate: capRate,
-                        genderRate: speciesData.gender_rate, // On stocke pour la capture
-                        sprite: sprite,
-                        types: data.types.map(t => t.type.name),
-                        isShiny: Math.random() < (1 / 512),
-                        baseExperience: data.base_experience || 50,
-                        level: Math.max(1, Math.floor(state.level * 0.8) + Math.floor(Math.random() * 5))
-                    };
-
-                    // Ajout aux découvertes en tant que "Rencontré"
-                    if (!state.discovery[currentPokemon.id]) {
-                        state.discovery[currentPokemon.id] = {
-                            name: currentPokemon.name,
-                            sprite: currentPokemon.sprite,
-                            caught: false
-                        };
-                        saveState();
-                        // Pas de refresh UI ici pour ne pas spoil si on est sur l'onglet Pokedex, 
-                        // ou alors on le fait si on veut que ├ºa s'affiche direct
-                    }
-                }
+                recordDiscovery(currentPokemon, false);
+                saveState();
             }
 
             renderPokemon();
         } catch (error) {
             console.error("Spawn error:", error);
-            state.spawnTimer = 10; // Réessaie vite en cas d'erreur API
+            if (state === spawnState) state.spawnTimer = 10; // Retry only in the same game.
             vscode.postMessage({ type: 'updateStatus', active: false });
-        }
+        } finally { spawnPending = false; }
     }
 
     function renderPokemon() {
@@ -695,6 +839,8 @@
         // --- Animation de Lancer ---
         const ballImg = document.createElement('img');
         ballImg.src = getItemIcon(ball.img);
+        ballImg.alt = ball.name;
+        ballImg.setAttribute('data-pokeidle-item', '');
         ballImg.className = 'thrown-ball throw-arc';
 
         // Positionner la ball par rapport au Pokémon
@@ -737,7 +883,7 @@
         if (catchSuccess) {
             pokemonEl.classList.add('captured-anim');
             setTimeout(() => {
-                finalizeCapture();
+                finalizeCapture(ball.id);
             }, 500);
         } else {
             pokemonEl.classList.add('shake-anim');
@@ -756,7 +902,7 @@
         }
     }
 
-    function finalizeCapture() {
+    function finalizeCapture(captureBall) {
         let gender = 'genderless';
         if (currentPokemon.genderRate !== -1 && currentPokemon.genderRate !== undefined) {
             // gender_rate est la chance sur 8 d'etre femelle
@@ -769,7 +915,9 @@
             xp: 0,
             gender: gender,
             date: new Date().toLocaleDateString(),
-            captureTimestamp: Date.now()
+            captureTimestamp: Date.now(),
+            capturedAtActiveMs: activeNow(),
+            captureBall
         };
 
         state.pokedex.push(newPoke);
@@ -782,6 +930,7 @@
         const mins = new Date().getMinutes();
 
         state.lastCaptureTimestamp = Date.now();
+        state.lastCaptureAtActiveMs = activeNow();
         if (!state.stats) state.stats = {};
         state.stats.captures = (state.stats.captures || 0) + 1;
 
@@ -795,16 +944,13 @@
         state.stats.totalCoins = (state.stats.totalCoins || 0) + 5;
 
         // Mise à jour de la liste des découvertes (Pokédex permanent)
-        state.discovery[newPoke.id] = {
-            name: newPoke.name,
-            sprite: newPoke.sprite,
-            caught: true
-        };
+        recordDiscovery(newPoke, true);
 
         currentPokemon.types.forEach(t => {
             state.missions.typeProgress[t] = (state.missions.typeProgress[t] || 0) + 1;
         });
 
+        challenges.update(state);
         checkLevelUp();
         currentPokemon = null;
         state.spawnTimer = 180;
@@ -832,7 +978,7 @@
             const card = document.createElement('div');
             card.className = 'shop-item';
             card.innerHTML = `
-                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${item.img}.png">
+                <img src="${getItemIcon(item.img)}" alt="${item.name}" data-pokeidle-item>
                 <div class="item-info">
                     <span>${item.name}</span>
                     <span class="owned">Possédé : ${owned}</span>
@@ -847,111 +993,15 @@
         itemsHeader.innerText = "Objets d'Évolution";
         itemsHeader.style.marginTop = "20px";
         UI.shopList.appendChild(itemsHeader);
+        const challengeLink = document.createElement('button'); challengeLink.type = 'button'; challengeLink.className = 'mini-btn';
+        challengeLink.textContent = 'Débloquer des objets avec les défis';
+        challengeLink.addEventListener('click', () => document.querySelector('[data-tab="missions-tab"]')?.click());
+        UI.shopList.appendChild(challengeLink);
 
-        const EVOLUTION_ITEMS = [
-            { id: 'linking-cord', name: 'Câble Link', price: 1000 },
-            { id: 'fire-stone', name: 'Pierre Feu', price: 500 },
-            { id: 'water-stone', name: 'Pierre Eau', price: 500 },
-            { id: 'thunder-stone', name: 'Pierre Foudre', price: 500 },
-            { id: 'leaf-stone', name: 'Pierre Plante', price: 500 },
-            { id: 'moon-stone', name: 'Pierre Lune', price: 500 },
-            { id: 'sun-stone', name: 'Pierre Soleil', price: 500 },
-            { id: 'ice-stone', name: 'Pierre Glace', price: 500 },
-            { id: 'dusk-stone', name: 'Pierre Nuit', price: 500 },
-            { id: 'shiny-stone', name: 'Pierre Éclat', price: 500 },
-            { id: 'dawn-stone', name: 'Pierre Aube', price: 500 },
-            { id: 'metal-coat', name: 'Peau Métal', price: 1500 },
-            { id: 'kings-rock', name: 'Roche Royale', price: 1500 },
-            { id: 'dragon-scale', name: 'Écaille Draco', price: 1500 },
-            { id: 'upgrade', name: 'Améliorator', price: 1500 },
-            { id: 'dubious-disc', name: 'CD Douteux', price: 2000 },
-            { id: 'protector', name: 'Protecteur', price: 1500 },
-            { id: 'reaper-cloth', name: 'Tissu Fauche', price: 1500 },
-            { id: 'electirizer', name: 'Électriseur', price: 1500 },
-            { id: 'magmarizer', name: 'Magmariseur', price: 1500 },
-            { id: 'prism-scale', name: "Bel'Écaille", price: 1500 },
-            { id: 'razor-claw', name: 'Griffe Rasoir', price: 1500 },
-            { id: 'razor-fang', name: 'Croc Rasoir', price: 1500 },
-            { id: 'sweet-apple', name: 'Pomme Sucrée', price: 800 },
-            { id: 'tart-apple', name: 'Pomme Acide', price: 800 },
-            { id: 'syrupy-apple', name: 'Pomme en Alliage', price: 800 },
-            { id: 'cracked-pot', name: 'Théière Fêlée', price: 800 },
-            { id: 'chipped-pot', name: 'Théière Ébréchée', price: 1500 },
-            { id: 'malicious-armor', name: 'Armure Rancune', price: 1500 },
-            { id: 'auspicious-armor', name: 'Armure Fortune', price: 1500 },
-            { id: 'black-augurite', name: 'Obsidienne', price: 1500 },
-            { id: 'peat-block', name: 'Bloc de Tourbe', price: 1500 },
-            { id: 'galarica-cuff', name: 'Bracelet Galanoa', price: 1000 },
-            { id: 'galarica-wreath', name: 'Couronne Galanoa', price: 1500 },
-            { id: 'unremarkable-teacup', name: 'Bol Médiocre', price: 800 },
-            { id: 'masterpiece-teacup', name: 'Bol Exceptionnel', price: 1500 },
-            { id: 'metal-alloy', name: 'Métal Composite', price: 1500 },
-            { id: 'sachet', name: 'Sachet Senteur', price: 1000 },
-            { id: 'whipped-dream', name: 'Chantibonbon', price: 1000 },
-            { id: 'deep-sea-tooth', name: 'Dent Océan', price: 1500 },
-            { id: 'deep-sea-scale', name: 'Écaille Océan', price: 1500 },
-            { id: 'leaders-crest', name: 'Emblème du Général', price: 1500 },
-            { id: 'strawberry-sweet', name: 'Objet en Sucre', price: 800 },
-            { id: 'gimmighoul-coin', name: 'Pièce Mordudor', price: 10 },
-            { id: 'alora-sand', name: 'Sable d\'Alola', price: 1000 },
-            { id: 'rock-peak', name: 'Éclat de Roche', price: 1000 },
-            { id: 'galar-vapor', name: 'Vapeur de Galar', price: 1000 },
-            { id: 'ancient-manuscript', name: 'Manuscrit Ancien', price: 1500 },
-            { id: 'boussole-magnetique', name: 'Boussole Magnétique', price: 1000 },
-            { id: 'cable-croise', name: 'Câble Croisé', price: 1500 },
-            { id: 'masque-maudit', name: 'Masque Maudit', price: 1500 },
-            { id: 'carte-de-voyage', name: 'Carte de Voyage', price: 2000 },
-            { id: 'pokego-candy', name: 'Bonbon Pokémon GO', price: 50 },
-            { id: 'scroll-of-darkness', name: 'Manuscrit des Ténèbres', price: 2000 },
-            { id: 'scroll-of-waters', name: 'Manuscrit des Eaux', price: 2000 },
-            { id: 'love-sweet', name: 'Sucre Cœur', price: 800 },
-            { id: 'berry-sweet', name: 'Sucre Baie', price: 800 },
-            { id: 'clover-sweet', name: 'Sucre Trèfle', price: 800 },
-            { id: 'flower-sweet', name: 'Sucre Fleur', price: 800 },
-            { id: 'star-sweet', name: 'Sucre Étoile', price: 800 },
-            { id: 'ribbon-sweet', name: 'Sucre Ruban', price: 800 }
-        ];
-
-        const stoneTranslations = {
-            'linking-cord': 'Câble Link', 'fire-stone': 'Pierre Feu', 'water-stone': 'Pierre Eau',
-            'thunder-stone': 'Pierre Foudre', 'leaf-stone': 'Pierre Plante', 'moon-stone': 'Pierre Lune',
-            'sun-stone': 'Pierre Soleil', 'ice-stone': 'Pierre Glace', 'dusk-stone': 'Pierre Nuit',
-            'shiny-stone': 'Pierre Éclat', 'dawn-stone': 'Pierre Aube', 'metal-coat': 'Peau Métal',
-            'kings-rock': 'Roche Royale', 'dragon-scale': 'Écaille Draco', 'upgrade': 'Améliorator',
-            'dubious-disc': 'CD Douteux', 'protector': 'Protecteur', 'reaper-cloth': 'Tissu Fauche',
-            'electirizer': 'Électriseur', 'magmarizer': 'Magmariseur', 'prism-scale': "Bel'Écaille",
-            'razor-claw': 'Griffe Rasoir', 'razor-fang': 'Croc Rasoir', 'sweet-apple': 'Pomme Sucrée',
-            'tart-apple': 'Pomme Acide', 'syrupy-apple': 'Pomme en Alliage', 'cracked-pot': 'Théière Fêlée',
-            'chipped-pot': 'Théière Ébréchée', 'malicious-armor': 'Armure Rancune', 'auspicious-armor': 'Armure Fortune',
-            'black-augurite': 'Obsidienne', 'peat-block': 'Bloc de Tourbe', 'galarica-cuff': 'Bracelet Galanoa',
-            'galarica-wreath': 'Couronne Galanoa', 'unremarkable-teacup': 'Bol Médiocre', 'masterpiece-teacup': 'Bol Exceptionnel',
-            'metal-alloy': 'Métal Composite', 'sachet': 'Sachet Senteur', 'whipped-dream': 'Chantibonbon',
-            'deep-sea-tooth': 'Dent Océan', 'deep-sea-scale': 'Écaille Océan', 'leaders-crest': 'Emblème du Général',
-            'strawberry-sweet': 'Objet en Sucre', 'gimmighoul-coin': 'Pièce Mordudor',
-            'love-sweet': 'Sucre Cœur', 'berry-sweet': 'Sucre Baie', 'clover-sweet': 'Sucre Trèfle',
-            'flower-sweet': 'Sucre Fleur', 'star-sweet': 'Sucre Étoile', 'ribbon-sweet': 'Sucre Ruban',
-            'alora-sand': 'Sable d\'Alola', 'rock-peak': 'Éclat de Roche',
-            'galar-vapor': 'Vapeur de Galar', 'ancient-manuscript': 'Manuscrit Ancien',
-            'boussole-magnetique': 'Boussole Magnétique', 'cable-croise': 'Câble Croisé',
-            'masque-maudit': 'Masque Maudit', 'carte-de-voyage': 'Carte de Voyage',
-            'pokego-candy': 'Bonbon Pokémon GO'
-        };
-
-        const availableItemsContainer = [];
-        if (typeof MISSIONS !== 'undefined' && state.missions && state.missions.claimed) {
-            EVOLUTION_ITEMS.forEach(evoItem => {
-                const count = MISSIONS.filter(m => m.item === evoItem.id && state.missions.claimed.includes(m.id)).length;
-                if (count >= 1) {
-                    let multiplier = (count === 1) ? 5 : (count === 2 ? 2 : 1);
-                    let finalPrice = Math.floor(evoItem.price * multiplier);
-                    availableItemsContainer.push({ ...evoItem, finalPrice, count });
-                }
-            });
-        }
-
+        const availableItemsContainer = challenges.items.map(item => challenges.shopStatus(state, item.id)).filter(item => item.unlocked);
         if (availableItemsContainer.length === 0) {
             const msg = document.createElement('p');
-            msg.innerText = "Accomplissez au moins 1 mission d'un objet pour le débloquer ici !";
+            msg.innerText = "Tes premiers objets arrivent avec les défis. Chaque premier palier offre les objets et débloque leur achat en boutique.";
             msg.style.opacity = 0.7;
             msg.style.margin = "10px 0";
             msg.style.fontStyle = "italic";
@@ -962,21 +1012,23 @@
                 const card = document.createElement('div');
                 card.className = 'shop-item';
 
-                let discountBadge = "";
-                if (item.count === 2) discountBadge = '<span class="discount-badge">-60%</span>';
-                if (item.count === 3) discountBadge = '<span class="discount-badge">-80%</span>';
+                let discountBadge = '';
+                if (item.tier === 2) discountBadge = '<span class="discount-badge">−20 %</span>';
+                if (item.tier >= 3) discountBadge = '<span class="discount-badge">−40 %</span>';
+                const quantity = item.packSize || 1;
+                const finalPrice = Math.max(1, Math.ceil(item.price * quantity * item.multiplier));
 
                 card.innerHTML = `
                     <div style="position:relative">
-                        <img src="${getItemIcon(item.id)}" onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'">
+                        <img src="${getItemIcon(item.id)}" alt="${item.name}" data-pokeidle-item>
                         ${discountBadge}
                     </div>
                     <div class="item-info">
-                        <span>${item.name}</span>
+                        <span>${item.name}${quantity > 1 ? ` ×${quantity}` : ''}</span>
                         <span class="owned">Possédé : ${owned}</span>
-                        <span class="price">${item.finalPrice} <img src="${getPokeDollarIcon()}" class="pokedollar-icon" style="width:14px;height:14px;vertical-align:middle;margin-left:4px;"></span>
+                        <span class="price">${finalPrice} <img src="${getPokeDollarIcon()}" class="pokedollar-icon" style="width:14px;height:14px;vertical-align:middle;margin-left:4px;"></span>
                     </div>
-                    <button onclick="buyStone('${item.id}', ${item.finalPrice})">Acheter</button>
+                    <button onclick="buyStone('${item.id}', ${quantity})">Acheter${quantity > 1 ? ` ×${quantity}` : ''}</button>
                 `;
                 UI.shopList.appendChild(card);
             });
@@ -990,7 +1042,10 @@
             state.inventory.balls[id] = (state.inventory.balls[id] || 0) + 1;
             state.stats.totalItemsBought = (state.stats.totalItemsBought || 0) + 1;
             state.stats.totalBallsBought = (state.stats.totalBallsBought || 0) + 1;
+            state.lastBallPurchaseAtActiveMs = activeNow();
+            state.lastBallPurchaseTimestamp = Date.now();
             state.lastPurchaseTimestamp = Date.now();
+            state.lastPurchaseAtActiveMs = activeNow();
             updateUI();
             saveState();
             renderShop();
@@ -999,20 +1054,18 @@
         }
     };
 
-    window.buyStone = (id, price) => {
-        if (state.coins >= price) {
-            if (state.coins > 10000) state.boughtAbove10000 = true;
-            state.coins -= price;
-            if (!state.inventory.stones) state.inventory.stones = {};
-            state.inventory.stones[id] = (state.inventory.stones[id] || 0) + 1;
-            state.stats.totalItemsBought = (state.stats.totalItemsBought || 0) + 1;
-            state.lastPurchaseTimestamp = Date.now();
-            updateUI();
-            saveState();
-            renderShop();
-        } else {
-            vscode.postMessage({ type: 'showInfo', value: "Pas assez de pièces !" });
-        }
+    window.buyStone = (id, quantity = 1) => {
+        if (window.POKEIDLE_SYNC_BUSY) return;
+        const item = challenges.shopStatus(state, id);
+        if (!item?.unlocked || !Number.isInteger(quantity) || ![1, item.packSize].includes(quantity)) return;
+        const price = Math.max(1, Math.ceil(item.price * quantity * item.multiplier));
+        if (state.coins < price) { vscode.postMessage({ type: 'showInfo', value: 'Pas assez de pièces !' }); return; }
+        state.coins -= price;
+        state.inventory.stones[id] = (state.inventory.stones[id] || 0) + quantity;
+        state.stats.totalItemsBought = (state.stats.totalItemsBought || 0) + quantity;
+        state.lastPurchaseTimestamp = Date.now();
+        state.lastPurchaseAtActiveMs = activeNow();
+        saveState(); updateUI(); renderShop();
     };
 
     window.addBall = (ballId, amount) => {
@@ -1028,6 +1081,7 @@
             const p = state.pokedex[index];
             if ((p.level || 1) >= 50) state.soldLevel50 = true;
 
+            challenges.recordRelease(state, p);
             state.pokedex.splice(index, 1);
             state.coins += 10;
             if (!state.stats) state.stats = {};
@@ -1046,9 +1100,8 @@
         if (!UI.pokedexList) return;
         UI.pokedexList.innerHTML = '';
 
-        const discoveries = Object.values(state.discovery || {});
-        const encounteredCount = discoveries.length;
-        const capturedCount = discoveries.filter(d => d.caught).length;
+        const encounteredCount = discoveryCount();
+        const capturedCount = discoveryCount(true);
 
         // Affichage du progrès global
         const statsHeader = document.createElement('div');
@@ -1085,40 +1138,70 @@
         // Sécurité : s'assurer que pokedex est un tableau
         if (!Array.isArray(state.pokedex)) state.pokedex = [];
 
-        let filtered = state.pokedex.filter(p => p && p.name && p.name.toLowerCase().includes(search));
+        let filtered = state.pokedex.filter(p => p && p.name && `${evolutions.speciesLabel(p)} ${p.name}`.toLowerCase().includes(search));
         const sortMode = UI.pokeSort ? UI.pokeSort.value : 'id';
 
         // Filtrer les doublons si demandé
         if (sortMode === 'duplicates') {
             const counts = {};
             state.pokedex.forEach(p => {
-                if (p) counts[p.id] = (counts[p.id] || 0) + 1;
+                if (p) { const id = evolutions.speciesIdOf(p); counts[id] = (counts[id] || 0) + 1; }
             });
-            filtered = filtered.filter(p => counts[p.id] > 1);
+            filtered = filtered.filter(p => counts[evolutions.speciesIdOf(p)] > 1);
         }
 
         // --- Système de Tri ---
         const sorted = filtered.sort((a, b) => {
-            if (sortMode === 'name-asc') return a.name.localeCompare(b.name);
-            if (sortMode === 'name-desc') return b.name.localeCompare(a.name);
+            if (sortMode === 'name-asc') return evolutions.speciesLabel(a).localeCompare(evolutions.speciesLabel(b));
+            if (sortMode === 'name-desc') return evolutions.speciesLabel(b).localeCompare(evolutions.speciesLabel(a));
             if (sortMode === 'level-desc') return b.level - a.level;
             if (sortMode === 'level-asc') return a.level - b.level;
             if (sortMode === 'can-evolve') {
-                const aCan = (typeof a.nextEvoLevel === 'number' && a.level >= a.nextEvoLevel) || a.nextEvoLevel === 'Item requis';
-                const bCan = (typeof b.nextEvoLevel === 'number' && b.level >= b.nextEvoLevel) || b.nextEvoLevel === 'Item requis';
+                const aCan = evolutions.choices(a, state).some(option => option.ready);
+                const bCan = evolutions.choices(b, state).some(option => option.ready);
                 if (aCan !== bCan) return bCan - aCan;
-                return (a.id || 0) - (b.id || 0);
+                return (evolutions.speciesIdOf(a) || 0) - (evolutions.speciesIdOf(b) || 0);
             }
             if (sortMode === 'final-stage') {
-                const aFinal = a.nextEvoLevel === 'MAX';
-                const bFinal = b.nextEvoLevel === 'MAX';
+                const aFinal = evolutions.choices(a, state).length === 0;
+                const bFinal = evolutions.choices(b, state).length === 0;
                 if (aFinal !== bFinal) return bFinal - aFinal;
-                return (a.id || 0) - (b.id || 0);
+                return (evolutions.speciesIdOf(a) || 0) - (evolutions.speciesIdOf(b) || 0);
             }
-            return (a.id || 0) - (b.id || 0);
+            return (evolutions.speciesIdOf(a) || 0) - (evolutions.speciesIdOf(b) || 0);
         });
 
-        sorted.forEach(p => {
+        const groups = new Map();
+        for (const p of sorted) {
+            const id = evolutions.speciesIdOf(p);
+            if (!groups.has(id)) groups.set(id, []);
+            groups.get(id).push(p);
+        }
+        for (const [speciesId, members] of groups) {
+            let parent = UI.pokedexList;
+            if (members.length > 1) {
+                const group = document.createElement('details'); group.className = 'species-group';
+                group.open = expandedSpecies.has(speciesId);
+                const summary = document.createElement('summary');
+                const portrait = document.createElement('img'); portrait.src = members[0].sprite; portrait.alt = '';
+                const label = document.createElement('strong'); label.textContent = evolutions.speciesLabel(members[0]);
+                const count = document.createElement('span'); count.className = 'species-count';
+                const variants = new Set(members.map(p => evolutions.formOf(p)?.id || p.formId || p.id)).size;
+                count.textContent = `${members.length} exemplaires · ${variants} variante${variants > 1 ? 's' : ''}`;
+                summary.append(portrait, label, count);
+                if (members.some(p => evolutions.choices(p, state).some(option => option.ready))) {
+                    const ready = document.createElement('span'); ready.className = 'species-ready'; ready.textContent = 'Évolution prête'; summary.appendChild(ready);
+                }
+                group.appendChild(summary);
+                group.addEventListener('toggle', () => {
+                    if (group.isConnected) {
+                        if (group.open) expandedSpecies.add(speciesId); else expandedSpecies.delete(speciesId);
+                    }
+                });
+                const body = document.createElement('div'); body.className = 'species-members'; group.appendChild(body);
+                UI.pokedexList.appendChild(group); parent = body;
+            }
+            members.forEach(p => {
             if (!p) return;
             const item = document.createElement('div');
             item.className = `pokedex-item ${p.isShiny ? 'shiny-border' : ''}`;
@@ -1129,7 +1212,7 @@
             let evoDisplay = '';
             if (evoInfo !== 'MAX') {
                 const readyClass = evoInfo === 'Évolution prête !' ? 'evo-ready' : '';
-                const clickAttr = readyClass ? `onclick="manualEvolve('${p.instanceId}')"` : '';
+                const clickAttr = `role="button" tabindex="0" onclick="manualEvolve('${p.instanceId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();manualEvolve('${p.instanceId}')}"`;
                 evoDisplay = `<div class="evo-timer ${readyClass}" ${clickAttr}>${evoInfo}</div>`;
             }
 
@@ -1137,7 +1220,7 @@
             const xpProgress = Math.min(100, (p.xp / xpToNext) * 100);
 
             // On utilise les icones de la Gen VIII pour le look "PC"
-            const iconUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/${p.id}.png`;
+            const iconUrl = evolutions.variantLabel(p) ? p.sprite : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/${p.id}.png`;
 
             item.innerHTML = `
                 <div class="tooltip">
@@ -1148,8 +1231,9 @@
                     <div class="tooltip-row"><span class="tooltip-label">Capture le</span><span>${p.date || 'Inconnue'}</span></div>
                 </div>
                 <div class="poke-info">
-                    <img src="${iconUrl}" onerror="this.src='${p.sprite}'">
-                    <span class="p-name">${p.name || 'Inconnu'} ${genderSign} ${p.isShiny ? '✨' : ''}</span>
+                    <img src="${iconUrl}" onerror="this.onerror=null;this.src='${p.sprite}'">
+                    <span class="p-name">${evolutions.speciesLabel(p)} ${genderSign} ${p.isShiny ? '✨' : ''}</span>
+                    <span class="p-variant">${evolutions.variantLabel(p)}</span>
                     <span class="p-lvl">Nv.${p.level || '?'}</span>
                     <div class="p-xp-bar"><div style="width: ${xpProgress}%"></div></div>
                     ${evoDisplay}
@@ -1158,8 +1242,9 @@
                     <button class="sell-btn" onclick="liberatePokemon('${p.instanceId}')">Liberer (10$)</button>
                 </div>
             `;
-            UI.pokedexList.appendChild(item);
-        });
+            parent.appendChild(item);
+            });
+        }
     }
 
     function renderNationalPokedex() {
@@ -1176,12 +1261,14 @@
             item.className = `national-item ${isCaught ? 'caught' : (isSeen ? 'seen' : 'unknown')}`;
 
             const spriteUrl = isSeen ? disc.sprite : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${i}.png`;
-            const name = isSeen ? disc.name : `???`;
+            const name = isSeen ? evolutions.data.species[i].label : `???`;
+            const variantCount = (disc?.variants || []).length;
 
             item.innerHTML = `
                 <span class="nat-id">#${i}</span>
                 <img src="${spriteUrl}" loading="lazy" class="${isCaught ? '' : 'silhouette'}">
                 <span class="nat-name">${name}</span>
+                ${variantCount > 1 ? `<span class="nat-variants">${variantCount} variantes observées</span>` : ''}
             `;
             container.appendChild(item);
         }
@@ -1189,264 +1276,172 @@
     }
 
     function calculateEvoTime(p) {
-        if (!p.nextEvoLevel || p.synced === false) {
-            fetchNextEvoLevel(p);
-            if (!p.nextEvoLevel) return "Analyse...";
-        }
-        if (p.nextEvoLevel === "MAX") return "MAX";
-        if (typeof p.nextEvoLevel === "string") {
-            if (p.nextEvoLevel.startsWith("item:")) {
-                const reqItem = p.nextEvoLevel.split(":")[1];
-                if (state.inventory.stones && state.inventory.stones[reqItem] > 0) {
-                    return "Évolution prête !";
-                } else {
-                    return `Requiert: ${stoneTranslations[reqItem] || reqItem.replace('-', ' ')}`;
-                }
-            }
-            if (p.nextEvoLevel.startsWith("loyalty:")) {
-                const targetSecs = parseInt(p.nextEvoLevel.split(":")[1]);
-                const currentSecs = (Date.now() - (p.captureTimestamp || Date.now())) / 1000;
-                if (currentSecs >= targetSecs) {
-                    return "Évolution prête !";
-                } else {
-                    const remaining = Math.ceil((targetSecs - currentSecs) / 60);
-                    return `Amitié: ${remaining} min restantes`;
-                }
-            }
-            return p.nextEvoLevel;
-        }
-        return p.level >= p.nextEvoLevel ? "Évolution prête !" : `Nv. requis : ${p.nextEvoLevel}`;
-    }
-
-    async function getSpeciesId(p) {
-        if (p.speciesId && p.speciesId <= 10000) return p.speciesId;
-        if (p.id <= 10000) {
-            p.speciesId = p.id;
-            return p.id;
-        }
-        try {
-            const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${p.id}/`);
-            if (!res.ok) return p.id;
-            const data = await res.json();
-            const parts = data.species.url.split('/');
-            const sId = parseInt(parts[parts.length - 2]);
-            p.speciesId = sId;
-            return sId;
-        } catch (e) {
-            return p.id;
-        }
-    }
-
-    async function fetchNextEvoLevel(p, retryCount = 0) {
-        if (p.fetchingEvo) return;
-        p.fetchingEvo = true;
-        try {
-            const sId = await getSpeciesId(p);
-
-            if (!speciesCache[sId]) {
-                const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${sId}/`);
-                if (!speciesRes.ok) {
-                    if (speciesRes.status === 404) {
-                        p.nextEvoLevel = "MAX";
-                        renderPokedex();
-                        p.fetchingEvo = false;
-                        return;
-                    }
-                    throw new Error("HTTP " + speciesRes.status);
-                }
-                const speciesData = await speciesRes.json();
-                const evoRes = await fetch(speciesData.evolution_chain.url);
-                const evoData = await evoRes.json();
-                speciesCache[sId] = { species: speciesData, chain: evoData };
-            }
-
-
-            const cache = speciesCache[sId];
-
-            // Correction dynamique du genre si erroné (ex: Migration 50/50 sur un Nidoking)
-            if (cache.species.gender_rate === 0) p.gender = 'male';
-            if (cache.species.gender_rate === 8) p.gender = 'female';
-            if (cache.species.gender_rate === -1) p.gender = 'genderless';
-
-            const englishName = cache.species.name;
-            const evoDetails = findEvoDetails(cache.chain.chain, englishName);
-
-            const name = englishName.toLowerCase();
-            // --- Custom Mappings for new Quests/Items ---
-            if (name === 'eevee' || name === 'crabrawler') { p.nextEvoLevel = "item:rock-peak"; }
-            else if (['pikachu', 'cubone', 'exeggcute'].includes(name)) { p.nextEvoLevel = "item:alora-sand"; }
-            else if (['magneton', 'nosepass', 'charjabug'].includes(name)) { p.nextEvoLevel = "item:boussole-magnetique"; }
-            else if (['karrablast', 'shelmet'].includes(name)) { p.nextEvoLevel = "item:cable-croise"; }
-            else if (['yanma', 'piloswine', 'kubfu'].includes(name)) { p.nextEvoLevel = "item:ancient-manuscript"; }
-            else if (name === 'meowth' && p.name.includes('Galar')) { p.nextEvoLevel = "item:galar-vapor"; }
-            else if (name === 'primeape' || name === 'yamask') { p.nextEvoLevel = "item:masque-maudit"; }
-            else if (evoDetails && evoDetails.length > 0) {
-                const detail = evoDetails[0];
-                if (detail.trigger.name === "level-up" && !detail.item && !detail.held_item) {
-                    if (detail.min_happiness) {
-                        p.nextEvoLevel = "loyalty:1800"; // 30 mins
-                    } else {
-                        p.nextEvoLevel = detail.min_level || 1;
-                    }
-                } else if (detail.item || detail.held_item || detail.trigger.name === "trade" || detail.trigger.name === "use-item") {
-                    let reqItem = 'linking-cord';
-                    if (detail.item) reqItem = detail.item.name;
-                    if (detail.held_item) reqItem = detail.held_item.name;
-                    p.nextEvoLevel = "item:" + reqItem;
-                }
-            } else {
-                p.nextEvoLevel = "MAX";
-            }
-            p.synced = true;
-            p.fetchingEvo = false;
-            renderPokedex();
-        } catch (e) {
-            console.error("Evo analysis error", p.name, e);
-            if (retryCount < 2) {
-                setTimeout(() => { p.fetchingEvo = false; fetchNextEvoLevel(p, retryCount + 1); }, 1500);
-            } else {
-                p.nextEvoLevel = "Erreur";
-                renderPokedex();
-            }
-        }
+        evolutions.syncPokemon(p);
+        const options = evolutions.choices(p, state);
+        p.synced = true;
         p.fetchingEvo = false;
+        p.nextEvoLevel = options.length ? 'Choix d’évolution' : 'MAX';
+        if (!options.length) return 'MAX';
+        if (options.some(option => option.ready)) return 'Évolution prête !';
+        return options.length === 1 ? 'Voir les conditions' : `${options.length} évolutions : voir les conditions`;
     }
 
     window.manualEvolve = (instanceId) => {
-        const p = state.pokedex.find(poke => poke.instanceId == instanceId);
-        if (p) checkAutoEvolution(p, true); // isManual = true
+        if (window.POKEIDLE_SYNC_BUSY) return;
+        const pokemon = state.pokedex.find(p => p.instanceId == instanceId);
+        if (!pokemon || evolutionLocks.has(pokemon.instanceId)) return;
+        evolutionDialog?.close();
+        const dialog = document.createElement('dialog');
+        dialog.className = 'evolution-dialog';
+        const title = document.createElement('h2');
+        title.textContent = `Faire évoluer ${pokemon.name}`;
+        dialog.appendChild(title);
+        const hint = document.createElement('p');
+        hint.className = 'hint';
+        hint.textContent = 'Choisis la destination. Les objets indiqués seront consommés. Les conditions sont vérifiées au moment du clic.';
+        dialog.appendChild(hint);
+        const status = document.createElement('p');
+        status.setAttribute('role', 'status');
+        const optionsArea = document.createElement('div');
+        dialog.appendChild(optionsArea);
+        const refresh = () => {
+            optionsArea.replaceChildren();
+            const current = state.pokedex.find(p => p.instanceId === pokemon.instanceId);
+            if (!current || current.id !== pokemon.id) { dialog.close(); return; }
+            const options = evolutions.choices(current, state);
+            if (!options.length) {
+                const text = document.createElement('p'); text.textContent = 'Ce Pokémon n’a pas d’évolution classique.'; optionsArea.appendChild(text);
+            }
+            for (const option of options) {
+                const card = document.createElement('section'); card.className = 'evolution-option';
+                const heading = document.createElement('h3'); heading.textContent = option.label; card.appendChild(heading);
+                const conditions = document.createElement('ul');
+                for (const req of option.requirements) {
+                    const li = document.createElement('li'); li.textContent = `${req.met ? '✓' : '○'} ${req.label}`;
+                    li.className = req.met ? 'condition-met' : 'condition-missing'; conditions.appendChild(li);
+                }
+                if (!option.requirements.length) { const li = document.createElement('li'); li.textContent = 'Évolution disponible'; conditions.appendChild(li); }
+                card.appendChild(conditions);
+                if (option.adaptations.length) {
+                    const note = document.createElement('p'); note.className = 'hint';
+                    note.textContent = 'Adaptation idle : ' + option.adaptations.join(' '); card.appendChild(note);
+                }
+                if (option.target.speciesId === 291) {
+                    const note = document.createElement('p'); note.className = 'hint';
+                    note.textContent = 'Bonus : Munja rejoint aussi la collection si une Poké Ball standard est disponible (elle sera consommée).'; card.appendChild(note);
+                }
+                const button = document.createElement('button'); button.className = 'mini-btn';
+                button.textContent = option.ready ? `Évoluer en ${option.label}` : 'Conditions à remplir';
+                button.disabled = !option.ready;
+                button.addEventListener('click', async () => {
+                    for (const control of dialog.querySelectorAll('button')) control.disabled = true;
+                    status.textContent = 'Préparation de l’évolution…';
+                    const success = await evolvePokemon(current, option.key);
+                    if (success) dialog.close();
+                    else { status.textContent = 'Évolution interrompue. Vérifie les conditions et la connexion ; aucun objet n’a été consommé.'; refresh(); close.disabled = false; refreshButton.disabled = false; }
+                });
+                card.appendChild(button); optionsArea.appendChild(card);
+            }
+        };
+        dialog.appendChild(status);
+        const refreshButton = document.createElement('button'); refreshButton.className = 'mini-btn';
+        refreshButton.textContent = 'Actualiser les conditions'; refreshButton.addEventListener('click', refresh);
+        dialog.appendChild(refreshButton);
+        const close = document.createElement('button'); close.className = 'mini-btn'; close.textContent = 'Fermer';
+        close.addEventListener('click', () => dialog.close()); dialog.appendChild(close);
+        dialog.addEventListener('close', () => { dialog.remove(); if (evolutionDialog === dialog) evolutionDialog = null; });
+        document.body.appendChild(dialog); evolutionDialog = dialog; refresh(); dialog.showModal();
     };
 
-    async function checkAutoEvolution(pokemon, isManual = false) {
-        if (!pokemon) return;
-        try {
-            const speciesId = await getSpeciesId(pokemon);
-            if (!speciesCache[speciesId]) await fetchNextEvoLevel(pokemon);
-            const cache = speciesCache[speciesId];
-            if (!cache) return;
-
-            const englishName = cache.species.name;
-            const evoDetails = findEvoDetails(cache.chain.chain, englishName);
-            if (evoDetails && evoDetails.length > 0) {
-                const detail = evoDetails[0];
-                let isReady = false;
-                let reqItem = null;
-
-                if (detail.trigger.name === "level-up" && !detail.item && !detail.held_item) {
-                    const levelMet = pokemon.level >= (detail.min_level || 1);
-                    let happinessMet = true;
-                    if (detail.min_happiness) {
-                        const loyaltySecs = (Date.now() - (pokemon.captureTimestamp || Date.now())) / 1000;
-                        happinessMet = loyaltySecs >= 1800; // 30 minutes
-                    }
-                    if (levelMet && happinessMet) isReady = true;
-                } else if (detail.item || detail.held_item || detail.trigger.name === "trade" || detail.trigger.name === "use-item") {
-                    // Si ce n'est pas un clic manuel, on n'auto-evolue PAS avec des objets
-                    if (!isManual) return;
-
-                    reqItem = 'linking-cord';
-                    if (detail.item) reqItem = detail.item.name;
-                    if (detail.held_item) reqItem = detail.held_item.name;
-
-                    if (state.inventory.stones && state.inventory.stones[reqItem] > 0) {
-                        isReady = true;
-                    }
+    async function evolutionPayload(form) {
+        if (!evolutionPayloads.has(form.id)) {
+            const promise = (async () => {
+                const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${form.pokemonId}/`);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const pokemon = await res.json();
+                let sprites = pokemon.sprites;
+                if (pokemon.forms.length > 1) {
+                    const formRes = await fetch(`https://pokeapi.co/api/v2/pokemon-form/${form.id}/`);
+                    if (!formRes.ok) throw new Error('HTTP ' + formRes.status);
+                    const cosmetic = await formRes.json();
+                    if (cosmetic.sprites.front_default) sprites = cosmetic.sprites;
                 }
-
-                if (isReady) {
-                    if (reqItem) {
-                        state.inventory.stones[reqItem]--;
-                        pokemon.evolvedViaLevel = false;
-                    } else {
-                        pokemon.evolvedViaLevel = true;
-                    }
-                    evolvePokemon(pokemon, detail.species_name);
-                }
-            } else {
-                pokemon.nextEvoLevel = "MAX";
-            }
-        } catch (e) { console.error("Auto-evo check error", e); }
+                return { pokemon, sprites };
+            })();
+            evolutionPayloads.set(form.id, promise);
+            promise.catch(() => evolutionPayloads.delete(form.id));
+        }
+        return evolutionPayloads.get(form.id);
     }
 
-    function findEvoDetails(chain, currentName) {
-        if (chain.species.name === currentName) {
-            return chain.evolves_to.map(e => ({ species_name: e.species.name, ...e.evolution_details[0] }));
-        }
-        for (let next of chain.evolves_to) {
-            const res = findEvoDetails(next, currentName);
-            if (res) return res;
-        }
-        return null;
+    function makeEvolvedPokemon(old, form, payload) {
+        const { pokemon, sprites } = payload;
+        const artwork = pokemon.sprites.other?.['official-artwork'];
+        const sprite = old.isShiny
+            ? (sprites.front_shiny || artwork?.front_shiny || sprites.front_default)
+            : (sprites.other?.['official-artwork']?.front_default || sprites.front_default || artwork?.front_default);
+        const evolved = {
+            ...old, id: pokemon.id, speciesId: form.speciesId, formId: form.id,
+            name: evolutions.targetLabel(form), sprite, types: pokemon.types.map(t => t.type.name),
+            baseExperience: pokemon.base_experience || old.baseExperience,
+            genderRate: evolutions.data.species[form.speciesId].genderRate,
+            captureRate: evolutions.data.species[form.speciesId].captureRate,
+            nextEvoLevel: null, fetchingEvo: false, synced: true,
+            hasEvolved: true
+        };
+        evolutions.syncPokemon(evolved);
+        return evolved;
     }
 
-    async function evolvePokemon(oldPoke, newSpeciesName) {
+    async function evolvePokemon(oldPoke, optionKey) {
+        const instanceId = oldPoke.instanceId;
+        if (window.POKEIDLE_SYNC_BUSY || evolutionLocks.has(instanceId)) return false;
+        const originalState = state;
+        const originalGeneration = stateGeneration;
+        evolutionLocks.add(instanceId);
         try {
-            const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${newSpeciesName}`);
-            const speciesData = await speciesRes.json();
-
-            let targetVarietyUrl = speciesData.varieties.find(v => v.is_default).pokemon.url;
-
-            let currentPokemonRes = await fetch(`https://pokeapi.co/api/v2/pokemon/${oldPoke.id}`);
-            let currentPokemonData = await currentPokemonRes.json();
-
-            let currentNameParts = currentPokemonData.name.split('-');
-            if (currentNameParts.length > 1) {
-                const suffix = currentNameParts.slice(1).join('-');
-                const matchingVariety = speciesData.varieties.find(v => v.pokemon.name.includes(suffix));
-                if (matchingVariety) {
-                    targetVarietyUrl = matchingVariety.pokemon.url;
-                }
+            let option = evolutions.choices(oldPoke, state).find(o => o.key === optionKey && o.ready);
+            if (!option) return false;
+            const payload = await evolutionPayload(option.target);
+            // All network work precedes inventory changes, including optional Shedinja.
+            let shedinja = null;
+            if (option.target.speciesId === 291 && (state.inventory.balls.pokeball || 0) > 0) {
+                try {
+                    const form = evolutions.data.forms[292];
+                    shedinja = { form, payload: await evolutionPayload(form) };
+                } catch (error) { console.error('Munja indisponible : évolution reportée', error); return false; }
             }
-
-            const response = await fetch(targetVarietyUrl);
-            const data = await response.json();
-
-            let frenchName = speciesData.names.find(n => n.language.name === 'fr')?.name || speciesData.name;
-            if (data.name.includes('-alola')) frenchName += " d'Alola";
-            if (data.name.includes('-galar')) frenchName += " de Galar";
-            if (data.name.includes('-hisui')) frenchName += " de Hisui";
-            if (data.name.includes('-paldea')) frenchName += " de Paldea";
-
-            const index = state.pokedex.findIndex(p => p.instanceId == oldPoke.instanceId);
-            if (index > -1) {
-                state.pokedex[index] = {
-                    ...oldPoke,
-                    id: data.id,
-                    speciesId: speciesData.id,
-                    name: frenchName,
-                    sprite: data.sprites.other['official-artwork'].front_default || data.sprites.front_default,
-                    nextEvoLevel: null,
-                    fetchingEvo: false,
-                    hasEvolved: true
-                };
-
-                // Special Quest: 3 evolutions in 2 mins
-                if (!state.recentEvoTimestamps) state.recentEvoTimestamps = [];
-                state.recentEvoTimestamps.push(Date.now());
-                state.recentEvoTimestamps = state.recentEvoTimestamps.filter(t => Date.now() - t < 120000);
-                state.recentEvoCount = state.recentEvoTimestamps.length;
-
-                // Special Quest: Ningale level 20 with 100 balls
-                if (oldPoke.name.includes('Ningale') || oldPoke.name.includes('Nincada')) {
-                    const totalBalls = Object.values(state.inventory.balls).reduce((a, b) => a + b, 0);
-                    if (oldPoke.level >= 20 && totalBalls >= 100) {
-                        state.ningaleEvolvedWithBalls = true;
-                    }
-                }
-
-                state.discovery[data.id] = { name: frenchName, sprite: state.pokedex[index].sprite, caught: true };
-
-                vscode.postMessage({ type: 'showInfo', value: `Évolution en ${frenchName} !` });
-                state.missions.evolutions++;
-                state.stats.evolved++;
-                state.lastEvoTimestamp = Date.now();
-                saveState();
-                renderPokedex();
-                updateUI();
+            const index = state.pokedex.findIndex(p => p === oldPoke);
+            if (state !== originalState || stateGeneration !== originalGeneration || index < 0 || window.POKEIDLE_SYNC_BUSY) return false;
+            // Another evolution may have consumed a required item during the download.
+            option = evolutions.choices(oldPoke, state).find(o => o.key === optionKey && o.ready);
+            if (!option) return false;
+            const evolved = makeEvolvedPokemon(oldPoke, option.target, payload);
+            evolved.evolvedViaLevel = Object.keys(option.items).length === 0;
+            const bonus = shedinja && state.inventory.balls.pokeball > 0
+                ? makeEvolvedPokemon({ ...oldPoke, instanceId: Date.now() + Math.random() }, shedinja.form, shedinja.payload) : null;
+            for (const [id, count] of Object.entries(option.items)) state.inventory.stones[id] -= count;
+            state.pokedex[index] = evolved;
+            if (bonus) { state.inventory.balls.pokeball--; state.pokedex.push(bonus); }
+            if (oldPoke.speciesId === 290) {
+                const ballsBefore = Object.values(state.inventory.balls).reduce((sum, count) => sum + count, 0) + (bonus ? 1 : 0);
+                if (oldPoke.level >= 20 && ballsBefore >= 100) state.ningaleEvolvedWithBalls = true;
             }
-        } catch (e) {
-            console.error("Evolution failed", e);
-        }
+            state.recentEvolutionActiveTimes = [...state.recentEvolutionActiveTimes, activeNow()].filter(t => activeNow() - t < 120000);
+            state.recentEvoCount = state.recentEvolutionActiveTimes.length;
+            for (const p of [evolved, bonus].filter(Boolean)) recordDiscovery(p, true);
+            state.missions.evolutions = (state.missions.evolutions || 0) + 1;
+            state.stats.evolved = (state.stats.evolved || 0) + 1;
+            state.lastEvoTimestamp = Date.now();
+            state.lastEvolutionAtActiveMs = activeNow();
+            challenges.update(state);
+            saveState(); renderPokedex(); updateUI(); renderMissions(); renderShop();
+            vscode.postMessage({ type: 'showInfo', value: `Évolution en ${evolved.name} !${bonus ? ' Munja rejoint aussi la collection !' : ''}` });
+            return true;
+        } catch (error) {
+            console.error('Evolution failed', error);
+            return false;
+        } finally { evolutionLocks.delete(instanceId); }
     }
 
     function getStoneForType(type) {
@@ -1461,141 +1456,113 @@
         return map[type] || 'moon-stone';
     }
 
-    const MISSIONS = [
-        { id: 'm_fire', reqType: 'type', type: 'fire', target: 100, item: 'fire-stone', label: 'Chasse Incendiaire', desc: 'Capturer 100 Pokémon Feu' },
-        { id: 'm_water', reqType: 'custom', check: () => (Date.now() - (state.lastCaptureTimestamp || 0)) >= 3600000, progress: () => Math.floor((Date.now() - (state.lastCaptureTimestamp || 0)) / 60000), target: 60, item: 'water-stone', label: 'Calme Plat', desc: '1h sans capture' },
-        { id: 'm_bolt', reqType: 'stat', statKey: 'totalItemsBought', target: 5000, item: 'thunder-stone', label: 'Client Fidèle', desc: 'Acheter 5000 objets' },
-        { id: 'm_leaf', reqType: 'custom', check: () => (state.pokedex || []).filter(p => p && (p.types || []).includes('grass') && (p.level || 1) >= 15).length >= 50, progress: () => (state.pokedex || []).filter(p => p && (p.types || []).includes('grass') && (p.level || 1) >= 15).length, target: 50, item: 'leaf-stone', label: 'Croissance Lente', desc: '50 Pokémon Plante Nv.15' },
-        { id: 'm_ice', reqType: 'custom', check: () => (Date.now() - (state.lastEvoTimestamp || 0)) >= 86400000, progress: () => Math.floor((Date.now() - (state.lastEvoTimestamp || 0)) / 3600000), target: 24, item: 'ice-stone', label: 'Hibernation', desc: '24h sans évolution' },
-        { id: 'm_moon', reqType: 'custom', check: () => (state.coins || 0) >= 14400, progress: () => state.coins || 0, target: 14400, item: 'moon-stone', label: 'Épargne Nocturne', desc: 'Accumuler 14 400 pièces' },
-        { id: 'm_sun', reqType: 'custom', check: () => (state.middayCaptures || 0) >= 50, progress: () => state.middayCaptures || 0, target: 50, item: 'sun-stone', label: 'Plein Midi', desc: '50 Pokémon entre 10h et 14h' },
-        { id: 'm_shiny', reqType: 'custom', check: () => (state.pokedex || []).some(p => p && (p.level || 1) >= 60), progress: () => (state.pokedex || []).reduce((max, p) => Math.max(max, p ? (p.level || 1) : 0), 0), target: 60, item: 'shiny-stone', label: 'Mentor Passif', desc: 'Un Pokémon au Niveau 60' },
-        { id: 'm_dusk', reqType: 'custom', check: () => { const h = new Date().getHours(); return h >= 0 && h < 4; }, progress: () => new Date().getHours(), target: 4, item: 'dusk-stone', label: 'Insomnie', desc: 'Connecté entre 00h et 04h' },
-        { id: 'm_dawn', reqType: 'custom', check: () => state.dawnCaptureAchieved, progress: () => state.dawnCaptureAchieved ? 1 : 0, target: 1, item: 'dawn-stone', label: 'Premier Levé', desc: 'Capturer entre 5h et 5h10' },
-        {
-            id: 'm_link', reqType: 'custom', check: () => {
-                const evolvedSpecies = new Set((state.pokedex || []).filter(p => p && p.hasEvolved && p.evolvedViaLevel).map(p => p.speciesId || p.id));
-                return evolvedSpecies.size >= 100;
-            }, progress: () => new Set((state.pokedex || []).filter(p => p && p.hasEvolved && p.evolvedViaLevel).map(p => p.speciesId || p.id)).size, target: 100, item: 'linking-cord', label: 'Réseau Local', desc: '100 espèces évoluées via Niveau'
-        },
-        { id: 'm_apple_sell', reqType: 'stat', statKey: 'liberated', target: 40, item: 'sweet-apple', label: 'Provision de Secours', desc: 'Vendre 40 Pokémon' },
-        { id: 'm_tea_sell', reqType: 'custom', check: () => state.soldLevel50, progress: () => state.soldLevel50 ? 1 : 0, target: 1, item: 'cracked-pot', label: 'Fortune de Collectionneur', desc: 'Vendre un Pokémon Nv.50' },
-        { id: 'm_galanoa_tox', reqType: 'custom', check: () => (state.missions.typeProgress['poison'] || 0) + (state.missions.typeProgress['psychic'] || 0) >= 30, progress: () => (state.missions.typeProgress['poison'] || 0) + (state.missions.typeProgress['psychic'] || 0), target: 30, item: 'galarica-cuff', label: 'Étude Toxique', desc: '30 Pokémon Poison ou Psy' },
-        { id: 'm_traveler', reqType: 'stat', statKey: 'captures', target: 400, item: 'auspicious-armor', label: 'Grand Voyageur', desc: 'Capturer 400 Pokémon' },
-        { id: 'm_ursaring', reqType: 'custom', check: () => (state.pokedex || []).some(p => (p.name || '').includes('Ursaring') && p.level >= 30), progress: () => (state.pokedex || []).find(p => (p.name || '').includes('Ursaring'))?.level || 0, target: 30, item: 'peat-block', label: 'Fidélité', desc: 'Ursaring Niveau 30' },
-        { id: 'm_geo', reqType: 'custom', check: () => (state.missions.typeProgress['rock'] || 0) + (state.missions.typeProgress['ground'] || 0) >= 200, progress: () => (state.missions.typeProgress['rock'] || 0) + (state.missions.typeProgress['ground'] || 0), target: 200, item: 'black-augurite', label: 'Géologue', desc: '200 Pokémon Roche ou Sol' },
-        { id: 'm_steel_mast', reqType: 'custom', check: () => (state.pokedex || []).filter(p => p && (p.types || []).includes('steel') && (p.level || 1) >= 40).length >= 4, progress: () => (state.pokedex || []).filter(p => p && (p.types || []).includes('steel') && (p.level || 1) >= 40).length, target: 4, item: 'metal-alloy', label: 'Maître de l\'Évolution', desc: '4 Pokémon Acier Nv.40' },
-        { id: 'm_metal', reqType: 'type', type: 'steel', target: 15, item: 'metal-coat', label: 'Magnétisme', desc: '15 Pokémon Acier' },
-        { id: 'm_king', reqType: 'stat', statKey: 'totalCoins', target: 1000000, item: 'kings-rock', label: 'Investissement Majeur', desc: '1 000 000 pièces cumulées' },
-
-        // Écaille Draco
-        { id: 'm_draco_1', reqType: 'type', type: 'dragon', target: 1, item: 'dragon-scale', label: 'Chasseur de Légendes', desc: 'Capturer un Dragon' },
-        { id: 'm_draco_2', reqType: 'type', type: 'dragon', target: 5, item: 'dragon-scale', label: 'Dresseur de Dragons', desc: 'Capturer 5 Dragons' },
-        { id: 'm_draco_3', reqType: 'custom', check: () => (state.pokedex || []).some(p => p && (p.types || []).includes('dragon') && (p.level || 1) >= 50), progress: () => (state.pokedex || []).filter(p => p && (p.types || []).includes('dragon')).reduce((max, p) => Math.max(max, p ? (p.level || 1) : 0), 0), target: 50, item: 'dragon-scale', label: 'Maître Dragon', desc: 'Un Dragon au Niveau 50' },
-
-        // Pommes (Verpom)
-        { id: 'm_apple_1', reqType: 'stat', statKey: 'liberated', target: 5, item: 'sweet-apple', label: 'Petit Ménage', desc: 'Libérer 5 Pokémon' },
-        { id: 'm_draco', reqType: 'type', type: 'dragon', target: 1, item: 'dragon-scale', label: 'Chasseur de Légendes', desc: 'Capturer un Dragon' },
-        { id: 'm_session', reqType: 'custom', check: () => (Date.now() - (state.sessionStartTime || Date.now())) >= 18000000, progress: () => Math.floor((Date.now() - (state.sessionStartTime || Date.now())) / 60000), target: 300, item: 'upgrade', label: 'Session Marathon', desc: 'Maintenir le jeu ouvert 5h' },
-        { id: 'm_balls_bought', reqType: 'stat', statKey: 'totalBallsBought', target: 1000, item: 'protector', label: 'Stock de Munitions', desc: 'Acheter 1000 Poké Balls' },
-        { id: 'm_levels', reqType: 'custom', check: () => (state.pokedex || []).reduce((s, p) => s + (p.level || 1), 0) >= 1000, progress: () => (state.pokedex || []).reduce((s, p) => s + (p.level || 1), 0), target: 1000, item: 'electirizer', label: 'Énergie Cumulée', desc: '1000 niveaux cumulés' },
-        { id: 'm_reaper', reqType: 'custom', check: () => (state.pokedex || []).some(p => (p.level || 1) >= 80), progress: () => (state.pokedex || []).reduce((max, p) => Math.max(max, p ? (p.level || 1) : 0), 0), target: 80, item: 'reaper-cloth', label: 'Sagesse Éternelle', desc: 'Un Pokémon au Niveau 80' },
-        { id: 'm_water_50', reqType: 'type', type: 'water', target: 50, item: 'prism-scale', label: 'Grand Large', desc: '50 Pokémon Eau' },
-        { id: 'm_fairy_15', reqType: 'type', type: 'fairy', target: 15, item: 'sachet', label: 'Charmeur', desc: '15 Pokémon Fée' },
-        { id: 'm_ascetisme', reqType: 'custom', check: () => (Date.now() - (state.lastPurchaseTimestamp || 0)) >= 18000000, progress: () => Math.floor((Date.now() - (state.lastPurchaseTimestamp || 0)) / 60000), target: 300, item: 'deep-sea-tooth', label: 'Ascétisme', desc: '5h sans rien acheter' },
-        { id: 'm_click_999', reqType: 'stat', statKey: 'totalClicks', target: 999, item: 'gimmighoul-coin', label: 'Obsession du Clic', desc: '999 clics sur l\'interface' },
-        { id: 'm_frenzy', reqType: 'custom', check: () => (state.recentEvoCount || 0) >= 3, progress: () => state.recentEvoCount || 0, target: 3, item: 'strawberry-sweet', label: 'Frénésie', desc: '3 évolutions en 2 minutes' },
-        { id: 'm_kubfu', reqType: 'custom', check: () => (state.pokedex || []).some(p => (p.name || '').includes('Wushours') && (p.level || 1) >= 70), progress: () => (state.pokedex || []).find(p => (p.name || '').includes('Wushours'))?.level || 0, target: 70, item: 'ancient-manuscript', label: 'Entraînement Intensif', desc: 'Wushours Niveau 70' },
-        { id: 'm_safari', reqType: 'stat', statKey: 'captures', target: 400, item: 'pokego-candy', label: 'Grand Safari', desc: '400 captures cumulées' },
-        { id: 'm_galanoa_cuff', reqType: 'type', type: 'poison', target: 15, item: 'galarica-cuff', label: 'Bracelet Galanoa', desc: '15 Pokémon Poison' },
-        { id: 'm_galanoa_wreath', reqType: 'type', type: 'psychic', target: 15, item: 'galarica-wreath', label: 'Couronne Galanoa', desc: '15 Pokémon Psy' },
-        { id: 'm_pom_alloy', reqType: 'custom', check: () => (state.pokedex || []).some(p => (p.name || '').includes('Pomdramour') && (p.level || 1) >= 40), progress: () => (state.pokedex || []).find(p => (p.name || '').includes('Pomdramour'))?.level || 0, target: 40, item: 'syrupy-apple', label: 'Pomme en Alliage', desc: 'Pomdramour Niveau 40' },
-        { id: 'm_no_catch_2h', reqType: 'custom', check: () => (Date.now() - (state.lastCaptureTimestamp || 0)) >= 7200000, progress: () => Math.floor((Date.now() - (state.lastCaptureTimestamp || 0)) / 60000), target: 120, item: 'tart-apple', label: 'Cueillete', desc: '2h sans capture' },
-        { id: 'm_coins_50k', reqType: 'custom', check: () => (state.coins || 0) >= 50000, progress: () => state.coins || 0, target: 50000, item: 'chipped-pot', label: 'Fortune de Collectionneur', desc: 'Posséder 50 000 pièces' },
-        { id: 'm_memory_past', reqType: 'custom', check: () => (state.pokedex || []).some(p => ['Cochignon', 'Yanma'].some(n => (p.name || '').includes(n)) && (p.level || 1) >= 50), progress: () => (state.pokedex || []).filter(p => ['Cochignon', 'Yanma'].some(n => (p.name || '').includes(n))).reduce((max, p) => Math.max(max, p.level), 0), target: 50, item: 'ancient-manuscript', label: 'Mémoire du Passé', desc: 'Cochignon ou Yanma Nv. 50' },
-        { id: 'm_mag_pole', reqType: 'custom', check: () => (state.missions.typeProgress['steel'] || 0) + (state.missions.typeProgress['electric'] || 0) >= 50, progress: () => (state.missions.typeProgress['steel'] || 0) + (state.missions.typeProgress['electric'] || 0), target: 50, item: 'boussole-magnetique', label: 'Pôle Magnétique', desc: '50 Pokémon Acier ou Électrik' },
-        { id: 'm_time_erosion', reqType: 'custom', check: () => (Date.now() - (state.lastBallPurchaseTimestamp || 0)) >= 7200000, progress: () => Math.floor((Date.now() - (state.lastBallPurchaseTimestamp || 0)) / 60000), target: 120, item: 'rock-peak', label: 'Érosion Temporelle', desc: '120 min sans acheter de Balls' },
-        { id: 'm_armor_duel', reqType: 'custom', check: () => (state.pokedex || []).some(p => (p.name || '').includes('Escargaume')) && (state.pokedex || []).some(p => (p.name || '').includes('Carabing')), progress: () => ((state.pokedex || []).some(p => (p.name || '').includes('Escargaume')) ? 1 : 0) + ((state.pokedex || []).some(p => (p.name || '').includes('Carabing')) ? 1 : 0), target: 2, item: 'cable-croise', label: 'Duel d\'Armures', desc: 'Posséder Escargaume et Carabing' },
-        { id: 'm_endurance', reqType: 'custom', check: () => (state.pokedex || []).some(p => ((p.types || []).includes('ghost') || (p.types || []).includes('fighting')) && (p.level || 1) >= 60), progress: () => (state.pokedex || []).filter(p => (p.types || []).includes('ghost') || (p.types || []).includes('fighting')).reduce((max, p) => Math.max(max, p.level), 0), target: 60, item: 'masque-maudit', label: 'Endurance', desc: 'Spectre ou Combat Niveau 60' },
-        { id: 'm_empty_shell', reqType: 'custom', check: () => state.ningaleEvolvedWithBalls, progress: () => state.ningaleEvolvedWithBalls ? 1 : 0, target: 1, item: 'sweet-apple', label: 'Coquille Vide', desc: 'Evolve Ningale level 20 with 100 Balls' },
-        { id: 'm_explorer', reqType: 'stat', statKey: 'totalBallsBought', target: 20000, item: 'carte-de-voyage', label: 'Explorateur', desc: 'Acheter 20 000 Poké Balls' }
-    ];
-
+    const challengeCategories = {
+        recommended: 'Conseillés', elements: 'Éléments', evolution: 'Évolution', exploration: 'Exploration', all: 'Tous'
+    };
 
     function renderMissions() {
         const container = document.getElementById('missions-list');
-        container.innerHTML = '<h2>Missions d\'Entraîneur</h2>';
-
-        if (!state.missions.typeProgress) state.missions.typeProgress = {};
-        if (!state.missions.claimed) state.missions.claimed = [];
-
-        const missionSeries = {};
-        MISSIONS.forEach(m => {
-            const seriesId = m.id.replace(/[0-9]+$/, ''); // Group m1, m2 to "m"
-            if (!missionSeries[seriesId]) missionSeries[seriesId] = [];
-            missionSeries[seriesId].push(m);
-        });
-
-        Object.keys(missionSeries).forEach(seriesId => {
-            const series = missionSeries[seriesId];
-            const nextMission = series.find(m => !state.missions.claimed.includes(m.id));
-
-            if (nextMission) {
-                let current = 0;
-                if (nextMission.reqType === 'type') {
-                    current = state.missions.typeProgress[nextMission.type] || 0;
-                } else if (nextMission.reqType === 'stat') {
-                    current = state.stats[nextMission.statKey] || 0;
-                } else if (nextMission.reqType === 'custom') {
-                    current = nextMission.progress ? nextMission.progress() : (nextMission.check() ? nextMission.target : 0);
+        if (!container) return;
+        const models = challenges.models(state);
+        const summary = {
+            claimed: state.challenges.claimed.length,
+            unlocked: challenges.items.filter(item => challenges.shopStatus(state, item.id).unlocked).length,
+            ready: models.filter(m => !m.complete && m.progress.ready).length
+        };
+        let visible = models;
+        if (challengeFilter === 'recommended') {
+            visible = models.filter(m => !m.complete).sort((a, b) =>
+                Number(b.progress.ready) - Number(a.progress.ready) || Number(b.needed) - Number(a.needed) || b.progress.ratio - a.progress.ratio || a.order - b.order).slice(0, 6);
+        } else if (challengeFilter !== 'all') visible = models.filter(m => m.category === challengeFilter);
+        const signature = JSON.stringify({ summary, filter: challengeFilter, visible, notice: challengeNotice });
+        if (signature === challengeRenderSignature && container.childElementCount) return;
+        challengeRenderSignature = signature;
+        const focusedFamily = container.contains(document.activeElement) ? document.activeElement?.dataset.challengeFamily : null;
+        container.replaceChildren();
+        const header = document.createElement('header'); header.className = 'challenge-header';
+        const title = document.createElement('h2'); title.textContent = 'Carnet de défis';
+        const intro = document.createElement('p'); intro.textContent = 'Explore, capture et fais évoluer. Un objectif au choix suffit pour chaque palier.';
+        const totals = document.createElement('p'); totals.className = 'challenge-totals';
+        totals.textContent = `${summary.claimed}/${challenges.families.length * 3} paliers réclamés · ${summary.unlocked}/${challenges.items.length} objets débloqués${summary.ready ? ` · ${summary.ready} récompense${summary.ready > 1 ? 's' : ''} prête${summary.ready > 1 ? 's' : ''}` : ''}`;
+        header.append(title, intro, totals); container.appendChild(header);
+        const filters = document.createElement('div'); filters.className = 'challenge-filters'; filters.setAttribute('aria-label', 'Filtrer les défis');
+        for (const [id, label] of Object.entries(challengeCategories)) {
+            const button = document.createElement('button'); button.type = 'button'; button.className = 'challenge-filter';
+            button.textContent = label; button.setAttribute('aria-pressed', String(challengeFilter === id));
+            button.addEventListener('click', () => {
+                challengeFilter = id; renderMissions();
+                container.querySelector(`.challenge-filter[aria-pressed="true"]`)?.focus({ preventScroll: true });
+            });
+            filters.appendChild(button);
+        }
+        container.appendChild(filters);
+        const notice = document.createElement('p'); notice.className = 'challenge-notice'; notice.setAttribute('role', 'status');
+        notice.textContent = challengeNotice; notice.hidden = !challengeNotice; container.appendChild(notice);
+        if (!visible.length) {
+            const empty = document.createElement('p'); empty.className = 'hint';
+            empty.textContent = 'Tous les parcours sont terminés. Retrouve tes objets et leurs remises dans la boutique.'; container.appendChild(empty);
+        }
+        const grid = document.createElement('div'); grid.className = 'challenge-grid';
+        for (const model of visible) {
+            const card = document.createElement('article'); card.className = `mission-card challenge-card${model.progress.ready && !model.complete ? ' challenge-ready' : ''}${model.complete ? ' challenge-complete' : ''}`;
+            const meta = document.createElement('p'); meta.className = 'challenge-meta';
+            meta.textContent = `${challengeCategories[model.category]} · ${model.complete ? 'Parcours terminé' : `Palier ${model.stage}/3`}${model.needed ? ' · Utile à ta collection' : ''}`;
+            const heading = document.createElement('h3'); heading.textContent = model.label;
+            const flavor = document.createElement('p'); flavor.className = 'challenge-flavor'; flavor.textContent = model.flavor;
+            card.append(meta, heading, flavor);
+            if (!model.complete) {
+                const choice = document.createElement('p'); choice.className = 'challenge-choice'; choice.textContent = 'Un seul de ces objectifs suffit :'; card.appendChild(choice);
+                const list = document.createElement('ul'); list.className = 'challenge-objectives';
+                for (const part of model.progress.parts) {
+                    const li = document.createElement('li'); const met = part.current >= part.target;
+                    li.className = met ? 'challenge-objective-met' : '';
+                    const label = document.createElement('span'); label.textContent = `${met ? '✓ ' : ''}${part.label}`;
+                    const count = document.createElement('strong'); count.textContent = `${Math.min(part.current, part.target)}/${part.target}`;
+                    li.append(label, count); list.appendChild(li);
                 }
-
-                const progress = Math.min(100, (current / nextMission.target) * 100);
-                const stoneFr = stoneTranslations[nextMission.item] || nextMission.item.replace('-', ' ');
-
-                const card = document.createElement('div');
-                card.className = `mission-card`;
-                card.innerHTML = `
-                    <h3>${nextMission.label}</h3>
-                    <p>${nextMission.desc} : ${current}/${nextMission.target}</p>
-                    <div class="progress-bar"><div style="width: ${progress}%"></div></div>
-                    <div class="reward">Cadeau: ${stoneFr}</div>
-                    <button class="claim-btn" ${nextMission.check ? (nextMission.check() ? '' : 'disabled') : (current >= nextMission.target ? '' : 'disabled')} onclick="claimMission('${nextMission.id}', '${nextMission.item}', '${nextMission.reqType}')">
-                        Réclamer
-                    </button>
-                `;
-                container.appendChild(card);
+                card.appendChild(list);
+                const progress = document.createElement('progress'); progress.className = 'challenge-progress'; progress.max = 1; progress.value = model.progress.ratio;
+                progress.setAttribute('aria-label', `Progression du palier ${model.stage} : ${Math.round(model.progress.ratio * 100)} %`); card.appendChild(progress);
+                const rewards = document.createElement('div'); rewards.className = 'challenge-rewards';
+                for (const gift of model.reward.items) {
+                    const reward = document.createElement('span'); reward.className = 'challenge-item';
+                    const icon = document.createElement('img'); icon.src = getItemIcon(gift.id); icon.alt = ''; icon.setAttribute('data-pokeidle-item', '');
+                    const text = document.createElement('span'); text.textContent = `${gift.quantity} × ${challenges.itemName(gift.id)}`;
+                    reward.append(icon, text); rewards.appendChild(reward);
+                }
+                const coins = document.createElement('span'); coins.className = 'challenge-item'; coins.textContent = `+ ${model.reward.coins} pièces`; rewards.appendChild(coins);
+                card.appendChild(rewards);
+                const effect = document.createElement('p'); effect.className = 'challenge-effect';
+                effect.textContent = model.stage === 1 ? 'Débloque aussi ces objets en boutique, au prix normal.' : `Remise permanente de ${model.stage === 2 ? 20 : 40} % sur ces objets en boutique.`;
+                card.appendChild(effect);
+                const claim = document.createElement('button'); claim.type = 'button'; claim.className = 'claim-btn';
+                claim.dataset.challengeFamily = model.id; claim.disabled = !model.progress.ready;
+                claim.textContent = model.progress.ready ? 'Réclamer la récompense' : 'Objectif à remplir';
+                claim.addEventListener('click', () => window.claimMission(model.key)); card.appendChild(claim);
+            } else {
+                const done = document.createElement('p'); done.className = 'challenge-effect'; done.textContent = 'Objets débloqués · remise permanente de 40 %'; card.appendChild(done);
             }
-        });
+            grid.appendChild(card);
+        }
+        container.appendChild(grid);
+        if (focusedFamily) {
+            const next = [...container.querySelectorAll('[data-challenge-family]')].find(button => button.dataset.challengeFamily === focusedFamily && !button.disabled);
+            (next || container.querySelector('.challenge-filter[aria-pressed="true"]'))?.focus({ preventScroll: true });
+        }
     }
 
-    window.claimMission = (missionId, itemReward, reqType) => {
-        const mission = MISSIONS.find(m => m.id === missionId);
-        if (!mission) return;
-
-        let isReady = false;
-        if (reqType === 'type') isReady = (state.missions.typeProgress[mission.type] || 0) >= mission.target;
-        if (reqType === 'stat') isReady = (state.stats[mission.statKey] || 0) >= mission.target;
-        if (reqType === 'custom') isReady = mission.check();
-
-        if (isReady) {
-            state.missions.claimed.push(missionId);
-            if (!state.inventory.stones) state.inventory.stones = {};
-            state.inventory.stones[itemReward] = (state.inventory.stones[itemReward] || 0) + 1;
-
-            const frName = stoneTranslations[itemReward] || itemReward;
-
-            vscode.postMessage({ type: 'showInfo', value: `Mission "${mission.label}" accomplie ! Vous obtenez : ${frName}` });
-            saveState();
-            renderMissions();
-            updateUI();
-        }
+    window.claimMission = key => {
+        if (window.POKEIDLE_SYNC_BUSY) return;
+        const result = challenges.claim(state, key);
+        if (!result) return;
+        challengeNotice = `${result.label} — palier ${result.stage} réclamé : objets reçus et ${result.reward.coins} pièces ajoutées.${result.stage === 1 ? ' Achat débloqué en boutique.' : ` Remise de ${result.stage === 2 ? 20 : 40} % débloquée.`}`;
+        saveState(); updateUI(); renderShop();
+        vscode.postMessage({ type: 'showInfo', value: challengeNotice });
     };
-
 
     function saveState() {
         state.lastUpdate = Date.now();
-        vscode.postMessage({ type: 'saveState', value: state });
+        vscode.postMessage({ type: 'saveState', value: state, generation: stateGeneration });
     }
 
 })();

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "pokeidle-codex",
+  "version": "1.7.0",
+  "description": "Jouer à PokeIdle dans Codex Desktop.",
+  "logo": "./assets/pokeidle.svg",
+  "author": {
+    "name": "hugo"
+  },
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "PokeIdle",
+        "logo": "./assets/pokeidle.svg",
+        "composerIcon": "./assets/pokeidle.svg",
+        "shortDescription": "Jouer à PokeIdle",
+        "longDescription": "Ouvre PokeIdle depuis la barre latérale de Codex Desktop.",
+        "developerName": "hugo",
+        "category": "Entertainment",
+        "capabilities": ["Interactive"],
+        "brandColor": "#e94f64",
+        "defaultPrompt": "Ouvre PokeIdle pour que je puisse jouer."
+      },
+      "hooks": "./hooks/hooks.json"
+    }
+  }
+}

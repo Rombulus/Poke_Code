@@ -3,7 +3,7 @@
   "displayName": "PokeIdle VS Code",
   "publisher": "hugo",
   "description": "Un idle game Pokémon dans votre barre latérale VS Code.",
-  "version": "0.9.0",
+  "version": "1.4.0",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -14,6 +14,9 @@
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
+      { "command": "pokeidle.sync", "title": "PokeIdle: Synchroniser ma partie avec GitHub" },
+      { "command": "pokeidle.push", "title": "PokeIdle: Push — envoyer ma partie" },
+      { "command": "pokeidle.pull", "title": "PokeIdle: Pull — récupérer ma partie" },
       {
         "command": "pokeidle.giveCoins",
         "title": "PokeIdle: Cheat - 100000 Pièces"
@@ -54,6 +57,8 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "codex": "node codex-server.js",
+    "save": "node scripts/save.cjs",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js"

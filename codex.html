@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f0f12">
+    <title>PokeIdle — Codex Desktop</title>
+    <link rel="stylesheet" href="/media/style.css">
+    <style>
+        #codex-toast {
+            position: fixed;
+            z-index: 20;
+            right: 16px;
+            bottom: 16px;
+            max-width: min(420px, calc(100vw - 32px));
+            padding: 12px 16px;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-main);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+            transition: opacity .18s ease, transform .18s ease;
+        }
+        #codex-toast.visible { opacity: 1; transform: translateY(0); }
+        #codex-import-file { display: none; }
+        @media (min-width: 900px) {
+            #app { max-width: 980px; margin: 0 auto; }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <div class="user-profile">
+                <div class="lvl-badge">Nv.<span id="player-level">1</span> <span class="v-tag">Codex</span></div>
+                <div class="xp-bar-container"><div id="xp-progress" class="xp-progress" style="width: 0%"></div></div>
+            </div>
+            <div class="stats">
+                <span><span id="coin-count">0</span> <img src="/media/pokedollar.png" class="pokedollar-icon" style="width:14px;height:14px;vertical-align:middle;margin-left:4px;" alt="Pokédollars"></span>
+                <span><span id="pokedex-count">0</span> 🐾</span>
+            </div>
+        </header>
+
+        <nav class="tabs" aria-label="Sections du jeu">
+            <button class="tab-btn active" data-tab="safari-tab">Safari <div class="notification-badge" id="badge-safari"></div></button>
+            <button class="tab-btn" data-tab="pokedex-tab">Pokédex</button>
+            <button class="tab-btn" data-tab="shop-tab">Boutique</button>
+            <button class="tab-btn" data-tab="missions-tab">Défis <div class="notification-badge" id="badge-missions"></div></button>
+            <button class="tab-btn" data-tab="settings-tab" aria-label="Paramètres">⚙️</button>
+        </nav>
+
+        <div class="tab-content" id="safari-tab">
+            <div class="walker-container"><div class="tall-grass"></div><div class="trainer-walker"></div></div>
+            <div class="game-container"><div id="spawn-area"><div class="loader">Zone de Safari calme...</div></div></div>
+            <div class="inventory-bar" id="ball-inventory"></div>
+            <div class="inventory-bar" id="stone-inventory" style="margin-top: 10px;"></div>
+        </div>
+
+        <div class="tab-content hidden" id="pokedex-tab">
+            <div class="pokedex-controls">
+                <input type="text" id="poke-search" placeholder="Rechercher un Pokémon..." aria-label="Rechercher un Pokémon">
+                <select id="pokedex-sort" aria-label="Trier le Pokédex">
+                    <option value="id">Ordre Pokéball</option>
+                    <option value="name-asc">Nom (A → Z)</option>
+                    <option value="name-desc">Nom (Z → A)</option>
+                    <option value="level-desc">Niveau (+ → −)</option>
+                    <option value="level-asc">Niveau (− → +)</option>
+                    <option value="can-evolve">Peut évoluer</option>
+                    <option value="final-stage">Stade final</option>
+                    <option value="duplicates">Doublons</option>
+                </select>
+            </div>
+            <div id="pokedex-list" class="pokedex-list"></div>
+        </div>
+
+        <div class="tab-content hidden" id="shop-tab"><div id="shop-list" class="shop-list"></div></div>
+        <div class="tab-content hidden" id="missions-tab"><div id="missions-list" class="missions-list"></div></div>
+
+        <div class="tab-content hidden" id="settings-tab">
+            <div class="settings-view">
+                <h3>Sauvegarde GitHub</h3>
+                <label for="github-repository">Dépôt GitHub de sauvegarde</label>
+                <input id="github-repository" placeholder="Rombulus/Poke_Code" style="width:100%;box-sizing:border-box;padding:10px;margin:8px 0;">
+                <label for="github-branch">Branche de sauvegarde</label>
+                <input id="github-branch" value="pokeidle-save" style="width:100%;box-sizing:border-box;padding:10px;margin:8px 0;">
+                <label><input id="github-allow-public" type="checkbox"> J’accepte que ma partie soit visible si ce dépôt est public.</label>
+                <button id="github-configure" class="mini-btn">Configurer le dépôt et la branche</button>
+                <p class="hint">À la première utilisation sur ce PC : connecte GitHub CLI avec <code>gh auth login</code> ou ouvre Sauvegarde-PokeIdle.cmd.</p>
+                <button id="btn-github-sync" class="main-btn"><span class="icon">☁️</span> Synchroniser maintenant</button>
+                <div class="btn-row">
+                    <button id="github-push" class="mini-btn">Push · envoyer ma partie</button>
+                    <button id="github-pull" class="mini-btn">Pull · récupérer ma partie</button>
+                </div>
+                <div id="github-sync-status" class="sync-status" role="status">GitHub non configuré</div>
+                <div id="github-conflict" hidden>
+                    <p>Deux parties différentes existent. Les deux versions sont conservées avant remplacement.</p>
+                    <button id="github-keep-local" class="mini-btn">Garder la partie de ce PC</button>
+                    <button id="github-keep-remote" class="mini-btn">Reprendre la partie GitHub</button>
+                </div>
+                <div id="sync-status" class="sync-status">Sauvegarde locale prête</div>
+                <hr>
+                <h3>Transfert de sauvegarde</h3>
+                <div class="btn-row">
+                    <button id="btn-export" class="mini-btn">Exporter JSON</button>
+                    <button id="btn-import" class="mini-btn">Importer JSON</button>
+                </div>
+                <input id="codex-import-file" type="file" accept="application/json,.json">
+                <p class="hint">Tous les éditeurs utilisent la sauvegarde de ce PC. Avant de changer de machine, vérifie « Synchronisé avec GitHub ». Tu peux aussi importer ou exporter un fichier JSON.</p>
+                <hr>
+                <h3>Temps de jeu</h3>
+                <p id="active-play-status" class="hint">Le temps de jeu avance uniquement pendant que PokeIdle fonctionne. Aucune progression app fermée ou en veille.</p>
+                <hr>
+                <h3>Nouvelle partie</h3>
+                <p class="hint">La partie actuelle sera conservée dans Codex et pourra être restaurée.</p>
+                <div class="btn-row">
+                    <button id="btn-new-game" class="mini-btn">Recommencer à zéro</button>
+                    <button id="btn-restore-game" class="mini-btn" disabled>Restaurer l’ancienne partie</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="codex-toast" role="status" aria-live="polite"></div>
+    <script>window.POKEIDLE_HTTP_HOST = true;</script>
+    <script src="/media/github-host.js"></script>
+    <script src="/media/codex-bridge.js"></script>
+    <script>window.POKEDOLLAR_URI = "/media/pokedollar.png";</script>
+    <script src="/media/item-icons.js"></script>
+    <script src="/media/evolution-data.js"></script>
+    <script src="/media/evolutions.js"></script>
+    <script src="/media/challenges.js"></script>
+    <script src="/media/main.js"></script>
+</body>
+</html>

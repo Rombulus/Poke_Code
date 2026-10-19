@@ -220,3 +220,9 @@ __marimo__/
 # Node.js and VS Code Extension
 node_modules/
 out/
+# Local PokeIdle progression and migration backups
+.pokeidle/
+sauvegardes/
+artifacts/
+/poke-idle-save-*.json
+.codex/plugins/pokeidle-codex/project.json
