@@ -1,0 +1,309 @@
+{
+  "pokedex": [
+    {
+      "id": 846,
+      "speciesId": 846,
+      "name": "Embrochet",
+      "rarity": "Commun",
+      "captureRate": 255,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/846.png",
+      "types": [
+        "water"
+      ],
+      "isShiny": false,
+      "baseExperience": 56,
+      "level": 7,
+      "instanceId": 1791899089782.681,
+      "xp": 343,
+      "gender": "male",
+      "date": "13/10/2026",
+      "captureTimestamp": 1791899089795,
+      "fetchingEvo": false,
+      "nextEvoLevel": 26,
+      "synced": true
+    },
+    {
+      "id": 769,
+      "speciesId": 769,
+      "name": "Bacabouh",
+      "rarity": "Peu Commun",
+      "captureRate": 140,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/769.png",
+      "types": [
+        "ghost",
+        "ground"
+      ],
+      "isShiny": false,
+      "baseExperience": 64,
+      "level": 7,
+      "instanceId": 1791899186798.652,
+      "xp": 100,
+      "gender": "female",
+      "date": "13/10/2026",
+      "captureTimestamp": 1791899186798,
+      "fetchingEvo": false,
+      "nextEvoLevel": 42,
+      "synced": true
+    },
+    {
+      "id": 220,
+      "speciesId": 220,
+      "name": "Marcacrin",
+      "rarity": "Commun",
+      "captureRate": 225,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/220.png",
+      "types": [
+        "ice",
+        "ground"
+      ],
+      "isShiny": false,
+      "baseExperience": 50,
+      "level": 7,
+      "instanceId": 1791899282210.3542,
+      "xp": 34,
+      "gender": "female",
+      "date": "13/10/2026",
+      "captureTimestamp": 1791899282211,
+      "fetchingEvo": false,
+      "nextEvoLevel": 33,
+      "synced": true
+    },
+    {
+      "id": 129,
+      "speciesId": 129,
+      "name": "Magicarpe",
+      "rarity": "Commun",
+      "captureRate": 255,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/129.png",
+      "types": [
+        "water"
+      ],
+      "isShiny": false,
+      "baseExperience": 40,
+      "level": 6,
+      "instanceId": 1791899377782.7866,
+      "xp": 283,
+      "gender": "male",
+      "date": "13/10/2026",
+      "captureTimestamp": 1791899377782,
+      "fetchingEvo": false,
+      "nextEvoLevel": 20,
+      "synced": true
+    },
+    {
+      "id": 554,
+      "speciesId": 554,
+      "name": "Darumarond",
+      "rarity": "Peu Commun",
+      "captureRate": 120,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/554.png",
+      "types": [
+        "fire"
+      ],
+      "isShiny": false,
+      "baseExperience": 63,
+      "level": 6,
+      "instanceId": 1791899474598.536,
+      "xp": 199,
+      "gender": "male",
+      "date": "13/10/2026",
+      "captureTimestamp": 1791899474598,
+      "fetchingEvo": false,
+      "nextEvoLevel": 35,
+      "synced": true
+    },
+    {
+      "id": 297,
+      "speciesId": 297,
+      "name": "Hariyama",
+      "rarity": "Commun",
+      "captureRate": 200,
+      "genderRate": 2,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/297.png",
+      "types": [
+        "fighting"
+      ],
+      "isShiny": false,
+      "baseExperience": 166,
+      "level": 6,
+      "instanceId": 1791899601779.0251,
+      "xp": 113,
+      "gender": "male",
+      "date": "13/10/2026",
+      "captureTimestamp": 1791899601779,
+      "fetchingEvo": false,
+      "nextEvoLevel": "MAX",
+      "synced": true
+    },
+    {
+      "id": 533,
+      "speciesId": 533,
+      "name": "Ouvrifier",
+      "rarity": "Rare",
+      "captureRate": 90,
+      "genderRate": 2,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/533.png",
+      "types": [
+        "fighting"
+      ],
+      "isShiny": false,
+      "baseExperience": 142,
+      "level": 6,
+      "instanceId": 1791899701704.1284,
+      "xp": 69,
+      "gender": "male",
+      "date": "13/10/2026",
+      "captureTimestamp": 1791899701704,
+      "fetchingEvo": false,
+      "nextEvoLevel": "item:linking-cord",
+      "synced": true
+    },
+    {
+      "id": 216,
+      "speciesId": 216,
+      "name": "Teddiursa",
+      "rarity": "Peu Commun",
+      "captureRate": 120,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/216.png",
+      "types": [
+        "normal"
+      ],
+      "isShiny": false,
+      "baseExperience": 66,
+      "level": 6,
+      "instanceId": 1791984543268.6453,
+      "xp": 166,
+      "gender": "male",
+      "date": "14/10/2026",
+      "captureTimestamp": 1791984543270,
+      "fetchingEvo": false,
+      "nextEvoLevel": 30,
+      "synced": true
+    }
+  ],
+  "inventory": {
+    "balls": {
+      "pokeball": 13,
+      "superball": 6
+    },
+    "stones": {}
+  },
+  "coins": 640,
+  "xp": 127,
+  "level": 1,
+  "missions": {
+    "captures": 8,
+    "evolutions": 0,
+    "typeProgress": {
+      "water": 2,
+      "ghost": 1,
+      "ground": 2,
+      "ice": 1,
+      "fire": 1,
+      "fighting": 2,
+      "normal": 1
+    },
+    "claimed": []
+  },
+  "spawnTimer": 171,
+  "discovery": {
+    "129": {
+      "name": "Magicarpe",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/129.png",
+      "caught": true
+    },
+    "177": {
+      "name": "Natu",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/177.png",
+      "caught": false
+    },
+    "178": {
+      "name": "Xatu",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/178.png",
+      "caught": false
+    },
+    "216": {
+      "name": "Teddiursa",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/216.png",
+      "caught": true
+    },
+    "220": {
+      "name": "Marcacrin",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/220.png",
+      "caught": true
+    },
+    "297": {
+      "name": "Hariyama",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/297.png",
+      "caught": true
+    },
+    "342": {
+      "name": "Colhomard",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/342.png",
+      "caught": false
+    },
+    "533": {
+      "name": "Ouvrifier",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/533.png",
+      "caught": true
+    },
+    "554": {
+      "name": "Darumarond",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/554.png",
+      "caught": true
+    },
+    "769": {
+      "name": "Bacabouh",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/769.png",
+      "caught": true
+    },
+    "846": {
+      "name": "Embrochet",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/846.png",
+      "caught": true
+    },
+    "915": {
+      "name": "Gourmelet",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/915.png",
+      "caught": false
+    }
+  },
+  "lastUpdate": 1792409406634,
+  "stats": {
+    "totalCoins": 40,
+    "shinies": 0,
+    "epics": 0,
+    "uniques": 8,
+    "evolved": 0,
+    "liberated": 0,
+    "totalItemsBought": 15,
+    "totalBallsBought": 15,
+    "totalClicks": 47,
+    "captures": 8
+  },
+  "sessionStartTime": 1791898887152,
+  "lastCaptureTimestamp": 1791984543271,
+  "lastEvoTimestamp": 1791898887152,
+  "lastPurchaseTimestamp": 1791899714676,
+  "clickProgress": 0,
+  "middayCaptures": 0,
+  "dawnCaptureAchieved": false,
+  "soldLevel50": false,
+  "recentEvoTimestamps": [],
+  "ningaleEvolvedWithBalls": false,
+  "boughtAbove10000": false,
+  "released": [],
+  "recentSpawns": [
+    216,
+    915,
+    177,
+    342,
+    178
+  ]
+}
