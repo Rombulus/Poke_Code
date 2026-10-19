@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 3,
       "instanceId": 1792420434087.7441,
-      "xp": 43,
+      "xp": 98,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -41,9 +41,9 @@
       ],
       "isShiny": false,
       "baseExperience": 68,
-      "level": 2,
+      "level": 3,
       "instanceId": 1792420633523.8599,
-      "xp": 35,
+      "xp": 34,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -60,7 +60,7 @@
     },
     "stones": {}
   },
-  "coins": 470,
+  "coins": 530,
   "xp": 23,
   "level": 1,
   "missions": {
@@ -73,7 +73,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 13,
+  "spawnTimer": 45,
   "discovery": {
     "276": {
       "speciesId": 276,
@@ -107,6 +107,22 @@
         }
       ]
     },
+    "587": {
+      "speciesId": 587,
+      "name": "Emolga",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/587.png",
+      "caught": false,
+      "variants": [
+        {
+          "formId": 587,
+          "id": 587,
+          "name": "Emolga",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/587.png",
+          "caught": false
+        }
+      ]
+    },
     "684": {
       "speciesId": 684,
       "name": "Sucroquin",
@@ -124,7 +140,7 @@
       ]
     }
   },
-  "lastUpdate": 1792420804111,
+  "lastUpdate": 1792420972114,
   "stats": {
     "totalCoins": 10,
     "shinies": 0,
@@ -152,13 +168,14 @@
   "recentSpawns": [
     276,
     519,
-    684
+    684,
+    587
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 806036,
-  "activeTickRemainderMs": 36,
-  "passiveXpElapsedMs": 2036,
-  "passiveCoinsElapsedMs": 26036,
+  "activeTimeMs": 971969,
+  "activeTickRemainderMs": 969,
+  "passiveXpElapsedMs": 2969,
+  "passiveCoinsElapsedMs": 11969,
   "recentEvolutionActiveTimes": [],
   "lastCaptureAtActiveMs": 639103,
   "lastEvolutionAtActiveMs": 0,
@@ -194,7 +211,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 2,
+        "maxLevel": 3,
         "evolved": false
       }
     },
@@ -202,7 +219,7 @@
       "pokeball"
     ],
     "compatibleLevels": {
-      "fairy": 2
+      "fairy": 3
     },
     "duplicateReleases": 0
   }
