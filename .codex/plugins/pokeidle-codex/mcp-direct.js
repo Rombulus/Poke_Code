@@ -4,7 +4,7 @@ const path = require('node:path');
 const readline = require('node:readline');
 const { buildGameHtml } = require('./game-resource');
 
-const VERSION = '1.7.0';
+const VERSION = '1.8.0';
 const icons = [{
   src: `data:image/svg+xml;base64,${fs.readFileSync(path.join(__dirname, 'assets/pokeidle.svg')).toString('base64')}`,
   mimeType: 'image/svg+xml', sizes: ['any']

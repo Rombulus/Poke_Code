@@ -1536,7 +1536,7 @@
             const flavor = document.createElement('p'); flavor.className = 'challenge-flavor'; flavor.textContent = model.flavor;
             card.append(meta, heading, flavor);
             if (!model.complete) {
-                const choice = document.createElement('p'); choice.className = 'challenge-choice'; choice.textContent = 'Un seul de ces objectifs suffit :'; card.appendChild(choice);
+                const choice = document.createElement('p'); choice.className = 'challenge-choice'; choice.textContent = 'Toutes ces conditions sont requises :'; card.appendChild(choice);
                 const list = document.createElement('ul'); list.className = 'challenge-objectives';
                 for (const part of model.progress.parts) {
                     const li = document.createElement('li'); const met = part.current >= part.target;
