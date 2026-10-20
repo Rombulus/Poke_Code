@@ -66,11 +66,13 @@
         return forms.filter(form => {
             const formName = String(form.formName || '').toLowerCase();
             const baseFormId = data.defaultForms[speciesId] || speciesId;
+            // Dominant (Totem) forms are special boss variants, not wild appearances.
+            if (formName.includes('totem')) return false;
             if ([1007, 1008].includes(speciesId)) {
                 return formName === (speciesId === 1007 ? 'apex-build' : 'ultimate-mode');
             }
 
-            // Keep visual, regional, costume, partner and Totem variants. Exclude
+            // Keep visual, regional, costume and partner variants. Exclude
             // forms that only switch elemental type/device, plus special legendary
             // battle/fusion forms that are not independent wild appearances.
             if (typeOrDeviceFormSpecies.has(speciesId) && form.id !== baseFormId) return false;

@@ -12,8 +12,9 @@ les variantes de genre, etc. Charmilly est réduit à une seule apparence dans l
 Gigamax et formes temporaires de combat sont exclues du catalogue.
 Les formes de déplacement de Koraidon et Miraidon ne sont pas proposées comme
 rencontres ; leur forme canonique reste possible. Les tenues de Pikachu, Pichu
-Troizépi, Évoli Partenaire, formes Totem et autres variantes d’apparence restent
-des variantes possibles d’une seule espèce. Les formes qui ne font que changer le
+Troizépi, Évoli Partenaire et autres variantes d’apparence restent des variantes
+possibles d’une seule espèce. Les formes Dominant (Totem) sont exclues des rencontres.
+Les formes qui ne font que changer le
 type ou l’équipement élémentaire (Deoxys, Motisma, Arceus, Genesect, Plumeline,
 Silvallié) et les formes spéciales non régionales des légendaires, comme les
 fusions de Kyurem ou les formes Originelles de Dialga et Palkia, sont retirées du
