@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 7,
       "instanceId": 1792420434087.7441,
-      "xp": 60,
+      "xp": 110,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -41,9 +41,9 @@
       ],
       "isShiny": false,
       "baseExperience": 168,
-      "level": 6,
+      "level": 7,
       "instanceId": 1792420633523.8599,
-      "xp": 289,
+      "xp": 46,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -72,7 +72,7 @@
       "baseExperience": 168,
       "level": 6,
       "instanceId": 1792421422423.5054,
-      "xp": 182,
+      "xp": 232,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -100,7 +100,7 @@
       "baseExperience": 66,
       "level": 6,
       "instanceId": 1792421648158.8218,
-      "xp": 92,
+      "xp": 142,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -127,7 +127,7 @@
       "baseExperience": 66,
       "level": 6,
       "instanceId": 1792421845061.071,
-      "xp": 31,
+      "xp": 81,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -152,9 +152,9 @@
       ],
       "isShiny": false,
       "baseExperience": 152,
-      "level": 5,
+      "level": 6,
       "instanceId": 1792422059857.3225,
-      "xp": 207,
+      "xp": 34,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -180,7 +180,7 @@
       "baseExperience": 58,
       "level": 5,
       "instanceId": 1792422262902.9136,
-      "xp": 122,
+      "xp": 172,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792422262902,
@@ -206,7 +206,7 @@
       "baseExperience": 48,
       "level": 6,
       "instanceId": 1792481483020.999,
-      "xp": 11,
+      "xp": 61,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792481483020,
@@ -231,9 +231,9 @@
       ],
       "isShiny": false,
       "baseExperience": 61,
-      "level": 4,
+      "level": 5,
       "instanceId": 1792481680242.6887,
-      "xp": 154,
+      "xp": 44,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792481680242,
@@ -257,9 +257,9 @@
       ],
       "isShiny": false,
       "baseExperience": 54,
-      "level": 3,
+      "level": 4,
       "instanceId": 1792483132157.1467,
-      "xp": 70,
+      "xp": 17,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483132177,
@@ -286,7 +286,7 @@
       "baseExperience": 37,
       "level": 3,
       "instanceId": 1792483335758.3262,
-      "xp": 7,
+      "xp": 57,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792483335784,
@@ -313,7 +313,7 @@
       "baseExperience": 66,
       "level": 2,
       "instanceId": 1792483585625.9045,
-      "xp": 1,
+      "xp": 51,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483585646,
@@ -322,11 +322,38 @@
       "synced": true,
       "fetchingEvo": false,
       "nextEvoLevel": "Choix d’évolution"
+    },
+    {
+      "id": 931,
+      "speciesId": 931,
+      "formId": 931,
+      "name": "Tapatoès Plumage Vert",
+      "rarity": "Commun",
+      "captureRate": 190,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/931.png",
+      "types": [
+        "normal",
+        "flying"
+      ],
+      "isShiny": false,
+      "baseExperience": 146,
+      "level": 4,
+      "instanceId": 1792483855288.3545,
+      "xp": 2,
+      "gender": "male",
+      "date": "20/10/2026",
+      "captureTimestamp": 1792483855311,
+      "capturedAtActiveMs": 3338854,
+      "captureBall": "pokeball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "MAX"
     }
   ],
   "inventory": {
     "balls": {
-      "pokeball": 7,
+      "pokeball": 6,
       "superball": 13
     },
     "stones": {
@@ -337,15 +364,15 @@
       "sun-stone": 0
     }
   },
-  "coins": 20,
-  "xp": 2,
+  "coins": 65,
+  "xp": 31,
   "level": 2,
   "missions": {
-    "captures": 12,
+    "captures": 13,
     "evolutions": 2,
     "typeProgress": {
-      "normal": 2,
-      "flying": 2,
+      "normal": 3,
+      "flying": 3,
       "fairy": 1,
       "electric": 4,
       "psychic": 1,
@@ -360,7 +387,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 116,
+  "spawnTimer": 176,
   "discovery": {
     "170": {
       "speciesId": 170,
@@ -602,6 +629,22 @@
         }
       ]
     },
+    "931": {
+      "speciesId": 931,
+      "name": "Tapatoès",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/931.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 931,
+          "id": 931,
+          "name": "Tapatoès Plumage Vert",
+          "label": "Plumage Vert",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/931.png",
+          "caught": true
+        }
+      ]
+    },
     "938": {
       "speciesId": 938,
       "name": "Têtampoule",
@@ -635,25 +678,25 @@
       ]
     }
   },
-  "lastUpdate": 1792483707709,
+  "lastUpdate": 1792483858402,
   "stats": {
-    "totalCoins": 140,
+    "totalCoins": 145,
     "shinies": 0,
     "epics": 0,
-    "uniques": 14,
+    "uniques": 15,
     "evolved": 2,
     "liberated": 0,
     "totalItemsBought": 17,
     "totalBallsBought": 17,
-    "totalClicks": 93,
-    "captures": 12
+    "totalClicks": 104,
+    "captures": 13
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792483585646,
+  "lastCaptureTimestamp": 1792483855311,
   "lastEvoTimestamp": 1792481526770,
   "lastPurchaseTimestamp": 1792483596563,
   "clickProgress": 0,
-  "middayCaptures": 2,
+  "middayCaptures": 3,
   "dawnCaptureAchieved": false,
   "soldLevel50": false,
   "recentEvoTimestamps": [],
@@ -661,19 +704,19 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    580,
     899,
     938,
     872,
-    228
+    228,
+    931
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 3193528,
-  "activeTickRemainderMs": 528,
-  "passiveXpElapsedMs": 1528,
-  "passiveCoinsElapsedMs": 13528,
+  "activeTimeMs": 3342852,
+  "activeTickRemainderMs": 852,
+  "passiveXpElapsedMs": 852,
+  "passiveCoinsElapsedMs": 42852,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 3129837,
+  "lastCaptureAtActiveMs": 3338854,
   "lastEvolutionAtActiveMs": 2052490,
   "lastPurchaseAtActiveMs": 3140844,
   "lastBallPurchaseAtActiveMs": 3140844,
@@ -758,7 +801,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 4,
+        "maxLevel": 5,
         "evolved": false
       },
       "684": {
@@ -784,7 +827,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 6,
+        "maxLevel": 7,
         "evolved": true
       },
       "694": {
@@ -826,7 +869,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 5,
+        "maxLevel": 6,
         "evolved": false
       },
       "837": {
@@ -856,6 +899,20 @@
         "maxLevel": 3,
         "evolved": false
       },
+      "931": {
+        "types": [
+          "flying",
+          "normal"
+        ],
+        "forms": [
+          931
+        ],
+        "genders": [
+          "male"
+        ],
+        "maxLevel": 4,
+        "evolved": false
+      },
       "938": {
         "types": [
           "electric"
@@ -866,7 +923,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 3,
+        "maxLevel": 4,
         "evolved": false
       },
       "971": {
@@ -889,7 +946,7 @@
     "compatibleLevels": {
       "fairy": 5,
       "celestial": 5,
-      "element-electric": 3
+      "element-electric": 4
     },
     "duplicateReleases": 0
   },
