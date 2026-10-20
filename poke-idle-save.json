@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 6,
       "instanceId": 1792420434087.7441,
-      "xp": 16,
+      "xp": 75,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -41,9 +41,9 @@
       ],
       "isShiny": false,
       "baseExperience": 168,
-      "level": 5,
+      "level": 6,
       "instanceId": 1792420633523.8599,
-      "xp": 175,
+      "xp": 11,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -72,7 +72,7 @@
       "baseExperience": 168,
       "level": 5,
       "instanceId": 1792421422423.5054,
-      "xp": 68,
+      "xp": 127,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -98,9 +98,9 @@
       ],
       "isShiny": false,
       "baseExperience": 66,
-      "level": 4,
+      "level": 5,
       "instanceId": 1792421648158.8218,
-      "xp": 138,
+      "xp": 37,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -127,7 +127,7 @@
       "baseExperience": 66,
       "level": 4,
       "instanceId": 1792421845061.071,
-      "xp": 77,
+      "xp": 136,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -154,7 +154,7 @@
       "baseExperience": 152,
       "level": 4,
       "instanceId": 1792422059857.3225,
-      "xp": 30,
+      "xp": 89,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -178,9 +178,9 @@
       ],
       "isShiny": false,
       "baseExperience": 58,
-      "level": 3,
+      "level": 4,
       "instanceId": 1792422262902.9136,
-      "xp": 48,
+      "xp": 4,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792422262902,
@@ -206,7 +206,7 @@
       "baseExperience": 48,
       "level": 4,
       "instanceId": 1792481483020.999,
-      "xp": 57,
+      "xp": 116,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792481483020,
@@ -215,11 +215,38 @@
       "synced": true,
       "fetchingEvo": false,
       "nextEvoLevel": "Choix d’évolution"
+    },
+    {
+      "id": 580,
+      "speciesId": 580,
+      "formId": 580,
+      "name": "Couaneton",
+      "rarity": "Commun",
+      "captureRate": 190,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/580.png",
+      "types": [
+        "water",
+        "flying"
+      ],
+      "isShiny": false,
+      "baseExperience": 61,
+      "level": 2,
+      "instanceId": 1792481680242.6887,
+      "xp": 35,
+      "gender": "female",
+      "date": "20/10/2026",
+      "captureTimestamp": 1792481680242,
+      "capturedAtActiveMs": 2194415,
+      "captureBall": "pokeball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "Choix d’évolution"
     }
   ],
   "inventory": {
     "balls": {
-      "pokeball": 8
+      "pokeball": 7
     },
     "stones": {
       "sachet": 1,
@@ -229,26 +256,26 @@
       "sun-stone": 0
     }
   },
-  "coins": 1040,
-  "xp": 110,
+  "coins": 1105,
+  "xp": 122,
   "level": 1,
   "missions": {
-    "captures": 8,
+    "captures": 9,
     "evolutions": 2,
     "typeProgress": {
       "normal": 2,
-      "flying": 1,
+      "flying": 2,
       "fairy": 1,
       "electric": 3,
       "psychic": 1,
-      "water": 1,
+      "water": 2,
       "steel": 1,
       "ghost": 1,
       "rock": 1
     },
     "claimed": []
   },
-  "spawnTimer": 11,
+  "spawnTimer": 14,
   "discovery": {
     "170": {
       "speciesId": 170,
@@ -310,6 +337,22 @@
           "name": "Poichigeon",
           "label": "",
           "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/519.png",
+          "caught": true
+        }
+      ]
+    },
+    "580": {
+      "speciesId": 580,
+      "name": "Couaneton",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/580.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 580,
+          "id": 580,
+          "name": "Couaneton",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/580.png",
           "caught": true
         }
       ]
@@ -443,21 +486,21 @@
       ]
     }
   },
-  "lastUpdate": 1792481663256,
+  "lastUpdate": 1792481963712,
   "stats": {
-    "totalCoins": 120,
+    "totalCoins": 125,
     "shinies": 0,
     "epics": 0,
-    "uniques": 10,
+    "uniques": 11,
     "evolved": 2,
     "liberated": 0,
     "totalItemsBought": 0,
     "totalBallsBought": 0,
-    "totalClicks": 63,
-    "captures": 8
+    "totalClicks": 64,
+    "captures": 9
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792481483020,
+  "lastCaptureTimestamp": 1792481680242,
   "lastEvoTimestamp": 1792481526770,
   "lastPurchaseTimestamp": 1792419495158,
   "clickProgress": 0,
@@ -469,19 +512,19 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    325,
     170,
     777,
     971,
-    837
+    837,
+    580
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 2181418,
-  "activeTickRemainderMs": 418,
-  "passiveXpElapsedMs": 418,
-  "passiveCoinsElapsedMs": 21418,
+  "activeTimeMs": 2360043,
+  "activeTickRemainderMs": 43,
+  "passiveXpElapsedMs": 2043,
+  "passiveCoinsElapsedMs": 20043,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 2012497,
+  "lastCaptureAtActiveMs": 2194415,
   "lastEvolutionAtActiveMs": 2052490,
   "lastPurchaseAtActiveMs": 0,
   "lastBallPurchaseAtActiveMs": 0,
@@ -524,7 +567,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 4,
+        "maxLevel": 5,
         "evolved": false
       },
       "519": {
@@ -539,6 +582,20 @@
           "male"
         ],
         "maxLevel": 6,
+        "evolved": false
+      },
+      "580": {
+        "types": [
+          "flying",
+          "water"
+        ],
+        "forms": [
+          580
+        ],
+        "genders": [
+          "female"
+        ],
+        "maxLevel": 2,
         "evolved": false
       },
       "684": {
@@ -564,7 +621,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 5,
+        "maxLevel": 6,
         "evolved": true
       },
       "694": {
@@ -632,7 +689,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 3,
+        "maxLevel": 4,
         "evolved": false
       }
     },
