@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 6,
       "instanceId": 1792420434087.7441,
-      "xp": 222,
+      "xp": 241,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 168,
       "level": 6,
       "instanceId": 1792420633523.8599,
-      "xp": 158,
+      "xp": 177,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -72,7 +72,7 @@
       "baseExperience": 168,
       "level": 6,
       "instanceId": 1792421422423.5054,
-      "xp": 51,
+      "xp": 70,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -100,7 +100,7 @@
       "baseExperience": 66,
       "level": 5,
       "instanceId": 1792421648158.8218,
-      "xp": 184,
+      "xp": 203,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -127,7 +127,7 @@
       "baseExperience": 66,
       "level": 5,
       "instanceId": 1792421845061.071,
-      "xp": 123,
+      "xp": 142,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -154,7 +154,7 @@
       "baseExperience": 152,
       "level": 5,
       "instanceId": 1792422059857.3225,
-      "xp": 76,
+      "xp": 95,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -178,9 +178,9 @@
       ],
       "isShiny": false,
       "baseExperience": 58,
-      "level": 4,
+      "level": 5,
       "instanceId": 1792422262902.9136,
-      "xp": 151,
+      "xp": 10,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792422262902,
@@ -206,7 +206,7 @@
       "baseExperience": 48,
       "level": 5,
       "instanceId": 1792481483020.999,
-      "xp": 103,
+      "xp": 122,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792481483020,
@@ -233,7 +233,7 @@
       "baseExperience": 61,
       "level": 4,
       "instanceId": 1792481680242.6887,
-      "xp": 23,
+      "xp": 42,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792481680242,
@@ -257,9 +257,9 @@
       ],
       "isShiny": false,
       "baseExperience": 54,
-      "level": 1,
+      "level": 2,
       "instanceId": 1792483132157.1467,
-      "xp": 15,
+      "xp": 14,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483132177,
@@ -282,7 +282,7 @@
       "sun-stone": 0
     }
   },
-  "coins": 1250,
+  "coins": 1270,
   "xp": 132,
   "level": 1,
   "missions": {
@@ -301,7 +301,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 134,
+  "spawnTimer": 77,
   "discovery": {
     "170": {
       "speciesId": 170,
@@ -544,7 +544,7 @@
       ]
     }
   },
-  "lastUpdate": 1792483179145,
+  "lastUpdate": 1792483239157,
   "stats": {
     "totalCoins": 130,
     "shinies": 0,
@@ -554,7 +554,7 @@
     "liberated": 0,
     "totalItemsBought": 0,
     "totalBallsBought": 0,
-    "totalClicks": 65,
+    "totalClicks": 66,
     "captures": 10
   },
   "sessionStartTime": 1792419495158,
@@ -577,10 +577,10 @@
     938
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 2801944,
-  "activeTickRemainderMs": 944,
-  "passiveXpElapsedMs": 2944,
-  "passiveCoinsElapsedMs": 41944,
+  "activeTimeMs": 2858921,
+  "activeTickRemainderMs": 921,
+  "passiveXpElapsedMs": 2921,
+  "passiveCoinsElapsedMs": 38921,
   "recentEvolutionActiveTimes": [],
   "lastCaptureAtActiveMs": 2755124,
   "lastEvolutionAtActiveMs": 2052490,
@@ -747,7 +747,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 1,
+        "maxLevel": 2,
         "evolved": false
       },
       "971": {
@@ -760,7 +760,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 4,
+        "maxLevel": 5,
         "evolved": false
       }
     },
@@ -770,7 +770,7 @@
     "compatibleLevels": {
       "fairy": 5,
       "celestial": 5,
-      "element-electric": 1
+      "element-electric": 2
     },
     "duplicateReleases": 0
   }
