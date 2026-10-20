@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 7,
       "instanceId": 1792420434087.7441,
-      "xp": 323,
+      "xp": 342,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 168,
       "level": 7,
       "instanceId": 1792420633523.8599,
-      "xp": 259,
+      "xp": 278,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -72,7 +72,7 @@
       "baseExperience": 168,
       "level": 7,
       "instanceId": 1792421422423.5054,
-      "xp": 152,
+      "xp": 171,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -100,7 +100,7 @@
       "baseExperience": 66,
       "level": 7,
       "instanceId": 1792421648158.8218,
-      "xp": 62,
+      "xp": 81,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -127,7 +127,7 @@
       "baseExperience": 66,
       "level": 7,
       "instanceId": 1792421845061.071,
-      "xp": 1,
+      "xp": 20,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -154,7 +154,7 @@
       "baseExperience": 152,
       "level": 6,
       "instanceId": 1792422059857.3225,
-      "xp": 247,
+      "xp": 266,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -180,7 +180,7 @@
       "baseExperience": 58,
       "level": 6,
       "instanceId": 1792422262902.9136,
-      "xp": 162,
+      "xp": 181,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792422262902,
@@ -204,9 +204,9 @@
       ],
       "isShiny": false,
       "baseExperience": 48,
-      "level": 6,
+      "level": 7,
       "instanceId": 1792481483020.999,
-      "xp": 274,
+      "xp": 0,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792481483020,
@@ -233,7 +233,7 @@
       "baseExperience": 61,
       "level": 6,
       "instanceId": 1792481680242.6887,
-      "xp": 34,
+      "xp": 53,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792481680242,
@@ -259,7 +259,7 @@
       "baseExperience": 173,
       "level": 5,
       "instanceId": 1792483132157.1467,
-      "xp": 70,
+      "xp": 89,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483132177,
@@ -288,7 +288,7 @@
       "baseExperience": 37,
       "level": 5,
       "instanceId": 1792483335758.3262,
-      "xp": 7,
+      "xp": 26,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792483335784,
@@ -315,7 +315,7 @@
       "baseExperience": 66,
       "level": 4,
       "instanceId": 1792483585625.9045,
-      "xp": 105,
+      "xp": 124,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483585646,
@@ -342,7 +342,7 @@
       "baseExperience": 146,
       "level": 5,
       "instanceId": 1792483855288.3545,
-      "xp": 55,
+      "xp": 74,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792483855311,
@@ -368,7 +368,7 @@
       "baseExperience": 63,
       "level": 4,
       "instanceId": 1792484182727.358,
-      "xp": 108,
+      "xp": 127,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792484182743,
@@ -394,7 +394,7 @@
       "baseExperience": 39,
       "level": 5,
       "instanceId": 1792484389853.315,
-      "xp": 42,
+      "xp": 61,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792484389853,
@@ -419,7 +419,7 @@
       "thunder-stone": 2
     }
   },
-  "coins": 415,
+  "coins": 435,
   "xp": 50,
   "level": 2,
   "missions": {
@@ -442,7 +442,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 56,
+  "spawnTimer": 101,
   "discovery": {
     "10": {
       "speciesId": 10,
@@ -764,6 +764,22 @@
         }
       ]
     },
+    "946": {
+      "speciesId": 946,
+      "name": "Virovent",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/946.png",
+      "caught": false,
+      "variants": [
+        {
+          "formId": 946,
+          "id": 946,
+          "name": "Virovent",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/946.png",
+          "caught": false
+        }
+      ]
+    },
     "971": {
       "speciesId": 971,
       "name": "Toutombe",
@@ -781,7 +797,7 @@
       ]
     }
   },
-  "lastUpdate": 1792484519795,
+  "lastUpdate": 1792484579801,
   "stats": {
     "totalCoins": 275,
     "shinies": 0,
@@ -807,17 +823,17 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    872,
     228,
     931,
     79,
-    10
+    10,
+    946
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 3981206,
-  "activeTickRemainderMs": 206,
-  "passiveXpElapsedMs": 206,
-  "passiveCoinsElapsedMs": 21206,
+  "activeTimeMs": 4038174,
+  "activeTickRemainderMs": 174,
+  "passiveXpElapsedMs": 174,
+  "passiveCoinsElapsedMs": 18174,
   "recentEvolutionActiveTimes": [],
   "lastCaptureAtActiveMs": 3857250,
   "lastEvolutionAtActiveMs": 3840254,
@@ -1014,7 +1030,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 6,
+        "maxLevel": 7,
         "evolved": false
       },
       "872": {
