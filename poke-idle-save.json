@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 8,
       "instanceId": 1792420434087.7441,
-      "xp": 143,
+      "xp": 162,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 168,
       "level": 8,
       "instanceId": 1792420633523.8599,
-      "xp": 79,
+      "xp": 98,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -72,7 +72,7 @@
       "baseExperience": 168,
       "level": 7,
       "instanceId": 1792421422423.5054,
-      "xp": 342,
+      "xp": 361,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -100,7 +100,7 @@
       "baseExperience": 66,
       "level": 7,
       "instanceId": 1792421648158.8218,
-      "xp": 252,
+      "xp": 271,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -127,7 +127,7 @@
       "baseExperience": 66,
       "level": 7,
       "instanceId": 1792421845061.071,
-      "xp": 191,
+      "xp": 210,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -154,7 +154,7 @@
       "baseExperience": 152,
       "level": 7,
       "instanceId": 1792422059857.3225,
-      "xp": 144,
+      "xp": 163,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -180,7 +180,7 @@
       "baseExperience": 58,
       "level": 7,
       "instanceId": 1792422262902.9136,
-      "xp": 59,
+      "xp": 78,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792422262902,
@@ -206,7 +206,7 @@
       "baseExperience": 48,
       "level": 7,
       "instanceId": 1792481483020.999,
-      "xp": 171,
+      "xp": 190,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792481483020,
@@ -233,7 +233,7 @@
       "baseExperience": 61,
       "level": 6,
       "instanceId": 1792481680242.6887,
-      "xp": 224,
+      "xp": 243,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792481680242,
@@ -259,7 +259,7 @@
       "baseExperience": 173,
       "level": 6,
       "instanceId": 1792483132157.1467,
-      "xp": 37,
+      "xp": 56,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483132177,
@@ -288,7 +288,7 @@
       "baseExperience": 37,
       "level": 5,
       "instanceId": 1792483335758.3262,
-      "xp": 197,
+      "xp": 216,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792483335784,
@@ -315,7 +315,7 @@
       "baseExperience": 66,
       "level": 5,
       "instanceId": 1792483585625.9045,
-      "xp": 135,
+      "xp": 154,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483585646,
@@ -342,7 +342,7 @@
       "baseExperience": 146,
       "level": 6,
       "instanceId": 1792483855288.3545,
-      "xp": 22,
+      "xp": 41,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792483855311,
@@ -368,7 +368,7 @@
       "baseExperience": 63,
       "level": 5,
       "instanceId": 1792484182727.358,
-      "xp": 138,
+      "xp": 157,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792484182743,
@@ -394,7 +394,7 @@
       "baseExperience": 39,
       "level": 6,
       "instanceId": 1792484389853.315,
-      "xp": 9,
+      "xp": 28,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792484389853,
@@ -421,7 +421,7 @@
       "baseExperience": 55,
       "level": 4,
       "instanceId": 1792484584527.499,
-      "xp": 12,
+      "xp": 31,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792484584527,
@@ -448,7 +448,7 @@
       "baseExperience": 64,
       "level": 3,
       "instanceId": 1792484776544.0112,
-      "xp": 54,
+      "xp": 73,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792484776544,
@@ -473,9 +473,9 @@
       ],
       "isShiny": false,
       "baseExperience": 124,
-      "level": 2,
+      "level": 3,
       "instanceId": 1792484972032.5503,
-      "xp": 47,
+      "xp": 10,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792484972032,
@@ -484,12 +484,35 @@
       "synced": true,
       "fetchingEvo": false,
       "nextEvoLevel": "Choix d’évolution"
+    },
+    {
+      "id": 172,
+      "speciesId": 172,
+      "formId": 172,
+      "name": "Pichu",
+      "rarity": "Commun",
+      "captureRate": 190,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/172.png",
+      "types": [
+        "electric"
+      ],
+      "isShiny": false,
+      "baseExperience": 41,
+      "level": 2,
+      "instanceId": 1792485180031.0615,
+      "xp": 0,
+      "gender": "male",
+      "date": "20/10/2026",
+      "captureTimestamp": 1792485180031,
+      "capturedAtActiveMs": 4608925,
+      "captureBall": "superball"
     }
   ],
   "inventory": {
     "balls": {
       "pokeball": 0,
-      "superball": 13
+      "superball": 12
     },
     "stones": {
       "sachet": 1,
@@ -500,17 +523,17 @@
       "thunder-stone": 2
     }
   },
-  "coins": 610,
-  "xp": 97,
+  "coins": 635,
+  "xp": 105,
   "level": 2,
   "missions": {
-    "captures": 18,
+    "captures": 19,
     "evolutions": 3,
     "typeProgress": {
       "normal": 4,
       "flying": 4,
       "fairy": 1,
-      "electric": 4,
+      "electric": 5,
       "psychic": 3,
       "water": 2,
       "steel": 1,
@@ -524,7 +547,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 39,
+  "spawnTimer": 180,
   "discovery": {
     "10": {
       "speciesId": 10,
@@ -570,6 +593,22 @@
           "name": "Loupio",
           "label": "",
           "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/170.png",
+          "caught": true
+        }
+      ]
+    },
+    "172": {
+      "speciesId": 172,
+      "name": "Pichu",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/172.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 172,
+          "id": 172,
+          "name": "Pichu",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/172.png",
           "caught": true
         }
       ]
@@ -911,25 +950,25 @@
       ]
     }
   },
-  "lastUpdate": 1792485119843,
+  "lastUpdate": 1792485180032,
   "stats": {
-    "totalCoins": 290,
+    "totalCoins": 295,
     "shinies": 0,
     "epics": 0,
-    "uniques": 21,
+    "uniques": 22,
     "evolved": 3,
     "liberated": 0,
     "totalItemsBought": 17,
     "totalBallsBought": 17,
-    "totalClicks": 122,
-    "captures": 18
+    "totalClicks": 125,
+    "captures": 19
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792484972032,
+  "lastCaptureTimestamp": 1792485180031,
   "lastEvoTimestamp": 1792484373191,
   "lastPurchaseTimestamp": 1792483596563,
   "clickProgress": 0,
-  "middayCaptures": 8,
+  "middayCaptures": 9,
   "dawnCaptureAchieved": false,
   "soldLevel50": false,
   "recentEvoTimestamps": [],
@@ -937,19 +976,19 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    79,
     10,
     946,
     177,
-    929
+    929,
+    172
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 4551942,
-  "activeTickRemainderMs": 942,
-  "passiveXpElapsedMs": 942,
-  "passiveCoinsElapsedMs": 51942,
+  "activeTimeMs": 4608925,
+  "activeTickRemainderMs": 925,
+  "passiveXpElapsedMs": 925,
+  "passiveCoinsElapsedMs": 48925,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 4410000,
+  "lastCaptureAtActiveMs": 4608925,
   "lastEvolutionAtActiveMs": 3840254,
   "lastPurchaseAtActiveMs": 3140844,
   "lastBallPurchaseAtActiveMs": 3140844,
@@ -1009,6 +1048,19 @@
           "male"
         ],
         "maxLevel": 7,
+        "evolved": false
+      },
+      "172": {
+        "types": [
+          "electric"
+        ],
+        "forms": [
+          172
+        ],
+        "genders": [
+          "male"
+        ],
+        "maxLevel": 2,
         "evolved": false
       },
       "177": {
@@ -1186,7 +1238,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 2,
+        "maxLevel": 3,
         "evolved": false
       },
       "931": {
@@ -1258,7 +1310,8 @@
       }
     },
     "balls": [
-      "pokeball"
+      "pokeball",
+      "superball"
     ],
     "compatibleLevels": {
       "fairy": 5,
