@@ -1415,7 +1415,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 135,
+  "spawnTimer": 134,
   "discovery": {
     "10": {
       "speciesId": 10,
@@ -2450,7 +2450,7 @@
       ]
     }
   },
-  "lastUpdate": 1792505089304,
+  "lastUpdate": 1792505168343,
   "stats": {
     "totalCoins": 670,
     "shinies": 0,
@@ -2483,10 +2483,10 @@
     520
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 13072160,
-  "activeTickRemainderMs": 160,
-  "passiveXpElapsedMs": 1160,
-  "passiveCoinsElapsedMs": 52160,
+  "activeTimeMs": 13073175,
+  "activeTickRemainderMs": 175,
+  "passiveXpElapsedMs": 2175,
+  "passiveCoinsElapsedMs": 53175,
   "recentEvolutionActiveTimes": [],
   "lastCaptureAtActiveMs": 12759887,
   "lastEvolutionAtActiveMs": 10181791,
