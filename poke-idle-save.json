@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 5,
       "instanceId": 1792420434087.7441,
-      "xp": 165,
+      "xp": 183,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 68,
       "level": 5,
       "instanceId": 1792420633523.8599,
-      "xp": 101,
+      "xp": 119,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -68,9 +68,9 @@
       ],
       "isShiny": false,
       "baseExperience": 58,
-      "level": 4,
+      "level": 5,
       "instanceId": 1792421422423.5054,
-      "xp": 154,
+      "xp": 12,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -96,7 +96,7 @@
       "baseExperience": 66,
       "level": 4,
       "instanceId": 1792421648158.8218,
-      "xp": 64,
+      "xp": 82,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -123,7 +123,7 @@
       "baseExperience": 66,
       "level": 4,
       "instanceId": 1792421845061.071,
-      "xp": 3,
+      "xp": 21,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -150,7 +150,7 @@
       "baseExperience": 152,
       "level": 3,
       "instanceId": 1792422059857.3225,
-      "xp": 59,
+      "xp": 77,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -176,7 +176,7 @@
       "baseExperience": 58,
       "level": 2,
       "instanceId": 1792422262902.9136,
-      "xp": 30,
+      "xp": 48,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792422262902,
@@ -185,19 +185,49 @@
       "synced": true,
       "fetchingEvo": false,
       "nextEvoLevel": "Choix d’évolution"
+    },
+    {
+      "id": 837,
+      "speciesId": 837,
+      "formId": 837,
+      "name": "Charbi",
+      "rarity": "Commun",
+      "captureRate": 255,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/837.png",
+      "types": [
+        "rock"
+      ],
+      "isShiny": false,
+      "baseExperience": 48,
+      "level": 4,
+      "instanceId": 1792481483020.999,
+      "xp": 1,
+      "gender": "male",
+      "date": "20/10/2026",
+      "captureTimestamp": 1792481483020,
+      "capturedAtActiveMs": 2012497,
+      "captureBall": "pokeball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "Choix d’évolution"
     }
   ],
   "inventory": {
     "balls": {
-      "pokeball": 9
+      "pokeball": 8
     },
-    "stones": {}
+    "stones": {
+      "sachet": 1,
+      "whipped-dream": 1,
+      "strawberry-sweet": 1
+    }
   },
-  "coins": 875,
-  "xp": 101,
+  "coins": 940,
+  "xp": 110,
   "level": 1,
   "missions": {
-    "captures": 7,
+    "captures": 8,
     "evolutions": 0,
     "typeProgress": {
       "normal": 2,
@@ -207,11 +237,12 @@
       "psychic": 1,
       "water": 1,
       "steel": 1,
-      "ghost": 1
+      "ghost": 1,
+      "rock": 1
     },
     "claimed": []
   },
-  "spawnTimer": 29,
+  "spawnTimer": 179,
   "discovery": {
     "170": {
       "speciesId": 170,
@@ -341,6 +372,22 @@
         }
       ]
     },
+    "837": {
+      "speciesId": 837,
+      "name": "Charbi",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/837.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 837,
+          "id": 837,
+          "name": "Charbi",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/837.png",
+          "caught": true
+        }
+      ]
+    },
     "971": {
       "speciesId": 971,
       "name": "Toutombe",
@@ -358,21 +405,21 @@
       ]
     }
   },
-  "lastUpdate": 1792481423251,
+  "lastUpdate": 1792481483255,
   "stats": {
-    "totalCoins": 35,
+    "totalCoins": 80,
     "shinies": 0,
     "epics": 0,
-    "uniques": 7,
+    "uniques": 8,
     "evolved": 0,
     "liberated": 0,
     "totalItemsBought": 0,
     "totalBallsBought": 0,
-    "totalClicks": 33,
-    "captures": 7
+    "totalClicks": 37,
+    "captures": 8
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792422262902,
+  "lastCaptureTimestamp": 1792481483020,
   "lastEvoTimestamp": 1792419495158,
   "lastPurchaseTimestamp": 1792419495158,
   "clickProgress": 0,
@@ -384,27 +431,33 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    694,
     325,
     170,
     777,
-    971
+    971,
+    837
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 1960525,
-  "activeTickRemainderMs": 525,
-  "passiveXpElapsedMs": 1525,
-  "passiveCoinsElapsedMs": 40525,
+  "activeTimeMs": 2013498,
+  "activeTickRemainderMs": 498,
+  "passiveXpElapsedMs": 498,
+  "passiveCoinsElapsedMs": 33498,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 1809591,
+  "lastCaptureAtActiveMs": 2012497,
   "lastEvolutionAtActiveMs": 0,
   "lastPurchaseAtActiveMs": 0,
   "lastBallPurchaseAtActiveMs": 0,
   "recentEvoCount": 0,
   "challenges": {
     "version": 1,
-    "claimed": [],
-    "unlocked": {},
+    "claimed": [
+      "challenge:fairy:1"
+    ],
+    "unlocked": {
+      "sachet": 1,
+      "whipped-dream": 1,
+      "strawberry-sweet": 1
+    },
     "records": {
       "170": {
         "types": [
@@ -471,7 +524,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 4,
+        "maxLevel": 5,
         "evolved": false
       },
       "777": {
@@ -486,6 +539,19 @@
           "female"
         ],
         "maxLevel": 3,
+        "evolved": false
+      },
+      "837": {
+        "types": [
+          "rock"
+        ],
+        "forms": [
+          837
+        ],
+        "genders": [
+          "male"
+        ],
+        "maxLevel": 4,
         "evolved": false
       },
       "971": {
@@ -507,7 +573,7 @@
     ],
     "compatibleLevels": {
       "fairy": 5,
-      "celestial": 4
+      "celestial": 5
     },
     "duplicateReleases": 0
   }
