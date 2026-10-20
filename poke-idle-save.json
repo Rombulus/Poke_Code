@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 7,
       "instanceId": 1792420434087.7441,
-      "xp": 31,
+      "xp": 50,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 168,
       "level": 6,
       "instanceId": 1792420633523.8599,
-      "xp": 260,
+      "xp": 279,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -72,7 +72,7 @@
       "baseExperience": 168,
       "level": 6,
       "instanceId": 1792421422423.5054,
-      "xp": 153,
+      "xp": 172,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -100,7 +100,7 @@
       "baseExperience": 66,
       "level": 6,
       "instanceId": 1792421648158.8218,
-      "xp": 63,
+      "xp": 82,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -127,7 +127,7 @@
       "baseExperience": 66,
       "level": 6,
       "instanceId": 1792421845061.071,
-      "xp": 2,
+      "xp": 21,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -154,7 +154,7 @@
       "baseExperience": 152,
       "level": 5,
       "instanceId": 1792422059857.3225,
-      "xp": 178,
+      "xp": 197,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -180,7 +180,7 @@
       "baseExperience": 58,
       "level": 5,
       "instanceId": 1792422262902.9136,
-      "xp": 93,
+      "xp": 112,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792422262902,
@@ -204,9 +204,9 @@
       ],
       "isShiny": false,
       "baseExperience": 48,
-      "level": 5,
+      "level": 6,
       "instanceId": 1792481483020.999,
-      "xp": 205,
+      "xp": 1,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792481483020,
@@ -233,7 +233,7 @@
       "baseExperience": 61,
       "level": 4,
       "instanceId": 1792481680242.6887,
-      "xp": 125,
+      "xp": 144,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792481680242,
@@ -259,7 +259,7 @@
       "baseExperience": 54,
       "level": 3,
       "instanceId": 1792483132157.1467,
-      "xp": 41,
+      "xp": 60,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483132177,
@@ -286,7 +286,7 @@
       "baseExperience": 37,
       "level": 2,
       "instanceId": 1792483335758.3262,
-      "xp": 34,
+      "xp": 53,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792483335784,
@@ -295,11 +295,39 @@
       "synced": true,
       "fetchingEvo": false,
       "nextEvoLevel": "Choix d’évolution"
+    },
+    {
+      "id": 228,
+      "speciesId": 228,
+      "formId": 228,
+      "name": "Malosse",
+      "rarity": "Commun",
+      "captureRate": 120,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/228.png",
+      "types": [
+        "dark",
+        "fire"
+      ],
+      "isShiny": false,
+      "baseExperience": 66,
+      "level": 1,
+      "instanceId": 1792483585625.9045,
+      "xp": 11,
+      "gender": "female",
+      "date": "20/10/2026",
+      "captureTimestamp": 1792483585646,
+      "capturedAtActiveMs": 3129837,
+      "captureBall": "pokeball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "Choix d’évolution"
     }
   ],
   "inventory": {
     "balls": {
-      "pokeball": 5
+      "pokeball": 7,
+      "superball": 13
     },
     "stones": {
       "sachet": 1,
@@ -309,11 +337,11 @@
       "sun-stone": 0
     }
   },
-  "coins": 1355,
-  "xp": 139,
-  "level": 1,
+  "coins": 0,
+  "xp": 2,
+  "level": 2,
   "missions": {
-    "captures": 11,
+    "captures": 12,
     "evolutions": 2,
     "typeProgress": {
       "normal": 2,
@@ -326,11 +354,13 @@
       "ghost": 1,
       "rock": 1,
       "ice": 1,
-      "bug": 1
+      "bug": 1,
+      "dark": 1,
+      "fire": 1
     },
     "claimed": []
   },
-  "spawnTimer": 19,
+  "spawnTimer": 147,
   "discovery": {
     "170": {
       "speciesId": 170,
@@ -344,6 +374,22 @@
           "name": "Loupio",
           "label": "",
           "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/170.png",
+          "caught": true
+        }
+      ]
+    },
+    "228": {
+      "speciesId": 228,
+      "name": "Malosse",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/228.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 228,
+          "id": 228,
+          "name": "Malosse",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/228.png",
           "caught": true
         }
       ]
@@ -589,25 +635,25 @@
       ]
     }
   },
-  "lastUpdate": 1792483558074,
+  "lastUpdate": 1792483618084,
   "stats": {
-    "totalCoins": 135,
+    "totalCoins": 140,
     "shinies": 0,
     "epics": 0,
-    "uniques": 13,
+    "uniques": 14,
     "evolved": 2,
     "liberated": 0,
-    "totalItemsBought": 0,
-    "totalBallsBought": 0,
-    "totalClicks": 71,
-    "captures": 11
+    "totalItemsBought": 17,
+    "totalBallsBought": 17,
+    "totalClicks": 93,
+    "captures": 12
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792483335784,
+  "lastCaptureTimestamp": 1792483585646,
   "lastEvoTimestamp": 1792481526770,
-  "lastPurchaseTimestamp": 1792419495158,
+  "lastPurchaseTimestamp": 1792483596563,
   "clickProgress": 0,
-  "middayCaptures": 1,
+  "middayCaptures": 2,
   "dawnCaptureAchieved": false,
   "soldLevel50": false,
   "recentEvoTimestamps": [],
@@ -615,22 +661,22 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    837,
     580,
     899,
     938,
-    872
+    872,
+    228
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 3105841,
-  "activeTickRemainderMs": 841,
-  "passiveXpElapsedMs": 841,
-  "passiveCoinsElapsedMs": 45841,
+  "activeTimeMs": 3162832,
+  "activeTickRemainderMs": 832,
+  "passiveXpElapsedMs": 832,
+  "passiveCoinsElapsedMs": 42832,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 2944889,
+  "lastCaptureAtActiveMs": 3129837,
   "lastEvolutionAtActiveMs": 2052490,
-  "lastPurchaseAtActiveMs": 0,
-  "lastBallPurchaseAtActiveMs": 0,
+  "lastPurchaseAtActiveMs": 3140844,
+  "lastBallPurchaseAtActiveMs": 3140844,
   "recentEvoCount": 0,
   "challenges": {
     "version": 1,
@@ -658,6 +704,20 @@
           "male"
         ],
         "maxLevel": 6,
+        "evolved": false
+      },
+      "228": {
+        "types": [
+          "dark",
+          "fire"
+        ],
+        "forms": [
+          228
+        ],
+        "genders": [
+          "female"
+        ],
+        "maxLevel": 1,
         "evolved": false
       },
       "325": {
@@ -779,7 +839,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 5,
+        "maxLevel": 6,
         "evolved": false
       },
       "872": {
@@ -832,5 +892,6 @@
       "element-electric": 3
     },
     "duplicateReleases": 0
-  }
+  },
+  "lastBallPurchaseTimestamp": 1792483596563
 }
