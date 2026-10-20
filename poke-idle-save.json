@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 11,
       "instanceId": 1792420434087.7441,
-      "xp": 378,
+      "xp": 397,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 168,
       "level": 11,
       "instanceId": 1792420633523.8599,
-      "xp": 314,
+      "xp": 333,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -72,7 +72,7 @@
       "baseExperience": 168,
       "level": 11,
       "instanceId": 1792421422423.5054,
-      "xp": 207,
+      "xp": 226,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -100,7 +100,7 @@
       "baseExperience": 66,
       "level": 11,
       "instanceId": 1792421648158.8218,
-      "xp": 117,
+      "xp": 136,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -127,7 +127,7 @@
       "baseExperience": 66,
       "level": 11,
       "instanceId": 1792421845061.071,
-      "xp": 56,
+      "xp": 75,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -154,7 +154,7 @@
       "baseExperience": 152,
       "level": 11,
       "instanceId": 1792422059857.3225,
-      "xp": 9,
+      "xp": 28,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -180,7 +180,7 @@
       "baseExperience": 58,
       "level": 10,
       "instanceId": 1792422262902.9136,
-      "xp": 556,
+      "xp": 575,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792422262902,
@@ -206,7 +206,7 @@
       "baseExperience": 48,
       "level": 11,
       "instanceId": 1792481483020.999,
-      "xp": 36,
+      "xp": 55,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792481483020,
@@ -233,7 +233,7 @@
       "baseExperience": 61,
       "level": 10,
       "instanceId": 1792481680242.6887,
-      "xp": 428,
+      "xp": 447,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792481680242,
@@ -259,7 +259,7 @@
       "baseExperience": 173,
       "level": 10,
       "instanceId": 1792483132157.1467,
-      "xp": 241,
+      "xp": 260,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483132177,
@@ -288,7 +288,7 @@
       "baseExperience": 37,
       "level": 10,
       "instanceId": 1792483335758.3262,
-      "xp": 178,
+      "xp": 197,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792483335784,
@@ -315,7 +315,7 @@
       "baseExperience": 66,
       "level": 10,
       "instanceId": 1792483585625.9045,
-      "xp": 116,
+      "xp": 135,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483585646,
@@ -342,7 +342,7 @@
       "baseExperience": 146,
       "level": 10,
       "instanceId": 1792483855288.3545,
-      "xp": 226,
+      "xp": 245,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792483855311,
@@ -368,7 +368,7 @@
       "baseExperience": 63,
       "level": 10,
       "instanceId": 1792484182727.358,
-      "xp": 119,
+      "xp": 138,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792484182743,
@@ -379,22 +379,23 @@
       "nextEvoLevel": "Choix d’évolution"
     },
     {
-      "id": 11,
-      "speciesId": 11,
-      "formId": 11,
-      "name": "Chrysacier",
+      "id": 12,
+      "speciesId": 12,
+      "formId": 12,
+      "name": "Papilusion",
       "rarity": "Commun",
-      "captureRate": 120,
+      "captureRate": 45,
       "genderRate": 4,
-      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/11.png",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/12.png",
       "types": [
-        "bug"
+        "bug",
+        "flying"
       ],
       "isShiny": false,
-      "baseExperience": 72,
+      "baseExperience": 178,
       "level": 10,
       "instanceId": 1792484389853.315,
-      "xp": 213,
+      "xp": 232,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792484389853,
@@ -402,7 +403,7 @@
       "captureBall": "pokeball",
       "synced": true,
       "fetchingEvo": false,
-      "nextEvoLevel": "Choix d’évolution",
+      "nextEvoLevel": "MAX",
       "hasEvolved": true,
       "evolvedViaLevel": true
     },
@@ -423,7 +424,7 @@
       "baseExperience": 168,
       "level": 9,
       "instanceId": 1792484584527.499,
-      "xp": 373,
+      "xp": 392,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792484584527,
@@ -452,7 +453,7 @@
       "baseExperience": 64,
       "level": 9,
       "instanceId": 1792484776544.0112,
-      "xp": 312,
+      "xp": 331,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792484776544,
@@ -479,7 +480,7 @@
       "baseExperience": 124,
       "level": 9,
       "instanceId": 1792484972032.5503,
-      "xp": 249,
+      "xp": 268,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792484972032,
@@ -505,7 +506,7 @@
       "baseExperience": 218,
       "level": 9,
       "instanceId": 1792485180031.0615,
-      "xp": 183,
+      "xp": 202,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792485180031,
@@ -534,7 +535,7 @@
       "baseExperience": 57,
       "level": 9,
       "instanceId": 1792485379585.5334,
-      "xp": 101,
+      "xp": 120,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792485379585,
@@ -560,7 +561,7 @@
       "baseExperience": 174,
       "level": 9,
       "instanceId": 1792485576433.733,
-      "xp": 218,
+      "xp": 237,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792485576433,
@@ -588,7 +589,7 @@
       "baseExperience": 147,
       "level": 8,
       "instanceId": 1792485797337.7866,
-      "xp": 422,
+      "xp": 441,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792485797337,
@@ -614,7 +615,7 @@
       "baseExperience": 50,
       "level": 8,
       "instanceId": 1792486080255.9182,
-      "xp": 331,
+      "xp": 350,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792486080255,
@@ -641,7 +642,7 @@
       "baseExperience": 56,
       "level": 8,
       "instanceId": 1792486955657.62,
-      "xp": 369,
+      "xp": 388,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792486955682,
@@ -668,7 +669,7 @@
       "baseExperience": 150,
       "level": 8,
       "instanceId": 1792488469140.817,
-      "xp": 276,
+      "xp": 295,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792488469142,
@@ -695,7 +696,7 @@
       "baseExperience": 53,
       "level": 8,
       "instanceId": 1792488667004.5635,
-      "xp": 375,
+      "xp": 394,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792488667004,
@@ -722,7 +723,7 @@
       "baseExperience": 179,
       "level": 8,
       "instanceId": 1792495048837.7576,
-      "xp": 143,
+      "xp": 162,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792495048838,
@@ -748,7 +749,7 @@
       "baseExperience": 42,
       "level": 7,
       "instanceId": 1792495845112.1326,
-      "xp": 281,
+      "xp": 300,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792495845178,
@@ -759,23 +760,23 @@
       "nextEvoLevel": "Choix d’évolution"
     },
     {
-      "id": 298,
-      "speciesId": 298,
-      "formId": 298,
-      "name": "Azurill",
+      "id": 183,
+      "speciesId": 183,
+      "formId": 183,
+      "name": "Marill",
       "rarity": "Commun",
-      "captureRate": 150,
-      "genderRate": 6,
-      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/298.png",
+      "captureRate": 190,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/183.png",
       "types": [
-        "normal",
+        "water",
         "fairy"
       ],
       "isShiny": false,
-      "baseExperience": 38,
+      "baseExperience": 88,
       "level": 8,
       "instanceId": 1792497603198.6443,
-      "xp": 9,
+      "xp": 28,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792497603198,
@@ -783,7 +784,9 @@
       "captureBall": "superball",
       "synced": true,
       "fetchingEvo": false,
-      "nextEvoLevel": "Choix d’évolution"
+      "nextEvoLevel": "Choix d’évolution",
+      "hasEvolved": true,
+      "evolvedViaLevel": true
     },
     {
       "id": 436,
@@ -802,7 +805,7 @@
       "baseExperience": 60,
       "level": 6,
       "instanceId": 1792497891914.2832,
-      "xp": 240,
+      "xp": 259,
       "gender": "genderless",
       "date": "20/10/2026",
       "captureTimestamp": 1792497891914,
@@ -829,7 +832,7 @@
       "baseExperience": 151,
       "level": 6,
       "instanceId": 1792498094240.7463,
-      "xp": 176,
+      "xp": 195,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792498094240,
@@ -855,7 +858,7 @@
       "baseExperience": 66,
       "level": 6,
       "instanceId": 1792498489274.005,
-      "xp": 126,
+      "xp": 145,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792498489274,
@@ -881,7 +884,7 @@
       "baseExperience": 40,
       "level": 6,
       "instanceId": 1792498882781.1438,
-      "xp": 1,
+      "xp": 20,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792498882781,
@@ -907,7 +910,7 @@
       "baseExperience": 66,
       "level": 6,
       "instanceId": 1792499075693.2893,
-      "xp": 43,
+      "xp": 62,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792499075693,
@@ -934,7 +937,7 @@
       "baseExperience": 55,
       "level": 5,
       "instanceId": 1792499275158.0593,
-      "xp": 43,
+      "xp": 62,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792499275158,
@@ -960,7 +963,7 @@
       "baseExperience": 64,
       "level": 5,
       "instanceId": 1792499469402.4153,
-      "xp": 141,
+      "xp": 160,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792499469402,
@@ -987,7 +990,7 @@
       "baseExperience": 50,
       "level": 4,
       "instanceId": 1792499662152.2058,
-      "xp": 61,
+      "xp": 80,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792499662152,
@@ -1014,7 +1017,7 @@
       "baseExperience": 62,
       "level": 5,
       "instanceId": 1792499854254.3682,
-      "xp": 19,
+      "xp": 38,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792499854254,
@@ -1041,7 +1044,7 @@
       "baseExperience": 49,
       "level": 4,
       "instanceId": 1792500048091.9277,
-      "xp": 117,
+      "xp": 136,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792500048091,
@@ -1067,11 +1070,38 @@
       "baseExperience": 62,
       "level": 4,
       "instanceId": 1792500255003.1025,
-      "xp": 52,
+      "xp": 71,
       "gender": "genderless",
       "date": "20/10/2026",
       "captureTimestamp": 1792500255003,
       "capturedAtActiveMs": 9974879,
+      "captureBall": "superball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "Choix d’évolution"
+    },
+    {
+      "id": 636,
+      "speciesId": 636,
+      "formId": 636,
+      "name": "Pyronille",
+      "rarity": "Rare",
+      "captureRate": 45,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/636.png",
+      "types": [
+        "bug",
+        "fire"
+      ],
+      "isShiny": false,
+      "baseExperience": 72,
+      "level": 2,
+      "instanceId": 1792500458203.5017,
+      "xp": 6,
+      "gender": "female",
+      "date": "20/10/2026",
+      "captureTimestamp": 1792500458203,
+      "capturedAtActiveMs": 10168800,
       "captureBall": "superball",
       "synced": true,
       "fetchingEvo": false,
@@ -1081,7 +1111,7 @@
   "inventory": {
     "balls": {
       "pokeball": 0,
-      "superball": 3
+      "superball": 11
     },
     "stones": {
       "sachet": 3,
@@ -1093,12 +1123,12 @@
       "water-stone": 2
     }
   },
-  "coins": 1180,
-  "xp": 410,
+  "coins": 5,
+  "xp": 424,
   "level": 2,
   "missions": {
-    "captures": 40,
-    "evolutions": 8,
+    "captures": 41,
+    "evolutions": 10,
     "typeProgress": {
       "normal": 5,
       "flying": 6,
@@ -1110,9 +1140,9 @@
       "ghost": 5,
       "rock": 1,
       "ice": 1,
-      "bug": 5,
+      "bug": 6,
       "dark": 4,
-      "fire": 3,
+      "fire": 4,
       "grass": 3,
       "fighting": 1,
       "poison": 3,
@@ -1121,7 +1151,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 26,
+  "spawnTimer": 162,
   "discovery": {
     "10": {
       "speciesId": 10,
@@ -1151,6 +1181,22 @@
           "name": "Chrysacier",
           "label": "",
           "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/11.png",
+          "caught": true
+        }
+      ]
+    },
+    "12": {
+      "speciesId": 12,
+      "name": "Papilusion",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/12.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 12,
+          "id": 12,
+          "name": "Papilusion",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/12.png",
           "caught": true
         }
       ]
@@ -1311,6 +1357,22 @@
           "name": "Natu",
           "label": "",
           "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/177.png",
+          "caught": true
+        }
+      ]
+    },
+    "183": {
+      "speciesId": 183,
+      "name": "Marill",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/183.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 183,
+          "id": 183,
+          "name": "Marill",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/183.png",
           "caught": true
         }
       ]
@@ -1567,6 +1629,22 @@
           "name": "Funécire",
           "label": "",
           "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/607.png",
+          "caught": true
+        }
+      ]
+    },
+    "636": {
+      "speciesId": 636,
+      "name": "Pyronille",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/636.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 636,
+          "id": 636,
+          "name": "Pyronille",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/636.png",
           "caught": true
         }
       ]
@@ -1956,23 +2034,23 @@
       ]
     }
   },
-  "lastUpdate": 1792500416154,
+  "lastUpdate": 1792500476148,
   "stats": {
-    "totalCoins": 600,
+    "totalCoins": 605,
     "shinies": 0,
     "epics": 0,
-    "uniques": 48,
-    "evolved": 8,
+    "uniques": 51,
+    "evolved": 10,
     "liberated": 0,
-    "totalItemsBought": 33,
-    "totalBallsBought": 33,
-    "totalClicks": 256,
-    "captures": 40
+    "totalItemsBought": 45,
+    "totalBallsBought": 45,
+    "totalClicks": 280,
+    "captures": 41
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792500255003,
-  "lastEvoTimestamp": 1792499041738,
-  "lastPurchaseTimestamp": 1792495402625,
+  "lastCaptureTimestamp": 1792500458203,
+  "lastEvoTimestamp": 1792500471333,
+  "lastPurchaseTimestamp": 1792500453509,
   "clickProgress": 0,
   "middayCaptures": 18,
   "dawnCaptureAchieved": false,
@@ -1982,23 +2060,26 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    104,
     167,
     92,
     714,
-    854
+    854,
+    636
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 10128820,
-  "activeTickRemainderMs": 820,
-  "passiveXpElapsedMs": 820,
-  "passiveCoinsElapsedMs": 48820,
-  "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 9974879,
-  "lastEvolutionAtActiveMs": 8818352,
-  "lastPurchaseAtActiveMs": 6838315,
-  "lastBallPurchaseAtActiveMs": 6838315,
-  "recentEvoCount": 0,
+  "activeTimeMs": 10186789,
+  "activeTickRemainderMs": 789,
+  "passiveXpElapsedMs": 1789,
+  "passiveCoinsElapsedMs": 46789,
+  "recentEvolutionActiveTimes": [
+    10176793,
+    10181791
+  ],
+  "lastCaptureAtActiveMs": 10168800,
+  "lastEvolutionAtActiveMs": 10181791,
+  "lastPurchaseAtActiveMs": 10163804,
+  "lastBallPurchaseAtActiveMs": 10163804,
+  "recentEvoCount": 2,
   "challenges": {
     "version": 1,
     "claimed": [
@@ -2039,6 +2120,20 @@
         ],
         "forms": [
           11
+        ],
+        "genders": [
+          "female"
+        ],
+        "maxLevel": 10,
+        "evolved": true
+      },
+      "12": {
+        "types": [
+          "bug",
+          "flying"
+        ],
+        "forms": [
+          12
         ],
         "genders": [
           "female"
@@ -2179,6 +2274,20 @@
         ],
         "maxLevel": 9,
         "evolved": false
+      },
+      "183": {
+        "types": [
+          "fairy",
+          "water"
+        ],
+        "forms": [
+          183
+        ],
+        "genders": [
+          "female"
+        ],
+        "maxLevel": 8,
+        "evolved": true
       },
       "218": {
         "types": [
@@ -2366,6 +2475,20 @@
           "female"
         ],
         "maxLevel": 5,
+        "evolved": false
+      },
+      "636": {
+        "types": [
+          "bug",
+          "fire"
+        ],
+        "forms": [
+          636
+        ],
+        "genders": [
+          "female"
+        ],
+        "maxLevel": 2,
         "evolved": false
       },
       "664": {
@@ -2681,8 +2804,8 @@
     },
     "duplicateReleases": 0,
     "evolutionActions": {
-      "level": 1,
-      "friendship": 1,
+      "level": 2,
+      "friendship": 2,
       "stone": 2,
       "walk": 1
     },
@@ -2693,5 +2816,5 @@
       "walk"
     ]
   },
-  "lastBallPurchaseTimestamp": 1792495402625
+  "lastBallPurchaseTimestamp": 1792500453509
 }
