@@ -15,9 +15,9 @@
       ],
       "isShiny": false,
       "baseExperience": 53,
-      "level": 7,
+      "level": 8,
       "instanceId": 1792420434087.7441,
-      "xp": 361,
+      "xp": 10,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 168,
       "level": 7,
       "instanceId": 1792420633523.8599,
-      "xp": 297,
+      "xp": 316,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -72,7 +72,7 @@
       "baseExperience": 168,
       "level": 7,
       "instanceId": 1792421422423.5054,
-      "xp": 190,
+      "xp": 209,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -100,7 +100,7 @@
       "baseExperience": 66,
       "level": 7,
       "instanceId": 1792421648158.8218,
-      "xp": 100,
+      "xp": 119,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -127,7 +127,7 @@
       "baseExperience": 66,
       "level": 7,
       "instanceId": 1792421845061.071,
-      "xp": 39,
+      "xp": 58,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -152,9 +152,9 @@
       ],
       "isShiny": false,
       "baseExperience": 152,
-      "level": 6,
+      "level": 7,
       "instanceId": 1792422059857.3225,
-      "xp": 285,
+      "xp": 11,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -180,7 +180,7 @@
       "baseExperience": 58,
       "level": 6,
       "instanceId": 1792422262902.9136,
-      "xp": 200,
+      "xp": 219,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792422262902,
@@ -206,7 +206,7 @@
       "baseExperience": 48,
       "level": 7,
       "instanceId": 1792481483020.999,
-      "xp": 19,
+      "xp": 38,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792481483020,
@@ -233,7 +233,7 @@
       "baseExperience": 61,
       "level": 6,
       "instanceId": 1792481680242.6887,
-      "xp": 72,
+      "xp": 91,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792481680242,
@@ -259,7 +259,7 @@
       "baseExperience": 173,
       "level": 5,
       "instanceId": 1792483132157.1467,
-      "xp": 108,
+      "xp": 127,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483132177,
@@ -288,7 +288,7 @@
       "baseExperience": 37,
       "level": 5,
       "instanceId": 1792483335758.3262,
-      "xp": 45,
+      "xp": 64,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792483335784,
@@ -313,9 +313,9 @@
       ],
       "isShiny": false,
       "baseExperience": 66,
-      "level": 4,
+      "level": 5,
       "instanceId": 1792483585625.9045,
-      "xp": 143,
+      "xp": 2,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483585646,
@@ -342,7 +342,7 @@
       "baseExperience": 146,
       "level": 5,
       "instanceId": 1792483855288.3545,
-      "xp": 93,
+      "xp": 112,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792483855311,
@@ -366,9 +366,9 @@
       ],
       "isShiny": false,
       "baseExperience": 63,
-      "level": 4,
+      "level": 5,
       "instanceId": 1792484182727.358,
-      "xp": 146,
+      "xp": 5,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792484182743,
@@ -394,7 +394,7 @@
       "baseExperience": 39,
       "level": 5,
       "instanceId": 1792484389853.315,
-      "xp": 80,
+      "xp": 99,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792484389853,
@@ -421,7 +421,7 @@
       "baseExperience": 55,
       "level": 2,
       "instanceId": 1792484584527.499,
-      "xp": 19,
+      "xp": 38,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792484584527,
@@ -446,7 +446,7 @@
       "thunder-stone": 2
     }
   },
-  "coins": 460,
+  "coins": 480,
   "xp": 61,
   "level": 2,
   "missions": {
@@ -470,7 +470,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 124,
+  "spawnTimer": 66,
   "discovery": {
     "10": {
       "speciesId": 10,
@@ -825,7 +825,7 @@
       ]
     }
   },
-  "lastUpdate": 1792484639808,
+  "lastUpdate": 1792484699815,
   "stats": {
     "totalCoins": 280,
     "shinies": 0,
@@ -858,10 +858,10 @@
     946
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 4095144,
-  "activeTickRemainderMs": 144,
-  "passiveXpElapsedMs": 144,
-  "passiveCoinsElapsedMs": 15144,
+  "activeTimeMs": 4153120,
+  "activeTickRemainderMs": 120,
+  "passiveXpElapsedMs": 1120,
+  "passiveCoinsElapsedMs": 13120,
   "recentEvolutionActiveTimes": [],
   "lastCaptureAtActiveMs": 4039168,
   "lastEvolutionAtActiveMs": 3840254,
@@ -908,7 +908,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 4,
+        "maxLevel": 5,
         "evolved": false
       },
       "170": {
@@ -936,7 +936,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 4,
+        "maxLevel": 5,
         "evolved": false
       },
       "325": {
@@ -963,7 +963,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 7,
+        "maxLevel": 8,
         "evolved": false
       },
       "580": {
@@ -1045,7 +1045,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 6,
+        "maxLevel": 7,
         "evolved": false
       },
       "837": {
@@ -1150,7 +1150,7 @@
       "fairy": 5,
       "celestial": 5,
       "element-electric": 5,
-      "galanoa": 4
+      "galanoa": 5
     },
     "duplicateReleases": 0
   },
