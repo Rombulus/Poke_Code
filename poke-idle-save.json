@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 6,
       "instanceId": 1792420434087.7441,
-      "xp": 259,
+      "xp": 272,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 168,
       "level": 6,
       "instanceId": 1792420633523.8599,
-      "xp": 195,
+      "xp": 208,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -72,7 +72,7 @@
       "baseExperience": 168,
       "level": 6,
       "instanceId": 1792421422423.5054,
-      "xp": 88,
+      "xp": 101,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -98,9 +98,9 @@
       ],
       "isShiny": false,
       "baseExperience": 66,
-      "level": 5,
+      "level": 6,
       "instanceId": 1792421648158.8218,
-      "xp": 221,
+      "xp": 11,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -127,7 +127,7 @@
       "baseExperience": 66,
       "level": 5,
       "instanceId": 1792421845061.071,
-      "xp": 160,
+      "xp": 173,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -154,7 +154,7 @@
       "baseExperience": 152,
       "level": 5,
       "instanceId": 1792422059857.3225,
-      "xp": 113,
+      "xp": 126,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -180,7 +180,7 @@
       "baseExperience": 58,
       "level": 5,
       "instanceId": 1792422262902.9136,
-      "xp": 28,
+      "xp": 41,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792422262902,
@@ -206,7 +206,7 @@
       "baseExperience": 48,
       "level": 5,
       "instanceId": 1792481483020.999,
-      "xp": 140,
+      "xp": 153,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792481483020,
@@ -233,7 +233,7 @@
       "baseExperience": 61,
       "level": 4,
       "instanceId": 1792481680242.6887,
-      "xp": 60,
+      "xp": 73,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792481680242,
@@ -259,7 +259,7 @@
       "baseExperience": 54,
       "level": 2,
       "instanceId": 1792483132157.1467,
-      "xp": 32,
+      "xp": 45,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483132177,
@@ -268,11 +268,38 @@
       "synced": true,
       "fetchingEvo": false,
       "nextEvoLevel": "Choix d’évolution"
+    },
+    {
+      "id": 872,
+      "speciesId": 872,
+      "formId": 872,
+      "name": "Frissonille",
+      "rarity": "Commun",
+      "captureRate": 190,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/872.png",
+      "types": [
+        "ice",
+        "bug"
+      ],
+      "isShiny": false,
+      "baseExperience": 37,
+      "level": 1,
+      "instanceId": 1792483335758.3262,
+      "xp": 2,
+      "gender": "male",
+      "date": "20/10/2026",
+      "captureTimestamp": 1792483335784,
+      "capturedAtActiveMs": 2944889,
+      "captureBall": "pokeball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "Choix d’évolution"
     }
   ],
   "inventory": {
     "balls": {
-      "pokeball": 6
+      "pokeball": 5
     },
     "stones": {
       "sachet": 1,
@@ -282,11 +309,11 @@
       "sun-stone": 0
     }
   },
-  "coins": 1290,
-  "xp": 132,
+  "coins": 1315,
+  "xp": 139,
   "level": 1,
   "missions": {
-    "captures": 10,
+    "captures": 11,
     "evolutions": 2,
     "typeProgress": {
       "normal": 2,
@@ -297,11 +324,13 @@
       "water": 2,
       "steel": 1,
       "ghost": 1,
-      "rock": 1
+      "rock": 1,
+      "ice": 1,
+      "bug": 1
     },
     "claimed": []
   },
-  "spawnTimer": 24,
+  "spawnTimer": 175,
   "discovery": {
     "170": {
       "speciesId": 170,
@@ -495,6 +524,22 @@
         }
       ]
     },
+    "872": {
+      "speciesId": 872,
+      "name": "Frissonille",
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/872.png",
+      "caught": true,
+      "variants": [
+        {
+          "formId": 872,
+          "id": 872,
+          "name": "Frissonille",
+          "label": "",
+          "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/872.png",
+          "caught": true
+        }
+      ]
+    },
     "899": {
       "speciesId": 899,
       "name": "Cerbyllin",
@@ -544,25 +589,25 @@
       ]
     }
   },
-  "lastUpdate": 1792483299165,
+  "lastUpdate": 1792483340183,
   "stats": {
-    "totalCoins": 130,
+    "totalCoins": 135,
     "shinies": 0,
     "epics": 0,
-    "uniques": 12,
+    "uniques": 13,
     "evolved": 2,
     "liberated": 0,
     "totalItemsBought": 0,
     "totalBallsBought": 0,
-    "totalClicks": 68,
-    "captures": 10
+    "totalClicks": 70,
+    "captures": 11
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792483132177,
+  "lastCaptureTimestamp": 1792483335784,
   "lastEvoTimestamp": 1792481526770,
   "lastPurchaseTimestamp": 1792419495158,
   "clickProgress": 0,
-  "middayCaptures": 0,
+  "middayCaptures": 1,
   "dawnCaptureAchieved": false,
   "soldLevel50": false,
   "recentEvoTimestamps": [],
@@ -570,19 +615,19 @@
   "boughtAbove10000": false,
   "released": [],
   "recentSpawns": [
-    971,
     837,
     580,
     899,
-    938
+    938,
+    872
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 2911900,
-  "activeTickRemainderMs": 900,
-  "passiveXpElapsedMs": 1900,
-  "passiveCoinsElapsedMs": 31900,
+  "activeTimeMs": 2949894,
+  "activeTickRemainderMs": 894,
+  "passiveXpElapsedMs": 894,
+  "passiveCoinsElapsedMs": 9894,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 2755124,
+  "lastCaptureAtActiveMs": 2944889,
   "lastEvolutionAtActiveMs": 2052490,
   "lastPurchaseAtActiveMs": 0,
   "lastBallPurchaseAtActiveMs": 0,
@@ -625,7 +670,7 @@
         "genders": [
           "male"
         ],
-        "maxLevel": 5,
+        "maxLevel": 6,
         "evolved": false
       },
       "519": {
@@ -735,6 +780,20 @@
           "male"
         ],
         "maxLevel": 5,
+        "evolved": false
+      },
+      "872": {
+        "types": [
+          "bug",
+          "ice"
+        ],
+        "forms": [
+          872
+        ],
+        "genders": [
+          "male"
+        ],
+        "maxLevel": 1,
         "evolved": false
       },
       "938": {
