@@ -127,7 +127,7 @@ export class UnifiedPokeIdleProvider implements vscode.WebviewViewProvider {
             const uri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', name)).toString();
             html = html.split('/media/' + name).join(uri);
         }
-        return html.replace('Codex Desktop', 'PokeIdle').replace('<span class="v-tag">Codex</span>', '<span class="v-tag">v1.5.0</span>');
+        return html.replace('Codex Desktop', 'PokeIdle').replace('<span class="v-tag">Codex</span>', '<span class="v-tag">v1.5.1</span>');
     }
 	public cheat(type: string) {
 		let state = this._getCurrentState();

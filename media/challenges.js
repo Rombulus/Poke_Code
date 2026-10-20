@@ -431,7 +431,7 @@
         ], 'Construis une collection qui ne manque pas de caractère.'),
         family('royal', 'Une équipe de caractère', 'evolution', ['kings-rock', 'leaders-crest'], [
             all(types(5), compatible('royal'), unique(10)), all(goal('duplicateReleases', 3, 'Doublons libérés'), unique(16)), all(evolved(8), unique(30))
-        ], 'Choisis tes compagnons ; libérer des doublons reste facultatif.'),
+        ], 'Choisis tes compagnons, puis libère trois doublons au deuxième palier.'),
         family('energy', 'Énergies croisées', 'elements', ['electirizer', 'magmarizer'], [
             all(capType('electric', 2, 'Électrik'), compatible('energy'), unique(10)), all(speciesType('fire', 3, 'Feu'), types(8)), all(evolved(6), unique(30))
         ], 'Croise les découvertes Feu et Électrik.'),

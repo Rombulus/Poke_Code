@@ -4,12 +4,31 @@ const path = require('node:path');
 const readline = require('node:readline');
 const { buildGameHtml } = require('./game-resource');
 
-const VERSION = '1.8.0';
+const VERSION = '1.8.1';
 const icons = [{
   src: `data:image/svg+xml;base64,${fs.readFileSync(path.join(__dirname, 'assets/pokeidle.svg')).toString('base64')}`,
   mimeType: 'image/svg+xml', sizes: ['any']
 }];
-const PROJECT_ROOT = process.env.POKEIDLE_PROJECT_ROOT || require('./project.json').projectRoot;
+function findProjectRoot() {
+  const candidates = [];
+  if (process.env.POKEIDLE_PROJECT_ROOT) candidates.push(process.env.POKEIDLE_PROJECT_ROOT);
+  try {
+    const configuredRoot = require('./project.json').projectRoot;
+    if (configuredRoot) candidates.push(configuredRoot);
+  } catch { /* The local override is optional; locate the repository below. */ }
+  let directory = __dirname;
+  for (let depth = 0; depth < 12; depth++) {
+    candidates.push(directory);
+    const parent = path.dirname(directory);
+    if (parent === directory) break;
+    directory = parent;
+  }
+  const root = candidates.find(candidate => fs.existsSync(path.join(candidate, 'codex-server.js')) &&
+    fs.existsSync(path.join(candidate, 'sync', 'runtime.cjs')) && fs.existsSync(path.join(candidate, 'media', 'main.js')));
+  if (!root) throw new Error('Dossier PokeIdle introuvable. Ouvre le dépôt Poke_Code ou configure POKEIDLE_PROJECT_ROOT.');
+  return path.resolve(root);
+}
+const PROJECT_ROOT = findProjectRoot();
 const UI_URI = `ui://pokeidle/direct-v${VERSION}.html`;
 const { createRuntime } = require(path.join(PROJECT_ROOT, 'sync/runtime.cjs'));
 const github = createRuntime(PROJECT_ROOT);
