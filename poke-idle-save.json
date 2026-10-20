@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 5,
       "instanceId": 1792420434087.7441,
-      "xp": 201,
+      "xp": 220,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 168,
       "level": 5,
       "instanceId": 1792420633523.8599,
-      "xp": 137,
+      "xp": 156,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -72,7 +72,7 @@
       "baseExperience": 168,
       "level": 5,
       "instanceId": 1792421422423.5054,
-      "xp": 30,
+      "xp": 49,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -100,7 +100,7 @@
       "baseExperience": 66,
       "level": 4,
       "instanceId": 1792421648158.8218,
-      "xp": 100,
+      "xp": 119,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -127,7 +127,7 @@
       "baseExperience": 66,
       "level": 4,
       "instanceId": 1792421845061.071,
-      "xp": 39,
+      "xp": 58,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -152,9 +152,9 @@
       ],
       "isShiny": false,
       "baseExperience": 152,
-      "level": 3,
+      "level": 4,
       "instanceId": 1792422059857.3225,
-      "xp": 95,
+      "xp": 11,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -180,7 +180,7 @@
       "baseExperience": 58,
       "level": 3,
       "instanceId": 1792422262902.9136,
-      "xp": 10,
+      "xp": 29,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792422262902,
@@ -206,7 +206,7 @@
       "baseExperience": 48,
       "level": 4,
       "instanceId": 1792481483020.999,
-      "xp": 19,
+      "xp": 38,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792481483020,
@@ -229,7 +229,7 @@
       "sun-stone": 0
     }
   },
-  "coins": 1000,
+  "coins": 1020,
   "xp": 110,
   "level": 1,
   "missions": {
@@ -248,7 +248,7 @@
     },
     "claimed": []
   },
-  "spawnTimer": 123,
+  "spawnTimer": 68,
   "discovery": {
     "170": {
       "speciesId": 170,
@@ -443,7 +443,7 @@
       ]
     }
   },
-  "lastUpdate": 1792481543250,
+  "lastUpdate": 1792481603252,
   "stats": {
     "totalCoins": 120,
     "shinies": 0,
@@ -476,10 +476,10 @@
     837
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 2069469,
-  "activeTickRemainderMs": 469,
-  "passiveXpElapsedMs": 2469,
-  "passiveCoinsElapsedMs": 29469,
+  "activeTimeMs": 2124446,
+  "activeTickRemainderMs": 446,
+  "passiveXpElapsedMs": 446,
+  "passiveCoinsElapsedMs": 24446,
   "recentEvolutionActiveTimes": [
     2049488,
     2052490
@@ -609,7 +609,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 3,
+        "maxLevel": 4,
         "evolved": false
       },
       "837": {
