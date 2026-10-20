@@ -17,7 +17,7 @@
       "baseExperience": 53,
       "level": 8,
       "instanceId": 1792420434087.7441,
-      "xp": 350,
+      "xp": 369,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792420434115,
@@ -43,7 +43,7 @@
       "baseExperience": 168,
       "level": 8,
       "instanceId": 1792420633523.8599,
-      "xp": 286,
+      "xp": 305,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792420633523,
@@ -72,7 +72,7 @@
       "baseExperience": 168,
       "level": 8,
       "instanceId": 1792421422423.5054,
-      "xp": 179,
+      "xp": 198,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792421422433,
@@ -100,7 +100,7 @@
       "baseExperience": 66,
       "level": 8,
       "instanceId": 1792421648158.8218,
-      "xp": 89,
+      "xp": 108,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421648158,
@@ -127,7 +127,7 @@
       "baseExperience": 66,
       "level": 8,
       "instanceId": 1792421845061.071,
-      "xp": 28,
+      "xp": 47,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792421845061,
@@ -152,9 +152,9 @@
       ],
       "isShiny": false,
       "baseExperience": 152,
-      "level": 7,
+      "level": 8,
       "instanceId": 1792422059857.3225,
-      "xp": 351,
+      "xp": 0,
       "gender": "female",
       "date": "19/10/2026",
       "captureTimestamp": 1792422059857,
@@ -180,7 +180,7 @@
       "baseExperience": 58,
       "level": 7,
       "instanceId": 1792422262902.9136,
-      "xp": 266,
+      "xp": 285,
       "gender": "male",
       "date": "19/10/2026",
       "captureTimestamp": 1792422262902,
@@ -206,7 +206,7 @@
       "baseExperience": 48,
       "level": 8,
       "instanceId": 1792481483020.999,
-      "xp": 8,
+      "xp": 27,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792481483020,
@@ -233,7 +233,7 @@
       "baseExperience": 61,
       "level": 7,
       "instanceId": 1792481680242.6887,
-      "xp": 138,
+      "xp": 157,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792481680242,
@@ -259,7 +259,7 @@
       "baseExperience": 173,
       "level": 6,
       "instanceId": 1792483132157.1467,
-      "xp": 244,
+      "xp": 263,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483132177,
@@ -288,7 +288,7 @@
       "baseExperience": 37,
       "level": 6,
       "instanceId": 1792483335758.3262,
-      "xp": 181,
+      "xp": 200,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792483335784,
@@ -315,7 +315,7 @@
       "baseExperience": 66,
       "level": 6,
       "instanceId": 1792483585625.9045,
-      "xp": 119,
+      "xp": 138,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792483585646,
@@ -342,7 +342,7 @@
       "baseExperience": 146,
       "level": 6,
       "instanceId": 1792483855288.3545,
-      "xp": 229,
+      "xp": 248,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792483855311,
@@ -368,7 +368,7 @@
       "baseExperience": 63,
       "level": 6,
       "instanceId": 1792484182727.358,
-      "xp": 122,
+      "xp": 141,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792484182743,
@@ -394,7 +394,7 @@
       "baseExperience": 39,
       "level": 6,
       "instanceId": 1792484389853.315,
-      "xp": 216,
+      "xp": 235,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792484389853,
@@ -421,7 +421,7 @@
       "baseExperience": 55,
       "level": 5,
       "instanceId": 1792484584527.499,
-      "xp": 59,
+      "xp": 78,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792484584527,
@@ -446,9 +446,9 @@
       ],
       "isShiny": false,
       "baseExperience": 64,
-      "level": 4,
+      "level": 5,
       "instanceId": 1792484776544.0112,
-      "xp": 158,
+      "xp": 17,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792484776544,
@@ -475,7 +475,7 @@
       "baseExperience": 124,
       "level": 4,
       "instanceId": 1792484972032.5503,
-      "xp": 95,
+      "xp": 114,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792484972032,
@@ -501,7 +501,7 @@
       "baseExperience": 41,
       "level": 4,
       "instanceId": 1792485180031.0615,
-      "xp": 29,
+      "xp": 48,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792485180031,
@@ -528,7 +528,7 @@
       "baseExperience": 57,
       "level": 3,
       "instanceId": 1792485379585.5334,
-      "xp": 50,
+      "xp": 69,
       "gender": "female",
       "date": "20/10/2026",
       "captureTimestamp": 1792485379585,
@@ -554,7 +554,7 @@
       "baseExperience": 63,
       "level": 4,
       "instanceId": 1792485576433.733,
-      "xp": 64,
+      "xp": 83,
       "gender": "male",
       "date": "20/10/2026",
       "captureTimestamp": 1792485576433,
@@ -563,12 +563,38 @@
       "synced": true,
       "fetchingEvo": false,
       "nextEvoLevel": "Choix d’évolution"
+    },
+    {
+      "id": 262,
+      "speciesId": 262,
+      "formId": 262,
+      "name": "Grahyèna",
+      "rarity": "Commun",
+      "captureRate": 127,
+      "genderRate": 4,
+      "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/262.png",
+      "types": [
+        "dark"
+      ],
+      "isShiny": false,
+      "baseExperience": 147,
+      "level": 1,
+      "instanceId": 1792485797337.7866,
+      "xp": 14,
+      "gender": "male",
+      "date": "20/10/2026",
+      "captureTimestamp": 1792485797337,
+      "capturedAtActiveMs": 5188653,
+      "captureBall": "superball",
+      "synced": true,
+      "fetchingEvo": false,
+      "nextEvoLevel": "MAX"
     }
   ],
   "inventory": {
     "balls": {
       "pokeball": 0,
-      "superball": 10
+      "superball": 8
     },
     "stones": {
       "sachet": 3,
@@ -579,11 +605,11 @@
       "thunder-stone": 2
     }
   },
-  "coins": 925,
-  "xp": 128,
+  "coins": 950,
+  "xp": 157,
   "level": 2,
   "missions": {
-    "captures": 21,
+    "captures": 22,
     "evolutions": 3,
     "typeProgress": {
       "normal": 4,
@@ -597,13 +623,13 @@
       "rock": 1,
       "ice": 1,
       "bug": 2,
-      "dark": 1,
+      "dark": 2,
       "fire": 1,
       "grass": 3
     },
     "claimed": []
   },
-  "spawnTimer": 115,
+  "spawnTimer": 137,
   "discovery": {
     "10": {
       "speciesId": 10,
@@ -705,7 +731,7 @@
       "speciesId": 262,
       "name": "Grahyèna",
       "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/262.png",
-      "caught": false,
+      "caught": true,
       "variants": [
         {
           "formId": 262,
@@ -713,7 +739,7 @@
           "name": "Grahyèna",
           "label": "",
           "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/262.png",
-          "caught": false
+          "caught": true
         }
       ]
     },
@@ -1054,25 +1080,25 @@
       ]
     }
   },
-  "lastUpdate": 1792485779417,
+  "lastUpdate": 1792485839417,
   "stats": {
-    "totalCoins": 385,
+    "totalCoins": 390,
     "shinies": 0,
     "epics": 0,
-    "uniques": 24,
+    "uniques": 25,
     "evolved": 3,
     "liberated": 0,
     "totalItemsBought": 17,
     "totalBallsBought": 17,
-    "totalClicks": 130,
-    "captures": 21
+    "totalClicks": 139,
+    "captures": 22
   },
   "sessionStartTime": 1792419495158,
-  "lastCaptureTimestamp": 1792485576433,
+  "lastCaptureTimestamp": 1792485797337,
   "lastEvoTimestamp": 1792484373191,
   "lastPurchaseTimestamp": 1792483596563,
   "clickProgress": 0,
-  "middayCaptures": 11,
+  "middayCaptures": 12,
   "dawnCaptureAchieved": false,
   "soldLevel50": false,
   "recentEvoTimestamps": [],
@@ -1087,12 +1113,12 @@
     262
   ],
   "activeTimeVersion": 1,
-  "activeTimeMs": 5174662,
-  "activeTickRemainderMs": 662,
-  "passiveXpElapsedMs": 2662,
-  "passiveCoinsElapsedMs": 14662,
+  "activeTimeMs": 5231630,
+  "activeTickRemainderMs": 630,
+  "passiveXpElapsedMs": 2630,
+  "passiveCoinsElapsedMs": 11630,
   "recentEvolutionActiveTimes": [],
-  "lastCaptureAtActiveMs": 4982734,
+  "lastCaptureAtActiveMs": 5188653,
   "lastEvolutionAtActiveMs": 3840254,
   "lastPurchaseAtActiveMs": 3140844,
   "lastBallPurchaseAtActiveMs": 3140844,
@@ -1179,7 +1205,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 4,
+        "maxLevel": 5,
         "evolved": false
       },
       "228": {
@@ -1194,6 +1220,19 @@
           "female"
         ],
         "maxLevel": 6,
+        "evolved": false
+      },
+      "262": {
+        "types": [
+          "dark"
+        ],
+        "forms": [
+          262
+        ],
+        "genders": [
+          "male"
+        ],
+        "maxLevel": 1,
         "evolved": false
       },
       "325": {
@@ -1329,7 +1368,7 @@
         "genders": [
           "female"
         ],
-        "maxLevel": 7,
+        "maxLevel": 8,
         "evolved": false
       },
       "837": {
