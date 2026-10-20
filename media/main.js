@@ -50,11 +50,12 @@
 
     let currentPokemon = null;
     let selectedBall = 'pokeball';
+    let ballThrowPending = false;
     let dayNightInterval = null;
     let gameLoopInterval = null;
     let spawnPending = false;
     let gameClockLoaded = false;
-    let gamePageActive = true;
+    let gamePageActive = document.visibilityState !== 'hidden';
     let lastClockPerformance = 0;
     let lastClockWall = 0;
     const evolutions = window.POKEIDLE_EVOLUTIONS;
@@ -665,12 +666,19 @@
         lastClockWall = Date.now();
     }
 
-    window.addEventListener('pagehide', () => {
-        gamePageActive = false;
-        if (gameClockLoaded && !window.POKEIDLE_SYNC_BUSY) saveState();
+    function setGamePageActive(active) {
+        const next = Boolean(active);
+        const changed = gamePageActive !== next;
+        gamePageActive = next;
         resetClockSample();
+        if (changed && !next && gameClockLoaded && !window.POKEIDLE_SYNC_BUSY) saveState();
+    }
+
+    window.addEventListener('pagehide', () => {
+        setGamePageActive(false);
     });
-    window.addEventListener('pageshow', () => { gamePageActive = true; resetClockSample(); });
+    window.addEventListener('pageshow', () => setGamePageActive(document.visibilityState !== 'hidden'));
+    document.addEventListener('visibilitychange', () => setGamePageActive(document.visibilityState !== 'hidden'));
 
     function startGameLoop() {
         if (gameLoopInterval) clearInterval(gameLoopInterval);
@@ -754,6 +762,18 @@
         return Math.floor(Math.pow(level, 1.5) * 20);
     }
 
+    async function fetchPokeApiJson(url) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12000);
+        try {
+            const response = await fetch(url, { signal: controller.signal });
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            return await response.json();
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+
     async function spawnPokemon() {
         if (spawnPending || !gamePageActive || window.POKEIDLE_SYNC_BUSY) return;
         spawnPending = true;
@@ -774,23 +794,18 @@
             while (!found) {
                 const encounter = chooseEncounter(state.level, state.recentSpawns);
                 const id = encounter.id;
-                const speciesRes = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}/`);
-                speciesData = await speciesRes.json();
+                speciesData = await fetchPokeApiJson(`https://pokeapi.co/api/v2/pokemon-species/${id}/`);
 
                 // One species draw, followed by one appearance draw. Species with
                 // many forms do not receive extra encounter probability.
                 const forms = evolutions.formsForSpecies(speciesData.id);
                 if (!forms.length) continue;
                 const form = forms[Math.floor(Math.random() * forms.length)];
-                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${form.pokemonId}/`);
-                if (!response.ok) throw new Error('HTTP ' + response.status);
-                data = await response.json();
+                data = await fetchPokeApiJson(`https://pokeapi.co/api/v2/pokemon/${form.pokemonId}/`);
                 let sprite = data.sprites.other?.['official-artwork']?.front_default || data.sprites.front_default;
                 const formId = form.id;
                 if (data.forms.length > 1) {
-                    const formRes = await fetch(`https://pokeapi.co/api/v2/pokemon-form/${formId}/`);
-                    if (!formRes.ok) throw new Error('HTTP ' + formRes.status);
-                    const formData = await formRes.json();
+                    const formData = await fetchPokeApiJson(`https://pokeapi.co/api/v2/pokemon-form/${formId}/`);
                     sprite = formData.sprites.front_default || sprite;
                 }
 
@@ -825,7 +840,12 @@
             renderPokemon();
         } catch (error) {
             console.error("Spawn error:", error);
-            if (state === spawnState) state.spawnTimer = 10; // Retry only in the same game.
+            if (state === spawnState) {
+                state.spawnTimer = 10; // Retry only in the same game.
+                UI.spawnArea.innerHTML = '<div class="loader" id="spawn-timer-display">La recherche a échoué. Nouvelle tentative…</div>';
+                updateSpawnTimerUI();
+                saveState();
+            }
             vscode.postMessage({ type: 'updateStatus', active: false });
         } finally { spawnPending = false; }
     }
@@ -848,13 +868,17 @@
     }
 
     function catchPokemon() {
-        if (!currentPokemon) return;
+        if (!currentPokemon || ballThrowPending) return;
         if ((state.inventory.balls[selectedBall] || 0) <= 0) {
             vscode.postMessage({ type: 'showInfo', value: "Plus de Balls ! Attendez que vos pièces s'accumulent." });
             return;
         }
 
+        const pokeEl = document.getElementById('active-pokemon');
+        if (!pokeEl) return;
         const ball = BALL_TYPES.find(b => b.id === selectedBall);
+        ballThrowPending = true;
+        pokeEl.classList.add('ball-throw-pending');
 
         // --- Décrémentation immédiate ---
         state.inventory.balls[selectedBall]--;
@@ -869,7 +893,6 @@
         ballImg.className = 'thrown-ball throw-arc';
 
         // Positionner la ball par rapport au Pokémon
-        const pokeEl = document.getElementById('active-pokemon');
         const rect = pokeEl.getBoundingClientRect();
         ballImg.style.left = `${rect.left + rect.width / 2 - 15}px`;
         ballImg.style.top = `${rect.top + rect.height / 2 - 15}px`;
@@ -883,7 +906,15 @@
         }, 600);
     }
 
+    function finishBallThrow() {
+        ballThrowPending = false;
+        const pokeEl = document.getElementById('active-pokemon');
+        if (!pokeEl) return;
+        pokeEl.classList.remove('ball-throw-pending');
+    }
+
     function executeCatchLogic(ball) {
+        if (!currentPokemon) { finishBallThrow(); return; }
         let catchSuccess = false;
 
         if (ball.id === 'masterball') {
@@ -906,13 +937,17 @@
         const pokemonEl = document.getElementById('active-pokemon');
 
         if (catchSuccess) {
-            pokemonEl.classList.add('captured-anim');
+            pokemonEl?.classList.add('captured-anim');
             setTimeout(() => {
-                finalizeCapture(ball.id);
+                try { finalizeCapture(ball.id); }
+                finally { finishBallThrow(); }
             }, 500);
         } else {
-            pokemonEl.classList.add('shake-anim');
-            setTimeout(() => { pokemonEl.classList.remove('shake-anim'); }, 500);
+            pokemonEl?.classList.add('shake-anim');
+            setTimeout(() => {
+                pokemonEl?.classList.remove('shake-anim');
+                finishBallThrow();
+            }, 500);
 
             // Vérifier si le joueur est à court de TOUTES les balls
             const totalBalls = Object.values(state.inventory.balls).reduce((a, b) => a + b, 0);
@@ -1457,6 +1492,7 @@
             for (const p of [evolved, bonus].filter(Boolean)) recordDiscovery(p, true);
             state.missions.evolutions = (state.missions.evolutions || 0) + 1;
             state.stats.evolved = (state.stats.evolved || 0) + 1;
+            challenges.recordEvolution(state, option.ruleId, option);
             state.lastEvoTimestamp = Date.now();
             state.lastEvolutionAtActiveMs = activeNow();
             challenges.update(state);
@@ -1506,7 +1542,7 @@
         container.replaceChildren();
         const header = document.createElement('header'); header.className = 'challenge-header';
         const title = document.createElement('h2'); title.textContent = 'Carnet de défis';
-        const intro = document.createElement('p'); intro.textContent = 'Explore, capture et fais évoluer. Un objectif au choix suffit pour chaque palier.';
+        const intro = document.createElement('p'); intro.textContent = 'Explore, capture, fais évoluer et entraîne tes compagnons. Chaque palier exige de remplir toutes ses conditions.';
         const totals = document.createElement('p'); totals.className = 'challenge-totals';
         totals.textContent = `${summary.claimed}/${challenges.families.length * 3} paliers réclamés · ${summary.unlocked}/${challenges.items.length} objets débloqués${summary.ready ? ` · ${summary.ready} récompense${summary.ready > 1 ? 's' : ''} prête${summary.ready > 1 ? 's' : ''}` : ''}`;
         header.append(title, intro, totals); container.appendChild(header);

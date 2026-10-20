@@ -389,19 +389,22 @@
 };
     /* POKEIDLE_LEGACY_END */
     const itemMap = new Map(items.map(item => [item.id, item]));
+    const evolutionRulesById = new Map(E.data.rules.map(rule => [String(rule.id), rule]));
     const oldMissionItems = new Set(Object.values(legacyRewards));
     const goal = (metric, target, label) => ({ metric, target, label });
     const unique = n => goal('unique', n, 'Espèces différentes obtenues');
     const types = n => goal('types', n, 'Types représentés dans le carnet');
     const evos = n => goal('evolutions', n, 'Évolutions réalisées');
     const evolved = n => goal('evolvedSpecies', n, 'Espèces obtenues par évolution');
+    const evolutionAction = (action, n, label) => goal('evolutionAction:' + action, n, label);
+    const methodVariety = n => goal('evolutionMethodDiversity', n, 'Méthodes d’évolution différentes utilisées');
     const variants = n => goal('variantSpecies', n, 'Espèces dont 2 variantes ont été obtenues');
     const regional = n => goal('regionalSpecies', n, 'Espèces régionales obtenues');
     const balls = n => goal('ballDiversity', n, 'Sortes de Poké Balls ayant réussi une capture');
     const trained = n => goal('trainedSpecies', n, 'Espèces élevées au niveau 8');
     const capType = (type, n, label) => goal('captureType:' + type, n, `Pokémon ${label} capturés`);
     const speciesType = (type, n, label) => goal('speciesType:' + type, n, `Espèces ${label} différentes obtenues`);
-    const compatible = id => goal('compatible:' + id, 5, 'Niveau atteint par un Pokémon utilisant ces objets');
+    const compatible = id => goal('compatible:' + id, 15, 'Niveau atteint par un Pokémon utilisant ces objets');
     const all = (...parts) => ({ mode: 'all', parts });
     const family = (id, label, category, rewards, objectives, flavor) => ({ id, label, category, items: rewards, objectives, flavor });
     const elements = [
@@ -411,77 +414,87 @@
         ['electric', 'Sous tension', 'thunder-stone', 'Électrik'],
         ['ice', 'L’appel du froid', 'ice-stone', 'Glace']
     ].map(([type, title, item, label]) => family('element-' + type, title, 'elements', [item], [
-        all(capType(type, 2, label), compatible('element-' + type), unique(type === 'ice' ? 8 : 6)),
-        all(speciesType(type, 3, label), evos(3)),
-        all(speciesType(type, 5, label), evolved(8))
+        all(capType(type, 8, label), compatible('element-' + type), unique(type === 'ice' ? 25 : 20)),
+        all(speciesType(type, 10, label), evos(12), unique(45)),
+        all(speciesType(type, 18, label), evolved(20), unique(90))
     ], `Fais une place aux Pokémon ${label} dans ton carnet.`));
     const families = [
         family('link', 'De nouveaux horizons', 'evolution', ['linking-cord'], [
-            all(unique(3), compatible('link')), all(evos(3), types(6)), all(evolved(8), unique(25))
+            all(unique(15), compatible('link'), types(8), evolutionAction('trade', 2, 'Évolutions par échange simulé')),
+            all(evos(12), types(12), unique(45), evolutionAction('trade', 6, 'Évolutions par échange simulé'), evolutionAction('partner', 2, 'Évolutions avec un partenaire requis')),
+            all(evolved(20), unique(75), variants(6), evolutionAction('trade', 12, 'Évolutions par échange simulé'), methodVariety(3))
         ], 'Ouvre les évolutions qui demandent habituellement un échange.'),
         ...elements,
         family('celestial', 'Entre Lune et Soleil', 'exploration', ['moon-stone', 'sun-stone'], [
-            all(types(4), compatible('celestial'), unique(8)), all(speciesType('fairy', 3, 'Fée'), evos(4)), all(variants(2), unique(25))
+            all(types(10), compatible('celestial'), unique(20), evolutionAction('friendship', 2, 'Évolutions liées à l’amitié')),
+            all(speciesType('fairy', 8, 'Fée'), evos(10), unique(45), evolutionAction('friendship', 5, 'Évolutions liées à l’amitié')),
+            all(variants(6), unique(75), evolved(15), evolutionAction('friendship', 10, 'Évolutions liées à l’amitié'), methodVariety(3))
         ], 'Explore plusieurs familles de Pokémon, à ton rythme.'),
         family('radiance', 'Éclats de lumière', 'evolution', ['shiny-stone', 'dusk-stone', 'dawn-stone'], [
-            all(evos(1), compatible('radiance'), unique(10)), all(types(8), evos(4)), all(evolved(6), unique(30))
+            all(evos(8), compatible('radiance'), unique(25), evolutionAction('stone', 3, 'Évolutions avec une pierre')),
+            all(types(14), evos(15), unique(50), evolutionAction('stone', 8, 'Évolutions avec une pierre')),
+            all(evolved(15), unique(90), variants(6), evolutionAction('stone', 15, 'Évolutions avec une pierre'), methodVariety(3))
         ], 'Les premières évolutions ouvrent de nouvelles possibilités.'),
         family('forge', 'À la forge', 'evolution', ['metal-coat', 'protector', 'metal-alloy'], [
-            all(capType('steel', 2, 'Acier'), compatible('forge'), unique(10)), all(speciesType('steel', 3, 'Acier'), types(8)), all(evolved(6), unique(30))
+            all(capType('steel', 10, 'Acier'), compatible('forge'), unique(25)), all(speciesType('steel', 8, 'Acier'), types(12), evos(10)), all(evolved(15), unique(90), trained(8))
         ], 'Construis une collection qui ne manque pas de caractère.'),
         family('royal', 'Une équipe de caractère', 'evolution', ['kings-rock', 'leaders-crest'], [
-            all(types(5), compatible('royal'), unique(10)), all(goal('duplicateReleases', 3, 'Doublons libérés'), unique(16)), all(evolved(8), unique(30))
-        ], 'Choisis tes compagnons, puis libère trois doublons au deuxième palier.'),
+            all(types(10), compatible('royal'), unique(25)), all(goal('duplicateReleases', 12, 'Doublons libérés'), unique(45), evos(8)), all(evolved(20), unique(100), variants(6))
+        ], 'Choisis tes compagnons, puis libère douze doublons au deuxième palier.'),
         family('energy', 'Énergies croisées', 'elements', ['electirizer', 'magmarizer'], [
-            all(capType('electric', 2, 'Électrik'), compatible('energy'), unique(10)), all(speciesType('fire', 3, 'Feu'), types(8)), all(evolved(6), unique(30))
+            all(capType('electric', 10, 'Électrik'), compatible('energy'), unique(25)), all(speciesType('fire', 8, 'Feu'), types(12), evos(8)), all(evolved(15), unique(90), trained(8))
         ], 'Croise les découvertes Feu et Électrik.'),
         family('retro', 'Le laboratoire', 'exploration', ['upgrade', 'dubious-disc'], [
-            all(types(5), compatible('retro'), unique(10)), all(balls(3), unique(18)), all(variants(3), evolved(8))
+            all(types(10), compatible('retro'), unique(25)), all(balls(6), unique(45), evos(8)), all(variants(6), evolved(15), unique(90))
         ], 'Expérimente les Poké Balls et observe les différences.'),
         family('ocean', 'Trésors des profondeurs', 'exploration', ['prism-scale', 'deep-sea-tooth', 'deep-sea-scale'], [
-            all(capType('water', 3, 'Eau'), compatible('ocean'), unique(8)), all(speciesType('water', 4, 'Eau'), unique(18)), all(speciesType('water', 7, 'Eau'), evolved(8))
+            all(capType('water', 10, 'Eau'), compatible('ocean'), unique(25)), all(speciesType('water', 12, 'Eau'), unique(45), types(10)), all(speciesType('water', 20, 'Eau'), evolved(15), unique(90))
         ], 'Chaque rencontre aquatique enrichit l’expédition.'),
         family('fairy', 'Douceurs du Safari', 'elements', ['sachet', 'whipped-dream', 'strawberry-sweet'], [
-            all(capType('fairy', 1, 'Fée'), compatible('fairy'), unique(6)), all(speciesType('fairy', 3, 'Fée'), types(8)), all(variants(2), unique(25))
+            all(capType('fairy', 8, 'Fée'), compatible('fairy'), unique(20)), all(speciesType('fairy', 8, 'Fée'), types(12), evos(8)), all(variants(6), unique(75), evolved(15))
         ], 'Un détour chez les Fées, sans obligation de trouver un shiny.'),
         family('claws', 'Sur leurs traces', 'evolution', ['razor-claw', 'razor-fang'], [
-            all(capType('dark', 2, 'Ténèbres'), compatible('claws'), unique(10)), all(speciesType('dark', 3, 'Ténèbres'), evos(4)), all(evolved(6), unique(30))
+            all(capType('dark', 10, 'Ténèbres'), compatible('claws'), unique(25)), all(speciesType('dark', 8, 'Ténèbres'), evos(12), types(12)), all(evolved(15), unique(90), variants(6))
         ], 'Suis les pistes des Pokémon les plus discrets.'),
         family('ghosts', 'Les mystères du Safari', 'elements', ['reaper-cloth', 'masque-maudit'], [
-            all(capType('ghost', 2, 'Spectre'), compatible('ghosts'), unique(10)), all(speciesType('ghost', 3, 'Spectre'), evos(5)), all(evolved(8), unique(30))
+            all(capType('ghost', 10, 'Spectre'), compatible('ghosts'), unique(25)), all(speciesType('ghost', 8, 'Spectre'), evos(12), types(12)), all(evolved(20), unique(100), variants(6))
         ], 'Les mystères se découvrent aussi en plein jour.'),
         family('hisui', 'Sur les traces de Hisui', 'exploration', ['black-augurite', 'peat-block'], [
-            all(capType('ground', 3, 'Sol'), compatible('hisui'), unique(10)), all(regional(2), speciesType('ground', 4, 'Sol')), all(regional(4), unique(30))
+            all(capType('ground', 10, 'Sol'), compatible('hisui'), unique(25)), all(regional(4), speciesType('ground', 10, 'Sol'), types(12)), all(regional(8), unique(90), evolved(15))
         ], 'Rencontre des formes régionales et de vieux compagnons.'),
         family('galanoa', 'Souvenirs de Galar', 'exploration', ['galarica-cuff', 'galarica-wreath'], [
-            all(capType('poison', 2, 'Poison'), compatible('galanoa'), unique(8)), all(speciesType('poison', 3, 'Poison'), speciesType('psychic', 3, 'Psy')), all(regional(3), unique(30))
+            all(capType('poison', 10, 'Poison'), compatible('galanoa'), unique(20)), all(speciesType('poison', 8, 'Poison'), speciesType('psychic', 8, 'Psy'), types(12)), all(regional(6), unique(90), evolved(15))
         ], 'Mène une petite étude des Pokémon Poison et Psy.'),
         family('orchard', 'Le verger', 'elements', ['sweet-apple', 'tart-apple', 'syrupy-apple'], [
-            all(capType('grass', 2, 'Plante'), compatible('orchard'), unique(6)), all(speciesType('dragon', 2, 'Dragon'), variants(1)), all(variants(3), unique(25))
+            all(capType('grass', 8, 'Plante'), compatible('orchard'), unique(20)), all(speciesType('dragon', 5, 'Dragon'), variants(4), evos(8)), all(variants(8), unique(75), evolved(15))
         ], 'Trois pommes, trois chemins possibles pour Verpom.'),
         family('tea', 'L’heure du thé', 'exploration', ['cracked-pot', 'chipped-pot', 'unremarkable-teacup', 'masterpiece-teacup'], [
-            all(capType('ghost', 2, 'Spectre'), compatible('tea'), unique(8)), all(speciesType('ghost', 3, 'Spectre'), variants(2)), all(variants(3), unique(25))
+            all(capType('ghost', 8, 'Spectre'), compatible('tea'), unique(20)), all(speciesType('ghost', 8, 'Spectre'), variants(5), evos(8)), all(variants(8), unique(75), evolved(15))
         ], 'Repère les variantes sans avoir à sacrifier un compagnon.'),
         family('armor', 'Deux voies, une aventure', 'evolution', ['auspicious-armor', 'malicious-armor'], [
-            all(capType('fire', 3, 'Feu'), compatible('armor'), unique(10)), all(speciesType('fire', 4, 'Feu'), evos(4)), all(trained(2), unique(30))
+            all(capType('fire', 10, 'Feu'), compatible('armor'), unique(25)), all(speciesType('fire', 10, 'Feu'), evos(12), types(12)), all(trained(10), unique(90), evolved(15))
         ], 'Prépare les deux évolutions de Charbambin.'),
         family('teaching', 'Le carnet du mentor', 'evolution', ['ancient-manuscript', 'scroll-of-darkness', 'scroll-of-waters', 'dragon-scale'], [
-            all(goal('maxLevel', 6, 'Niveau atteint par un compagnon'), compatible('teaching'), unique(6)), all(trained(3), evos(4)), all(evolved(8), unique(30))
+            all(goal('maxLevel', 12, 'Niveau atteint par un compagnon'), compatible('teaching'), unique(20), evolutionAction('special', 2, 'Évolutions à condition spéciale')),
+            all(trained(8), evos(12), types(12), evolutionAction('special', 6, 'Évolutions à condition spéciale'), methodVariety(3)),
+            all(evolved(20), unique(90), goal('maxLevel', 25, 'Niveau atteint par un compagnon'), evolutionAction('special', 12, 'Évolutions à condition spéciale'), methodVariety(4))
         ], 'Les apprentissages ouvrent des évolutions particulières.'),
         family('travel', 'Carnet de voyage', 'exploration', ['alora-sand', 'galar-vapor', 'carte-de-voyage'], [
-            all(types(5), compatible('travel'), unique(8)), all(regional(2), balls(3)), all(regional(4), unique(30))
+            all(types(10), compatible('travel'), unique(20)), all(regional(4), balls(6), evos(8)), all(regional(8), unique(90), evolved(15))
         ], 'Un même Pokémon, d’autres horizons.'),
         family('partners', 'Un duo inattendu', 'evolution', ['cable-croise'], [
-            all(goal('exchangePair', 2, 'Carabing et Escargaume obtenus'), compatible('partners'), unique(12)), all(evos(4), unique(18)), all(evolved(8), unique(30))
+            all(goal('exchangePair', 2, 'Carabing et Escargaume obtenus'), compatible('partners'), unique(25)), all(evos(12), unique(45), types(12)), all(evolved(20), unique(90), variants(6))
         ], 'Prépare leur rencontre ; leurs évolutions demandent les deux partenaires.'),
         family('field', 'Les outils du chercheur', 'evolution', ['oval-stone', 'rock-peak'], [
-            all(goal('captures', 5, 'Captures réalisées'), compatible('field'), unique(8)), all(types(8), evos(4)), all(trained(3), unique(25))
+            all(goal('captures', 40, 'Captures réalisées'), compatible('field'), unique(20), evolutionAction('item', 3, 'Évolutions avec un objet spécial')),
+            all(types(12), evos(12), unique(45), evolutionAction('item', 8, 'Évolutions avec un objet spécial'), evolutionAction('walk', 2, 'Évolutions après une promenade active')),
+            all(trained(10), unique(75), evolved(15), evolutionAction('item', 15, 'Évolutions avec un objet spécial'), evolutionAction('walk', 5, 'Évolutions après une promenade active'), methodVariety(4))
         ], 'Des outils simples pour des évolutions moins ordinaires.'),
         family('coins', 'La chasse au trésor', 'exploration', ['gimmighoul-coin'], [
-            all(unique(8), compatible('coins')), all(unique(18), variants(2)), all(unique(35), evolved(8))
+            all(unique(20), compatible('coins'), types(8)), all(unique(50), variants(5), evos(8)), all(unique(100), evolved(20), regional(6))
         ], 'Trois étapes pour réunir les 999 pièces de Mordudor.'),
         family('candies', 'Une réserve pour Meltan', 'exploration', ['pokego-candy'], [
-            all(unique(10), compatible('candies')), all(unique(25), balls(3)), all(unique(40), evolved(10))
+            all(unique(25), compatible('candies'), types(10)), all(unique(55), balls(6), evos(10)), all(unique(110), evolved(25), variants(8))
         ], 'Les récompenses fournissent les 400 bonbons au fil de l’aventure.')
     ];
     const familyByItem = new Map();
@@ -507,6 +520,8 @@
     }
     function update(state) {
         const c = initialize(state);
+        c.evolutionActions ||= {};
+        c.evolutionMethods ||= [];
         function record(sid) {
             return c.records[sid] ||= { types: [], forms: [], genders: [], maxLevel: 0, evolved: false };
         }
@@ -544,11 +559,13 @@
             variantSpecies: records.filter(r => r.forms.length >= 2).length,
             regionalSpecies, ballDiversity: c.balls.length,
             trainedSpecies: records.filter(r => r.maxLevel >= 8).length,
+            evolutionMethodDiversity: c.evolutionMethods.length,
             maxLevel: Math.max(0, ...records.map(r => r.maxLevel)),
             duplicateReleases: c.duplicateReleases || 0,
             exchangePair: Number(Boolean(c.records[588])) + Number(Boolean(c.records[616]))
         };
         for (const [type, count] of Object.entries(state.missions?.typeProgress || {})) metrics['captureType:' + type] = count;
+        for (const [action, count] of Object.entries(c.evolutionActions)) metrics['evolutionAction:' + action] = count;
         for (const type of representedTypes) metrics['speciesType:' + type] = records.filter(r => r.types.includes(type)).length;
         for (const [id, level] of Object.entries(c.compatibleLevels)) metrics['compatible:' + id] = level;
         return metrics;
@@ -595,10 +612,36 @@
         state.stats.totalCoins = (state.stats.totalCoins || 0) + model.reward.coins;
         return model;
     }
+    function recordEvolution(state, ruleId, option) {
+        const rule = evolutionRulesById.get(String(ruleId)) || (option?.items ? {
+            trigger: 'use-item', trigger_item_id: Object.keys(option.items)[0]
+        } : null);
+        if (!rule) return;
+        const c = initialize(state);
+        c.evolutionActions ||= {};
+        c.evolutionMethods ||= [];
+        let method;
+        if (rule.minimum_happiness || rule.minimum_affection) method = 'friendship';
+        else if (rule.trigger === 'trade') method = 'trade';
+        else if (rule.trigger === 'use-item' && /-stone$/.test(rule.trigger_item_id || '')) method = 'stone';
+        else if (rule.trigger === 'use-item' || rule.trigger_item_id) method = 'item';
+        else if (rule.minimum_steps) method = 'walk';
+        else if (rule.time_of_day || rule.gender_id || rule.region_id || rule.location_id || rule.near_special_rock ||
+            rule.known_move_id || rule.known_move_type_id || rule.used_move_id || rule.party_species_id || rule.party_type_id ||
+            rule.needs_overworld_rain || rule.turn_upside_down || rule.needs_multiplayer || rule.minimum_beauty ||
+            rule.relative_physical_stats !== undefined || rule.nature_bitmask || rule.percentage_chance) method = 'special';
+        else if (['level-up', 'in-battle-level-up'].includes(rule.trigger)) method = 'level';
+        else method = 'special';
+        const actions = new Set([method]);
+        if (rule.trade_species_id || rule.party_species_id || rule.party_type_id) actions.add('partner');
+        if (rule.minimum_steps) actions.add('walk');
+        c.evolutionMethods = [...new Set([...c.evolutionMethods, method])].sort();
+        for (const action of actions) c.evolutionActions[action] = (c.evolutionActions[action] || 0) + 1;
+    }
     function recordRelease(state, p) {
         update(state);
         const sid = E.speciesIdOf(p);
         if (state.pokedex.filter(other => other && E.speciesIdOf(other) === sid).length > 1) state.challenges.duplicateReleases++;
     }
-    window.POKEIDLE_CHALLENGES = { items, families, itemName, initialize, update, models, claim, shopStatus, recordRelease };
+    window.POKEIDLE_CHALLENGES = { items, families, itemName, initialize, update, models, claim, shopStatus, recordEvolution, recordRelease };
 })();

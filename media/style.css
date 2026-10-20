@@ -333,6 +333,11 @@ header {
     animation: fadeIn 0.5s ease-out;
 }
 
+.pokemon-card.ball-throw-pending {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
 .pokemon-sprite {
     width: 150px;
     height: 150px;
