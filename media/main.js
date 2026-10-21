@@ -89,7 +89,7 @@
             milestones: [[3, 'Curieux des formes'], [10, 'Œil affûté'], [25, 'Collectionneur de formes'], [50, 'Archiviste des formes'], [100, 'Maître des formes']] },
         { id: 'evolutions', title: 'Collection évoluée', description: 'Ajoute à ta collection des espèces issues d’une évolution.', metric: 'evolutions', icon: '✨',
             milestones: [[5, 'Observateur des évolutions'], [15, 'Dresseur expérimenté'], [35, 'Spécialiste des évolutions'], [75, 'Savant Pokémon'], [150, 'Maître évolutif']] },
-        { id: 'rare', title: 'Rencontres remarquables', description: 'Enregistre les Pokémon légendaires, uniques et difficiles à trouver.', metric: 'rare', icon: '🌟',
+        { id: 'rare', title: 'Rencontres remarquables', description: 'Capture des Pokémon classés rares, semi-légendaires ou légendaires dans le Safari.', metric: 'rare', icon: '🌟',
             milestones: [[1, 'Rencontre rare'], [5, 'Pisteur de légendes'], [15, 'Chasseur de raretés'], [30, 'Gardien des légendes'], [50, 'Mythe du Safari'], [80, 'Légende vivante']] }
     ];
     const allCollectionTitles = collectionTracks.flatMap(track => track.milestones.map(([threshold, name]) => ({
@@ -288,7 +288,7 @@
         document.body.classList.toggle('night-mode', isNight);
     }
 
-    function mergeDiscovery(discoveries, pokemon, caught) {
+    function mergeDiscovery(discoveries, pokemon, caught, recordEncounter = true) {
         const p = { ...pokemon };
         evolutions.syncPokemon(p);
         const speciesId = evolutions.speciesIdOf(p);
@@ -307,9 +307,11 @@
         if (variant) {
             variant.caught = Boolean(variant.caught || caught);
             if (!variant.sprite) variant.sprite = p.sprite;
+            if (recordEncounter && p.rarity) variant.rarity = p.rarity;
         } else {
             entry.variants.push({ formId, id: p.id, name: p.name,
-                label: evolutions.variantLabel(p), sprite: p.sprite, caught: Boolean(caught) });
+                label: evolutions.variantLabel(p), sprite: p.sprite,
+                rarity: recordEncounter ? (p.rarity || '') : '', caught: Boolean(caught) });
         }
         entry.variants.sort((a, b) => a.formId - b.formId);
     }
@@ -341,7 +343,11 @@
                 Number(id) !== Number(evolutions.data.defaultForms[form.speciesId] || form.speciesId) &&
                 evolutions.formsForSpecies(form.speciesId).some(allowed => Number(allowed.id) === Number(id))).length },
             evolutions: { value: [...caughtSpecies].filter(id => evolutionTargets.has(id)).length, total: [...evolutionTargets].length },
-            rare: { value: [...caughtSpecies].filter(id => rareSpecies.has(id)).length, total: rareSpecies.size }
+            rare: { value: caughtEntries.filter(([id, entry]) => {
+                const speciesId = Number(id);
+                return legendaryIds.has(speciesId) || semiLegendaryIds.has(speciesId) ||
+                    entry.variants?.some(variant => variant.caught && variant.rarity === 'Rare');
+            }).length, total: rareSpecies.size }
         };
     }
 
@@ -358,8 +364,8 @@
         return unlocked;
     }
 
-    function recordDiscovery(p, caught) {
-        mergeDiscovery(state.discovery, p, caught);
+    function recordDiscovery(p, caught, recordEncounter = true) {
+        mergeDiscovery(state.discovery, p, caught, recordEncounter);
         if (state.stats) state.stats.uniques = discoveryCount(true);
     }
 
@@ -378,7 +384,7 @@
                 else normalized[id] = discovery; // Keep unmapped historical records for compatibility.
             }
         }
-        for (const p of state.pokedex || []) if (p) mergeDiscovery(normalized, p, true);
+        for (const p of state.pokedex || []) if (p) mergeDiscovery(normalized, p, true, !p.hasEvolved);
         state.discovery = normalized;
         state.stats.uniques = discoveryCount(true);
         if (JSON.stringify(normalized) !== previous) saveState();
@@ -815,7 +821,7 @@
     }
 
     function gainPassiveXP() {
-        let leveledUp = false;
+        const leveledPokemon = [];
         state.pokedex.forEach(p => {
             if (!p) return;
             // Gain de 1 XP toutes les 3 secondes
@@ -824,19 +830,46 @@
             if (p.xp >= xpToNext) {
                 p.level = (p.level || 1) + 1;
                 p.xp = 0;
-                leveledUp = true;
+                leveledPokemon.push(p);
                 // Evolutions remain manual so the player can choose a branch.
             }
         });
 
-        // Mise à jour visuelle si on est sur l'onglet pokedex
+        // Update XP fields in place: rebuilding the collection also reloads every sprite.
         const isPokedexOpen = !document.getElementById('pokedex-tab').classList.contains('hidden');
-        if (isPokedexOpen || leveledUp) {
-            renderPokedex();
-        }
+        if (isPokedexOpen) updatePokedexProgress(leveledPokemon);
 
         // Toujours sauvegarder le gain d'XP
         saveState();
+    }
+
+    function updatePokedexProgress(leveledPokemon = []) {
+        if (UI.pokedexMode !== 'collection' || !UI.pokedexList) return;
+        const cards = new Map([...UI.pokedexList.querySelectorAll('.pokedex-item')]
+            .map(item => [item.dataset.instanceId, item]));
+        const leveledIds = new Set(leveledPokemon.map(p => String(p.instanceId)));
+
+        state.pokedex.forEach(p => {
+            if (!p) return;
+            const item = cards.get(String(p.instanceId));
+            if (!item) return;
+
+            const xpToNext = calculatePokeXPToNext(p.level || 1);
+            const xpProgress = Math.min(100, ((p.xp || 0) / xpToNext) * 100);
+            const level = item.querySelector('.p-lvl');
+            const progress = item.querySelector('.p-xp-bar > div');
+            if (level) level.textContent = `Nv.${p.level || '?'}`;
+            if (progress) progress.style.width = `${xpProgress}%`;
+
+            if (leveledIds.has(String(p.instanceId))) {
+                const evolution = item.querySelector('.evo-timer');
+                if (evolution) {
+                    const status = calculateEvoTime(p);
+                    evolution.textContent = status;
+                    evolution.classList.toggle('evo-ready', status === 'Évolution prête !');
+                }
+            }
+        });
     }
 
     function calculatePokeXPToNext(level) {
@@ -1501,6 +1534,7 @@
             if (!p) return;
             const item = document.createElement('div');
             item.className = `pokedex-item ${p.isShiny ? 'shiny-border' : ''}`;
+            item.dataset.instanceId = String(p.instanceId);
             const evoInfo = calculateEvoTime(p);
 
             const genderSign = p.gender === 'male' ? '<span class="gender-m">♂</span>' : (p.gender === 'female' ? '<span class="gender-f">♀</span>' : '');
@@ -1762,6 +1796,7 @@
             baseExperience: pokemon.base_experience || old.baseExperience,
             genderRate: evolutions.data.species[form.speciesId].genderRate,
             captureRate: evolutions.data.species[form.speciesId].captureRate,
+            rarity: '',
             nextEvoLevel: null, fetchingEvo: false, synced: true,
             hasEvolved: true
         };
@@ -1805,7 +1840,7 @@
             }
             state.recentEvolutionActiveTimes = [...state.recentEvolutionActiveTimes, activeNow()].filter(t => activeNow() - t < 120000);
             state.recentEvoCount = state.recentEvolutionActiveTimes.length;
-            for (const p of [evolved, bonus].filter(Boolean)) recordDiscovery(p, true);
+            for (const p of [evolved, bonus].filter(Boolean)) recordDiscovery(p, true, false);
             state.missions.evolutions = (state.missions.evolutions || 0) + 1;
             state.stats.evolved = (state.stats.evolved || 0) + 1;
             challenges.recordEvolution(state, option.ruleId, option);
