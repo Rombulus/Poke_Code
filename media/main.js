@@ -42,6 +42,10 @@
         claimMission1: document.getElementById('claim-mission-1'),
         pokeSearch: document.getElementById('poke-search'),
         pokeSort: document.getElementById('pokedex-sort'),
+        pokedexControls: document.getElementById('pokedex-controls'),
+        trainerTitle: document.getElementById('trainer-title'),
+        safariNotificationsButton: document.getElementById('btn-safari-notifications'),
+        safariNotificationsStatus: document.getElementById('safari-notifications-status'),
         githubSync: document.getElementById('btn-github-sync'),
         syncStatus: document.getElementById('sync-status'),
         exportBtn: document.getElementById('btn-export'),
@@ -55,7 +59,9 @@
     let gameLoopInterval = null;
     let spawnPending = false;
     let gameClockLoaded = false;
-    let gamePageActive = document.visibilityState !== 'hidden';
+    // The game keeps running while its host editor is open, even when its
+    // panel is in the background. pagehide/pageshow mark an actual page close.
+    let gamePageActive = true;
     let lastClockPerformance = 0;
     let lastClockWall = 0;
     const evolutions = window.POKEIDLE_EVOLUTIONS;
@@ -76,6 +82,20 @@
         !legendaryIds.has(s.id) && !semiLegendaryIds.has(s.id)).map(s => s.id));
     const commonSpeciesIds = rarityEntries.map(s => s.id)
         .filter(id => !legendaryIds.has(id) && !semiLegendaryIds.has(id) && !rareWildIds.has(id) && !uncommonWildIds.has(id));
+    const collectionTracks = [
+        { id: 'national', title: 'Pokédex national', description: 'Enregistre des espèces différentes dans ton Pokédex.', metric: 'species', icon: '📘',
+            milestones: [[25, 'Novice du Pokédex'], [100, 'Explorateur Pokémon'], [250, 'Dresseur confirmé'], [500, 'Maître régional'], [750, 'Maître du Pokédex'], [1025, 'Maître national']] },
+        { id: 'forms', title: 'Album des formes', description: 'Capture les variantes spéciales retenues dans le Safari.', metric: 'forms', icon: '🎨',
+            milestones: [[3, 'Curieux des formes'], [10, 'Œil affûté'], [25, 'Collectionneur de formes'], [50, 'Archiviste des formes'], [100, 'Maître des formes']] },
+        { id: 'evolutions', title: 'Collection évoluée', description: 'Ajoute à ta collection des espèces issues d’une évolution.', metric: 'evolutions', icon: '✨',
+            milestones: [[5, 'Observateur des évolutions'], [15, 'Dresseur expérimenté'], [35, 'Spécialiste des évolutions'], [75, 'Savant Pokémon'], [150, 'Maître évolutif']] },
+        { id: 'rare', title: 'Rencontres remarquables', description: 'Enregistre les Pokémon légendaires, uniques et difficiles à trouver.', metric: 'rare', icon: '🌟',
+            milestones: [[1, 'Rencontre rare'], [5, 'Pisteur de légendes'], [15, 'Chasseur de raretés'], [30, 'Gardien des légendes'], [50, 'Mythe du Safari'], [80, 'Légende vivante']] }
+    ];
+    const allCollectionTitles = collectionTracks.flatMap(track => track.milestones.map(([threshold, name]) => ({
+        id: `${track.id}:${threshold}`, name, track: track.title, threshold, metric: track.metric
+    })));
+    allCollectionTitles.push({ id: 'master:all', name: 'Maître collectionneur', track: 'Toutes les collections', metric: 'master', threshold: 1 });
 
     function chooseEncounter(level, recentIds = []) {
         const levelScale = Math.max(0, Math.min(1, ((Number(level) || 1) - 1) / 49));
@@ -125,6 +145,8 @@
 
             // Initialisation des modes UI
             UI.pokedexMode = UI.pokedexMode || 'collection';
+            if (typeof state.collectionTitle !== 'string') state.collectionTitle = '';
+            if (typeof state.safariNotifications !== 'boolean') state.safariNotifications = false;
 
             // Migrations de donnees
             if (!state.inventory) state.inventory = { balls: { pokeball: 20 }, stones: {} };
@@ -208,9 +230,13 @@
             initializeActiveClock();
             translateExistingPokedex();
             syncDiscovery();
+            if (!('Notification' in window) || Notification.permission !== 'granted') state.safariNotifications = false;
+            if (!getCollectionTitles().some(title => title.id === state.collectionTitle)) state.collectionTitle = '';
             challenges.update(state);
             saveState();
             updateUI();
+            renderPokedex();
+            updateSafariNotificationSettings();
             renderMissions();
 
             updateDayNight();
@@ -291,6 +317,45 @@
     function discoveryCount(caughtOnly = false) {
         return Object.entries(state.discovery || {}).filter(([id, d]) =>
             evolutions.data.species[id] && (!caughtOnly || d.caught)).length;
+    }
+
+    function collectionMetrics() {
+        const caughtEntries = Object.entries(state.discovery || {}).filter(([id, entry]) =>
+            evolutions.data.species[id] && entry?.caught);
+        const caughtSpecies = new Set(caughtEntries.map(([id]) => Number(id)));
+        const evolutionTargets = new Set(evolutions.data.rules.map(rule => Number(rule.to)));
+        const rareSpecies = new Set([...legendaryIds, ...semiLegendaryIds, ...rareWildIds]);
+        const caughtForms = new Set();
+        for (const [id, entry] of caughtEntries) {
+            const speciesId = Number(id);
+            const defaultForm = Number(evolutions.data.defaultForms[speciesId] || speciesId);
+            const allowedForms = new Set(evolutions.formsForSpecies(speciesId).map(form => Number(form.id)));
+            for (const variant of entry.variants || []) {
+                const formId = Number(variant.formId);
+                if (variant.caught && formId !== defaultForm && allowedForms.has(formId)) caughtForms.add(`${speciesId}:${formId}`);
+            }
+        }
+        return {
+            species: { value: caughtSpecies.size, total: Object.keys(evolutions.data.species).length },
+            forms: { value: caughtForms.size, total: Object.entries(evolutions.data.forms).filter(([id, form]) =>
+                Number(id) !== Number(evolutions.data.defaultForms[form.speciesId] || form.speciesId) &&
+                evolutions.formsForSpecies(form.speciesId).some(allowed => Number(allowed.id) === Number(id))).length },
+            evolutions: { value: [...caughtSpecies].filter(id => evolutionTargets.has(id)).length, total: [...evolutionTargets].length },
+            rare: { value: [...caughtSpecies].filter(id => rareSpecies.has(id)).length, total: rareSpecies.size }
+        };
+    }
+
+    function getCollectionTitles(metrics = collectionMetrics()) {
+        const unlocked = [];
+        for (const track of collectionTracks) {
+            for (const [threshold, name] of track.milestones) {
+                if (metrics[track.metric].value >= threshold) unlocked.push({ id: `${track.id}:${threshold}`, name, track: track.title });
+            }
+        }
+        if (collectionTracks.every(track => metrics[track.metric].value >= track.milestones[track.milestones.length - 1][0])) {
+            unlocked.push({ id: 'master:all', name: 'Maître collectionneur', track: 'Toutes les collections' });
+        }
+        return unlocked;
     }
 
     function recordDiscovery(p, caught) {
@@ -410,6 +475,10 @@
                     vscode.postMessage({ type: 'importState' });
                 });
             }
+
+            if (UI.safariNotificationsButton) {
+                UI.safariNotificationsButton.addEventListener('click', toggleSafariNotifications);
+            }
         } catch (err) {
             console.error("Init error:", err);
         }
@@ -428,6 +497,11 @@
             if (UI.coinCount) UI.coinCount.innerText = state.coins || 0;
             if (UI.pokedexCount) UI.pokedexCount.innerText = new Set((state.pokedex || []).filter(Boolean).map(p => evolutions.speciesIdOf(p))).size;
             if (UI.playerLevel) UI.playerLevel.innerText = state.level || 1;
+            if (UI.trainerTitle) {
+                const equipped = allCollectionTitles.find(title => title.id === state.collectionTitle);
+                UI.trainerTitle.textContent = equipped ? `✦ ${equipped.name}` : '';
+                UI.trainerTitle.hidden = !equipped;
+            }
 
             const lvl = state.level || 1;
             const xpToNext = Math.floor(Math.pow(lvl, 1.8) * 150);
@@ -442,6 +516,12 @@
             const badgeSafari = document.getElementById('badge-safari');
             if (badgeSafari) {
                 badgeSafari.classList.toggle('active', currentPokemon !== null);
+                badgeSafari.setAttribute('aria-hidden', 'true');
+            }
+            const safariTab = document.querySelector('[data-tab="safari-tab"]');
+            if (safariTab) {
+                if (currentPokemon) safariTab.setAttribute('aria-label', `Safari — ${currentPokemon.name} est apparu`);
+                else safariTab.removeAttribute('aria-label');
             }
 
             const badgeMissions = document.getElementById('badge-missions');
@@ -677,8 +757,7 @@
     window.addEventListener('pagehide', () => {
         setGamePageActive(false);
     });
-    window.addEventListener('pageshow', () => setGamePageActive(document.visibilityState !== 'hidden'));
-    document.addEventListener('visibilitychange', () => setGamePageActive(document.visibilityState !== 'hidden'));
+    window.addEventListener('pageshow', () => setGamePageActive(true));
 
     function startGameLoop() {
         if (gameLoopInterval) clearInterval(gameLoopInterval);
@@ -690,10 +769,12 @@
             const wallElapsed = wall - lastClockWall;
             lastClockPerformance = monotonic;
             lastClockWall = wall;
-            // Only live ticks count. Never catch up after closing, suspension,
-            // sleep, clock changes, host synchronization or a frozen webview.
+            // Background editor panels may throttle timers to roughly one tick
+            // per minute. Credit that live time, but ignore long gaps caused by
+            // sleep, a closed page, host synchronization or a frozen webview.
+            const maxLiveTickGapMs = 65000;
             if (!gameClockLoaded || !gamePageActive || window.POKEIDLE_SYNC_BUSY ||
-                elapsed <= 0 || elapsed > 5000 || wallElapsed < 0 || wallElapsed > 5000) return;
+                elapsed <= 0 || elapsed > maxLiveTickGapMs || wallElapsed < 0 || wallElapsed > maxLiveTickGapMs) return;
             const creditedMs = Math.floor(elapsed);
             state.activeTimeMs += creditedMs;
             state.activeTickRemainderMs += creditedMs;
@@ -838,6 +919,7 @@
             }
 
             renderPokemon();
+            notifySafariEncounter(currentPokemon);
         } catch (error) {
             console.error("Spawn error:", error);
             if (state === spawnState) {
@@ -865,6 +947,69 @@
         `;
 
         document.getElementById('active-pokemon').addEventListener('click', catchPokemon);
+        const safariTab = document.querySelector('[data-tab="safari-tab"]');
+        const badge = document.getElementById('badge-safari');
+        if (safariTab) safariTab.setAttribute('aria-label', `Safari — ${currentPokemon.name} est apparu`);
+        if (badge) badge.setAttribute('aria-label', `${currentPokemon.name} est apparu dans le Safari`);
+    }
+
+    async function toggleSafariNotifications() {
+        if (state.safariNotifications) {
+            state.safariNotifications = false;
+            saveState(); updateSafariNotificationSettings();
+            return;
+        }
+        if (!('Notification' in window)) {
+            if (UI.safariNotificationsStatus) UI.safariNotificationsStatus.textContent = 'Les notifications de bureau ne sont pas disponibles dans cet éditeur. Le badge Safari reste actif dans le jeu.';
+            return;
+        }
+        try {
+            const permission = Notification.permission === 'default' ? await Notification.requestPermission() : Notification.permission;
+            state.safariNotifications = permission === 'granted';
+            saveState(); updateSafariNotificationSettings();
+            if (!state.safariNotifications && UI.safariNotificationsStatus) {
+                UI.safariNotificationsStatus.textContent = permission === 'denied'
+                    ? 'Autorisation refusée. Tu peux la modifier dans les paramètres de notifications de Codex.'
+                    : 'Autorisation non accordée. Le badge Safari reste actif dans le jeu.';
+            }
+        } catch (error) {
+            state.safariNotifications = false;
+            updateSafariNotificationSettings();
+            if (UI.safariNotificationsStatus) UI.safariNotificationsStatus.textContent = 'Codex ne permet pas les notifications de bureau dans ce panneau. Le badge Safari reste actif dans le jeu.';
+        }
+    }
+
+    function updateSafariNotificationSettings() {
+        if (UI.safariNotificationsButton) {
+            UI.safariNotificationsButton.textContent = state.safariNotifications ? 'Désactiver les notifications' : 'Activer les notifications';
+            UI.safariNotificationsButton.setAttribute('aria-pressed', String(Boolean(state.safariNotifications)));
+        }
+        if (UI.safariNotificationsStatus && state.safariNotifications) {
+            UI.safariNotificationsStatus.textContent = 'Notifications activées — elles s’afficheront quand PokeIdle est en arrière-plan.';
+        } else if (UI.safariNotificationsStatus && (!('Notification' in window) || Notification.permission !== 'denied')) {
+            UI.safariNotificationsStatus.textContent = 'Notifications désactivées';
+        }
+    }
+
+    function notifySafariEncounter(pokemon) {
+        const badge = document.getElementById('badge-safari');
+        if (badge) badge.classList.add('active');
+        // Codex cannot add a dynamic badge to the plugin's global sidebar icon.
+        // Show the host's visible toast whenever an encounter arrives instead.
+        vscode.postMessage({ type: 'showInfo', value: `${pokemon.name} est apparu dans le Safari !` });
+        if (!state.safariNotifications || !('Notification' in window) || Notification.permission !== 'granted') return;
+        if (document.visibilityState !== 'hidden' && document.hasFocus()) return;
+        try {
+            const notification = new Notification('Pokémon apparu dans le Safari !', {
+                body: `${pokemon.name}${pokemon.isShiny ? ' ✨' : ''} attend dans PokeIdle.`,
+                icon: '/media/pokeball-icon.png',
+                tag: 'pokeidle-safari-encounter',
+                renotify: true
+            });
+            notification.onclick = () => { window.focus(); notification.close(); };
+        } catch (error) {
+            console.warn('Notification Safari indisponible dans cet éditeur.', error);
+        }
     }
 
     function catchPokemon() {
@@ -1135,30 +1280,40 @@
         updateUI();
     };
 
-    window.liberatePokemon = (instanceId) => {
+    window.liberatePokemon = async (instanceId) => {
         const index = state.pokedex.findIndex(p => p.instanceId == instanceId);
-        if (index > -1) {
-            const p = state.pokedex[index];
-            if ((p.level || 1) >= 50) state.soldLevel50 = true;
+        if (index < 0) return;
+        const pokemon = state.pokedex[index];
+        const confirm = window.POKEIDLE_MCP_HOST?.confirm || (message => Promise.resolve(window.confirm(message)));
+        const detail = pokemon.isShiny ? ' C’est un Pokémon chromatique.' : '';
+        const approved = await confirm(`Libérer ${pokemon.name} contre 10 Pokédollars ?${detail}`);
+        if (!approved) return;
 
-            challenges.recordRelease(state, p);
-            state.pokedex.splice(index, 1);
-            state.coins += 10;
-            if (!state.stats) state.stats = {};
-            state.stats.liberated = (state.stats.liberated || 0) + 1;
-            state.stats.totalCoins = (state.stats.totalCoins || 0) + 10;
+        // The confirmation is asynchronous; make sure this exact Pokémon is
+        // still in the collection before changing the save.
+        const currentIndex = state.pokedex.findIndex(p => p.instanceId == instanceId);
+        if (currentIndex < 0) return;
+        const p = state.pokedex[currentIndex];
+        if ((p.level || 1) >= 50) state.soldLevel50 = true;
 
-            saveState();
-            renderPokedex();
-            updateUI();
-            renderShop();
-            if (typeof renderMissions === 'function') renderMissions();
-        }
+        challenges.recordRelease(state, p);
+        state.pokedex.splice(currentIndex, 1);
+        state.coins += 10;
+        if (!state.stats) state.stats = {};
+        state.stats.liberated = (state.stats.liberated || 0) + 1;
+        state.stats.totalCoins = (state.stats.totalCoins || 0) + 10;
+
+        saveState();
+        renderPokedex();
+        updateUI();
+        renderShop();
+        if (typeof renderMissions === 'function') renderMissions();
     };
 
     function renderPokedex() {
         if (!UI.pokedexList) return;
         UI.pokedexList.innerHTML = '';
+        if (UI.pokedexControls) UI.pokedexControls.hidden = UI.pokedexMode !== 'collection';
 
         const encounteredCount = discoveryCount();
         const capturedCount = discoveryCount(true);
@@ -1174,6 +1329,7 @@
             <div class="pokedex-mode-toggle">
                 <button id="btn-view-collection" class="mini-btn ${UI.pokedexMode === 'national' ? '' : 'active'}">Ma Collection</button>
                 <button id="btn-view-national" class="mini-btn ${UI.pokedexMode === 'national' ? 'active' : ''}">Pokédex National</button>
+                <button id="btn-view-achievements" class="mini-btn ${UI.pokedexMode === 'achievements' ? 'active' : ''}">Palmarès</button>
             </div>
         `;
         UI.pokedexList.appendChild(statsHeader);
@@ -1187,9 +1343,17 @@
             UI.pokedexMode = 'national';
             renderPokedex();
         };
+        statsHeader.querySelector('#btn-view-achievements').onclick = () => {
+            UI.pokedexMode = 'achievements';
+            renderPokedex();
+        };
 
         if (UI.pokedexMode === 'national') {
             renderNationalPokedex();
+            return;
+        }
+        if (UI.pokedexMode === 'achievements') {
+            renderCollectionAchievements();
             return;
         }
 
@@ -1305,6 +1469,86 @@
             parent.appendChild(item);
             });
         }
+    }
+
+    function renderCollectionAchievements() {
+        const metrics = collectionMetrics();
+        const unlocked = getCollectionTitles(metrics);
+        if (state.collectionTitle && !unlocked.some(title => title.id === state.collectionTitle)) state.collectionTitle = '';
+
+        const section = document.createElement('section');
+        section.className = 'collection-ledger';
+        const intro = document.createElement('div');
+        intro.className = 'collection-ledger-intro';
+        intro.innerHTML = '<h2>Palmarès du Dresseur</h2><p>Des objectifs de collection à ton rythme. Les récompenses sont des titres uniquement : elles ne changent ni les rencontres ni le déblocage des objets.</p>';
+        section.appendChild(intro);
+
+        const titleLabel = document.createElement('label');
+        titleLabel.className = 'collection-title-label';
+        titleLabel.htmlFor = 'collection-title-select';
+        titleLabel.textContent = 'Titre affiché sur ta carte de Dresseur';
+        const titleSelect = document.createElement('select');
+        titleSelect.id = 'collection-title-select';
+        titleSelect.className = 'collection-title-select';
+        titleSelect.setAttribute('aria-label', 'Choisir le titre de Dresseur');
+        const noTitle = document.createElement('option'); noTitle.value = ''; noTitle.textContent = 'Aucun titre'; titleSelect.appendChild(noTitle);
+        for (const title of unlocked) {
+            const option = document.createElement('option'); option.value = title.id;
+            option.textContent = `${title.name} · ${title.track}`;
+            titleSelect.appendChild(option);
+        }
+        titleSelect.value = state.collectionTitle || '';
+        titleSelect.addEventListener('change', () => {
+            state.collectionTitle = titleSelect.value;
+            saveState(); updateUI();
+        });
+        const titlePicker = document.createElement('div');
+        titlePicker.className = 'collection-title-picker';
+        titlePicker.append(titleLabel, titleSelect);
+        section.appendChild(titlePicker);
+
+        const grid = document.createElement('div');
+        grid.className = 'collection-track-grid';
+        for (const track of collectionTracks) {
+            const metric = metrics[track.metric];
+            const completed = track.milestones.filter(([threshold]) => metric.value >= threshold).length;
+            const next = track.milestones.find(([threshold]) => metric.value < threshold);
+            const card = document.createElement('article');
+            card.className = `collection-track-card${completed === track.milestones.length ? ' collection-track-complete' : ''}`;
+            const heading = document.createElement('div'); heading.className = 'collection-track-heading';
+            const icon = document.createElement('span'); icon.className = 'collection-track-icon'; icon.setAttribute('aria-hidden', 'true'); icon.textContent = track.icon;
+            const title = document.createElement('h3'); title.textContent = track.title;
+            heading.append(icon, title);
+            const description = document.createElement('p'); description.className = 'collection-track-description'; description.textContent = track.description;
+            const count = document.createElement('p'); count.className = 'collection-track-count';
+            count.textContent = `${metric.value.toLocaleString('fr-FR')} / ${metric.total.toLocaleString('fr-FR')} · ${completed}/${track.milestones.length} paliers`;
+            const progress = document.createElement('progress'); progress.className = 'collection-track-progress';
+            progress.max = next ? next[0] : metric.value || 1;
+            progress.value = next ? Math.min(metric.value, next[0]) : progress.max;
+            progress.setAttribute('aria-label', `Progression ${track.title}`);
+            const milestoneList = document.createElement('ol'); milestoneList.className = 'collection-milestones';
+            for (const [threshold, reward] of track.milestones) {
+                const item = document.createElement('li');
+                const reached = metric.value >= threshold;
+                item.className = reached ? 'collection-milestone reached' : 'collection-milestone';
+                const stamp = document.createElement('span'); stamp.className = 'collection-milestone-stamp';
+                stamp.setAttribute('aria-hidden', 'true'); stamp.textContent = reached ? '✓' : '◇';
+                const detail = document.createElement('span'); detail.className = 'collection-milestone-detail';
+                const rewardName = document.createElement('strong'); rewardName.textContent = reward;
+                const requirement = document.createElement('small'); requirement.textContent = `${threshold.toLocaleString('fr-FR')} ${track.metric === 'species' ? 'espèces' : track.metric === 'forms' ? 'formes' : track.metric === 'evolutions' ? 'espèces évoluées' : 'raretés'}`;
+                detail.append(rewardName, requirement); item.append(stamp, detail); milestoneList.appendChild(item);
+            }
+            card.append(heading, description, count, progress, milestoneList);
+            grid.appendChild(card);
+        }
+        section.appendChild(grid);
+        const master = document.createElement('p');
+        master.className = unlocked.some(title => title.id === 'master:all') ? 'collection-master-title unlocked' : 'collection-master-title';
+        master.textContent = unlocked.some(title => title.id === 'master:all')
+            ? 'Toutes les collections sont terminées : le titre « Maître collectionneur » est à toi.'
+            : 'Termine le dernier palier de chaque collection pour décrocher le titre Maître collectionneur.';
+        section.appendChild(master);
+        UI.pokedexList.appendChild(section);
     }
 
     function renderNationalPokedex() {

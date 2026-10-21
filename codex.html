@@ -32,7 +32,7 @@
     <div id="app">
         <header>
             <div class="user-profile">
-                <div class="lvl-badge">Nv.<span id="player-level">1</span> <span class="v-tag">Codex</span></div>
+                <div class="lvl-badge">Nv.<span id="player-level">1</span> <span class="v-tag">Codex</span><span id="trainer-title" class="trainer-title" hidden></span></div>
                 <div class="xp-bar-container"><div id="xp-progress" class="xp-progress" style="width: 0%"></div></div>
             </div>
             <div class="stats">
@@ -65,7 +65,7 @@
         </div>
 
         <div class="tab-content hidden" id="pokedex-tab">
-            <div class="pokedex-controls">
+            <div class="pokedex-controls" id="pokedex-controls">
                 <input type="text" id="poke-search" placeholder="Rechercher un Pokémon..." aria-label="Rechercher un Pokémon">
                 <select id="pokedex-sort" aria-label="Trier le Pokédex">
                     <option value="id">Ordre Pokéball</option>
@@ -117,6 +117,11 @@
                 <hr>
                 <h3>Temps de jeu</h3>
                 <p id="active-play-status" class="hint">Le temps de jeu avance uniquement pendant que PokeIdle fonctionne. Aucune progression app fermée ou en veille.</p>
+                <hr>
+                <h3>Notifications du Safari</h3>
+                <p class="hint">Le badge Safari signale déjà une apparition dans le jeu. Tu peux aussi activer une notification de bureau quand PokeIdle est en arrière-plan.</p>
+                <button id="btn-safari-notifications" class="mini-btn">Activer les notifications</button>
+                <div id="safari-notifications-status" class="sync-status" role="status" aria-live="polite">Notifications désactivées</div>
                 <hr>
                 <h3>Nouvelle partie</h3>
                 <p class="hint">La partie actuelle sera conservée dans Codex et pourra être restaurée.</p>
