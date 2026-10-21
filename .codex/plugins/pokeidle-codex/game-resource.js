@@ -22,12 +22,13 @@ function buildGameHtml(projectRoot, document) {
   html = html.replace('<body>', `<body>
     <div id="pokeidle-host-status" role="status"><span id="pokeidle-host-message">Chargement de ta partie…</span><button id="pokeidle-host-retry" hidden>Réessayer</button></div>`);
   html = html.replace('</head>', `<style>
-    #pokeidle-host-status { position:fixed; top:0; left:0; right:0; z-index:100; padding:12px; background:#282830; color:white; font:14px system-ui; }
+    #pokeidle-host-status { position:fixed; top:0; left:0; right:0; z-index:100; padding:12px 16px; background:linear-gradient(110deg,#294967,#172b40); color:#f8f6eb; border-bottom:2px solid #8bdad6; box-shadow:0 6px 20px #0007; font:14px system-ui; }
     #pokeidle-host-status[hidden] { display:none; }
-    #pokeidle-host-retry { margin-left:12px; padding:6px 12px; background:#484850; color:white; border:1px solid #888; border-radius:6px; cursor:pointer; }
-    .pokeidle-confirm { max-width:min(440px,90vw); background:#222229; color:white; border:1px solid #666; border-radius:12px; padding:22px; }
-    .pokeidle-confirm::backdrop { background:#0009; }
-    .pokeidle-confirm button { margin-right:12px; padding:8px 16px; cursor:pointer; }
+    #pokeidle-host-retry { margin-left:12px; padding:8px 14px; background:linear-gradient(#e95a57,#c63c49); color:white; border:1px solid #fff0dc; border-radius:9px; font-weight:700; cursor:pointer; }
+    .pokeidle-confirm { max-width:min(440px,90vw); background:linear-gradient(155deg,#294967,#172b40 72%); color:#f8f6eb; border:3px solid #f4f0df; border-radius:16px; padding:22px; box-shadow:0 0 0 3px #2f7fa3,0 18px 54px #0009; }
+    .pokeidle-confirm::backdrop { background:#030912c7; backdrop-filter:blur(3px); }
+    .pokeidle-confirm button { min-width:96px; min-height:42px; margin:8px 8px 0 0; padding:9px 16px; border:1px solid #f4f0df; border-radius:9px; background:linear-gradient(#315878,#244765); color:#fffaf0; font-weight:700; cursor:pointer; }
+    .pokeidle-confirm button:last-child { background:linear-gradient(#e95a57,#c63c49); }
   </style></head>`);
   html = html.replace('La progression est gardée dans Codex Desktop.', 'La progression est enregistrée sur cet ordinateur.');
   return html;

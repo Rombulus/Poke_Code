@@ -4,7 +4,7 @@ const path = require('node:path');
 const readline = require('node:readline');
 const { buildGameHtml } = require('./game-resource');
 
-const VERSION = '1.8.3';
+const VERSION = '1.8.7';
 const icons = [{
   src: `data:image/svg+xml;base64,${fs.readFileSync(path.join(__dirname, 'assets/pokeidle.svg')).toString('base64')}`,
   mimeType: 'image/svg+xml', sizes: ['any']
@@ -36,7 +36,7 @@ const storage = github.store;
 const uiMeta = {
   ui: { csp: { connectDomains: ['https://pokeapi.co'], resourceDomains: ['https://raw.githubusercontent.com'] } },
   'openai/widgetCSP': { connect_domains: ['https://pokeapi.co'], resource_domains: ['https://raw.githubusercontent.com'] },
-  'openai/ui': { availableDisplayModes: ['fullscreen', 'inline'] }
+  'openai/ui': { preferredDisplayMode: 'fullscreen', availableDisplayModes: ['fullscreen', 'inline'] }
 };
 
 const emptySchema = { type: 'object', properties: {}, additionalProperties: false };
@@ -141,7 +141,8 @@ async function handle(message) {
     case 'resources/templates/list': result({ resourceTemplates: [] }); break;
     case 'resources/read': {
       const uri = message.params?.uri;
-      if (uri !== UI_URI && !/^ui:\/\/pokeidle\/game(?:\/v[\d.]+\.html)?$/.test(uri || '')) {
+      // Older open panels can retain their resource URI across a plugin update.
+      if (uri !== UI_URI && !/^ui:\/\/pokeidle\/(?:direct-v\d+(?:\.\d+)*\.html|game(?:\/v[\d.]+\.html)?)$/.test(uri || '')) {
         error(-32602, 'Ressource inconnue.'); break;
       }
       const html = buildGameHtml(PROJECT_ROOT, storage.read());

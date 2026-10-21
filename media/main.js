@@ -1280,13 +1280,85 @@
         updateUI();
     };
 
+    function confirmPokemonRelease(pokemon) {
+        return new Promise(resolve => {
+            const dialog = document.createElement('dialog');
+            dialog.className = 'pokemon-release-dialog';
+            dialog.setAttribute('aria-labelledby', 'pokemon-release-title');
+            dialog.setAttribute('aria-describedby', 'pokemon-release-description');
+
+            const heading = document.createElement('div');
+            heading.className = 'pokemon-release-heading';
+            const emblem = document.createElement('span');
+            emblem.className = 'pokemon-release-emblem';
+            emblem.setAttribute('aria-hidden', 'true');
+            emblem.innerHTML = '<svg viewBox="0 0 40 40" focusable="false"><circle cx="20" cy="20" r="17" fill="#f7f4e9" stroke="#17324d" stroke-width="3"/><path d="M3.7 17.5h32.6a17 17 0 0 1-32.6 0Z" fill="#e94b4b"/><path d="M3 20h34" stroke="#17324d" stroke-width="4"/><circle cx="20" cy="20" r="5.5" fill="#f7f4e9" stroke="#17324d" stroke-width="3"/><circle cx="20" cy="20" r="2" fill="#8fd9d2"/></svg>';
+            const title = document.createElement('h2');
+            title.id = 'pokemon-release-title';
+            title.textContent = 'Libérer ce Pokémon ?';
+            heading.append(emblem, title);
+
+            const summary = document.createElement('div');
+            summary.className = 'pokemon-release-summary';
+            const sprite = document.createElement('img');
+            sprite.className = 'pokemon-release-sprite';
+            sprite.src = pokemon.sprite;
+            sprite.alt = '';
+            sprite.setAttribute('aria-hidden', 'true');
+            sprite.addEventListener('error', () => { sprite.hidden = true; }, { once: true });
+            const description = document.createElement('p');
+            description.id = 'pokemon-release-description';
+            description.className = 'pokemon-release-description';
+            description.textContent = `Veux-tu vraiment libérer ${pokemon.name} ?`;
+            summary.append(sprite, description);
+
+            const reward = document.createElement('div');
+            reward.className = 'pokemon-release-reward';
+            const rewardLabel = document.createElement('span');
+            rewardLabel.textContent = 'Tu recevras';
+            const rewardAmount = document.createElement('strong');
+            rewardAmount.textContent = '+10 Pokédollars';
+            reward.append(rewardLabel, rewardAmount);
+
+            if (pokemon.isShiny) {
+                const warning = document.createElement('p');
+                warning.className = 'pokemon-release-warning';
+                warning.textContent = 'Attention : ce Pokémon est chromatique !';
+                summary.appendChild(warning);
+            }
+
+            const actions = document.createElement('div');
+            actions.className = 'pokemon-release-actions';
+            const cancel = document.createElement('button');
+            cancel.className = 'pokemon-release-cancel';
+            cancel.type = 'button';
+            cancel.textContent = 'Garder';
+            cancel.autofocus = true;
+            const accept = document.createElement('button');
+            accept.className = 'pokemon-release-accept';
+            accept.type = 'button';
+            accept.textContent = 'Libérer';
+            cancel.addEventListener('click', () => dialog.close('cancel'));
+            accept.addEventListener('click', () => dialog.close('release'));
+            actions.append(cancel, accept);
+
+            dialog.append(heading, summary, reward, actions);
+            dialog.addEventListener('close', () => {
+                const approved = dialog.returnValue === 'release';
+                dialog.remove();
+                resolve(approved);
+            }, { once: true });
+            document.body.appendChild(dialog);
+            dialog.showModal();
+            cancel.focus();
+        });
+    }
+
     window.liberatePokemon = async (instanceId) => {
         const index = state.pokedex.findIndex(p => p.instanceId == instanceId);
         if (index < 0) return;
         const pokemon = state.pokedex[index];
-        const confirm = window.POKEIDLE_MCP_HOST?.confirm || (message => Promise.resolve(window.confirm(message)));
-        const detail = pokemon.isShiny ? ' C’est un Pokémon chromatique.' : '';
-        const approved = await confirm(`Libérer ${pokemon.name} contre 10 Pokédollars ?${detail}`);
+        const approved = await confirmPokemonRelease(pokemon);
         if (!approved) return;
 
         // The confirmation is asynchronous; make sure this exact Pokémon is

@@ -50,7 +50,7 @@ Le serveur reste actif pendant la partie. Arrête-le avec `Ctrl+C`. Pour transf�
 
 ### Icône PokeIdle dans la barre latérale de Codex
 
-Le dépôt inclut un plugin local PokeIdle avec une app de barre latérale. La source locale du dépôt doit être ajoutée une fois (`codex plugin marketplace add .`), puis le plugin installé (`codex plugin add pokeidle-codex --marketplace pokeidle-local`). Redémarre Codex Desktop pour charger l'icône Pokéball.
+Le dépôt inclut un plugin local PokeIdle avec une app de barre latérale. Lance `node scripts/install-codex.cjs` depuis ce dépôt : le script installe le plugin et enregistre son serveur MCP sur le chemin stable du projet. Le lanceur continue ainsi à fonctionner lorsque Codex remplace les dossiers de cache du plugin. Conserve le dossier du projet à cet emplacement, ou relance le script après l'avoir déplacé.
 
 Le panneau du plugin embarque directement le jeu : il n'ouvre aucune page locale dans un iframe. Aucun serveur HTTP, hook à valider ou terminal séparé à lancer n'est nécessaire pour ce panneau. Codex initialise le plugin automatiquement et le jeu démarre à l'ouverture de son icône ou de son panneau.
 
@@ -60,7 +60,7 @@ Pour jouer à côté d'une conversation de développement, ouvre le panneau de d
 
 L'icône Pokéball est déclarée sur l'outil MCP et sur le serveur, en plus du logo du plugin : Codex utilise ces métadonnées pour son bouton de navigation.
 
-Après une mise à jour, Codex peut conserver l'ancien processus et la connexion du plugin : redémarre complètement Codex pour charger la nouvelle version. L'ancien mode navigateur (`npm run codex`) reste disponible ; son stockage navigateur et le fichier historique VS Code ne sont pas supprimés.
+Après l'installation ou une modification du lanceur, utilise **Fichier → Quitter**, puis relance Codex pour renouveler sa session technique de lancement. Fermer seulement la fenêtre peut laisser son moteur en arrière-plan. Le panneau accepte aussi les adresses de ressources des anciennes versions pour les onglets déjà ouverts. L'ancien mode navigateur (`npm run codex`) reste disponible ; son stockage navigateur et le fichier historique VS Code ne sont pas supprimés.
 
 ---
 
